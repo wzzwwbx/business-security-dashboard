@@ -1,0 +1,199 @@
+:root {
+  color-scheme: dark;
+
+  /* Primitive palette */
+  --ref-color-slate-950: #07101c;
+  --ref-color-slate-925: #08111f;
+  --ref-color-slate-900: #091425;
+  --ref-color-slate-850: #0b1728;
+  --ref-color-slate-800: #0e1b2d;
+  --ref-color-slate-780: #0e1d31;
+  --ref-color-slate-760: #10233a;
+  --ref-color-slate-740: #11243a;
+  --ref-color-slate-720: #122740;
+  --ref-color-slate-700: #122842;
+  --ref-color-slate-680: #122d48;
+  --ref-color-slate-660: #091523;
+
+  --ref-color-white: #f3f8ff;
+  --ref-color-blue-50: #dbe9ff;
+  --ref-color-blue-100: #d9e8ff;
+  --ref-color-blue-200: #dbe7ff;
+  --ref-color-blue-300: #90a4c3;
+  --ref-color-blue-500: #1e88ff;
+  --ref-color-cyan-400: #2de2e6;
+  --ref-color-green-400: #3ddc97;
+  --ref-color-orange-400: #ffb547;
+  --ref-color-red-400: #ff6b7d;
+
+  --ref-color-green-500: #1fb977;
+  --ref-color-orange-500: #ef8d20;
+  --ref-color-red-500: #ff4d6d;
+  --ref-color-cyan-500: #00bcd4;
+
+  /* Semantic color */
+  --sys-color-bg-page: var(--ref-color-slate-925);
+  --sys-color-bg-page-top: var(--ref-color-slate-950);
+  --sys-color-bg-page-bottom: var(--ref-color-slate-900);
+  --sys-color-surface-1: rgba(14, 27, 45, 0.92);
+  --sys-color-surface-2: rgba(16, 35, 58, 0.95);
+  --sys-color-surface-3: rgba(18, 45, 72, 0.72);
+  --sys-color-surface-card: linear-gradient(180deg, rgba(14, 29, 49, 0.98) 0%, rgba(9, 19, 34, 0.96) 100%);
+  --sys-color-surface-muted: rgba(18, 40, 66, 0.72);
+  --sys-color-surface-muted-strong: rgba(18, 40, 66, 0.76);
+  --sys-color-surface-panel: rgba(18, 39, 64, 0.82);
+  --sys-color-surface-node: rgba(9, 21, 39, 0.9);
+  --sys-color-surface-region: rgba(17, 36, 58, 0.82);
+
+  --sys-color-text-primary: var(--ref-color-white);
+  --sys-color-text-secondary: var(--ref-color-blue-300);
+  --sys-color-text-tertiary: rgba(217, 232, 255, 0.8);
+  --sys-color-text-inverse: #03111f;
+
+  --sys-color-border-primary: rgba(91, 151, 255, 0.24);
+  --sys-color-border-secondary: rgba(89, 145, 226, 0.18);
+  --sys-color-border-strong: rgba(100, 149, 237, 0.35);
+  --sys-color-border-table: rgba(91, 151, 255, 0.14);
+  --sys-color-border-accent: rgba(72, 133, 228, 0.3);
+  --sys-color-border-region: rgba(91, 151, 255, 0.15);
+
+  --sys-color-brand-primary: var(--ref-color-blue-500);
+  --sys-color-brand-secondary: var(--ref-color-cyan-400);
+  --sys-color-brand-primary-soft: rgba(30, 136, 255, 0.18);
+  --sys-color-brand-primary-weak: rgba(30, 136, 255, 0.05);
+  --sys-color-brand-primary-tint: rgba(30, 136, 255, 0.14);
+  --sys-color-brand-secondary-tint: rgba(45, 226, 230, 0.14);
+  --sys-color-brand-secondary-soft: rgba(45, 226, 230, 0.1);
+  --sys-color-brand-gradient: linear-gradient(135deg, rgba(30, 136, 255, 0.88), rgba(45, 226, 230, 0.52));
+  --sys-color-tag-bg: rgba(32, 95, 173, 0.2);
+  --sys-color-tag-text: var(--ref-color-blue-100);
+  --sys-color-scrollbar: rgba(76, 122, 194, 0.5);
+
+  --sys-color-status-success: var(--ref-color-green-400);
+  --sys-color-status-success-bg: rgba(61, 220, 151, 0.14);
+  --sys-color-status-success-border: rgba(61, 220, 151, 0.24);
+  --sys-color-status-success-text: #9bf2c9;
+
+  --sys-color-status-warning: var(--ref-color-orange-400);
+  --sys-color-status-warning-bg: rgba(255, 181, 71, 0.14);
+  --sys-color-status-warning-border: rgba(255, 181, 71, 0.24);
+  --sys-color-status-warning-text: #ffd494;
+
+  --sys-color-status-danger: var(--ref-color-red-400);
+  --sys-color-status-danger-bg: rgba(255, 107, 125, 0.14);
+  --sys-color-status-danger-border: rgba(255, 107, 125, 0.24);
+  --sys-color-status-danger-text: #ffc1c9;
+  --sys-color-status-danger-soft: rgba(255, 107, 125, 0.18);
+
+  --sys-color-status-info: var(--ref-color-cyan-400);
+  --sys-color-status-info-bg: rgba(45, 226, 230, 0.14);
+  --sys-color-status-info-border: rgba(45, 226, 230, 0.24);
+  --sys-color-status-info-text: #b6fbfb;
+
+  --sys-color-progress-track: rgba(136, 162, 204, 0.16);
+  --sys-color-surface-timeline: rgba(18, 40, 66, 0.69);
+  --sys-color-timeline-line: rgba(77, 128, 201, 0.24);
+  --sys-color-grid-line: rgba(77, 135, 212, 0.08);
+  --sys-color-grid-glow: rgba(30, 136, 255, 0.09);
+  --sys-color-line-topology: rgba(45, 226, 230, 0.45);
+  --sys-color-tooltip-bg: rgba(9, 21, 39, 0.96);
+  --sys-color-tooltip-border: rgba(91, 151, 255, 0.22);
+  --sys-color-skeleton-base: rgba(30, 52, 84, 0.48);
+  --sys-color-skeleton-highlight: rgba(79, 121, 181, 0.26);
+
+  /* Typography */
+  --font-family-base: 'PingFang SC', 'Microsoft YaHei', Inter, sans-serif;
+  --font-size-12: 12px;
+  --font-size-13: 13px;
+  --font-size-14: 14px;
+  --font-size-16: 16px;
+  --font-size-18: 18px;
+  --font-size-24: 24px;
+  --font-size-32: 32px;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-black: 800;
+  --line-height-tight: 1.2;
+  --line-height-base: 1.5;
+  --line-height-relaxed: 1.7;
+  --letter-spacing-wide: 0.08em;
+  --letter-spacing-wider: 0.12em;
+
+  /* Spacing */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 10px;
+  --space-4: 12px;
+  --space-5: 14px;
+  --space-6: 16px;
+  --space-7: 18px;
+  --space-8: 20px;
+  --space-9: 22px;
+  --space-10: 24px;
+  --space-11: 26px;
+  --space-12: 32px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 16px;
+  --radius-xl: 18px;
+  --radius-2xl: 20px;
+  --radius-pill: 999px;
+
+  /* Shadow */
+  --shadow-sm: 0 10px 24px rgba(3, 11, 24, 0.4);
+  --shadow-md: 0 12px 40px rgba(1, 10, 28, 0.38);
+  --shadow-focus: 0 0 0 3px rgba(45, 226, 230, 0.18);
+
+  /* Motion */
+  --motion-duration-fast: 160ms;
+  --motion-duration-base: 240ms;
+  --motion-duration-slow: 320ms;
+  --motion-ease-standard: ease;
+
+  /* Layer / z-index */
+  --z-base: 1;
+  --z-sticky: 10;
+  --z-dropdown: 100;
+  --z-overlay: 400;
+  --z-modal: 500;
+  --z-toast: 600;
+
+  /* Layout */
+  --layout-sidebar-width: 280px;
+  --layout-sidebar-width-collapsed: 88px;
+  --layout-page-padding: 24px;
+  --layout-page-padding-mobile: 16px;
+  --layout-grid-gap: 18px;
+  --layout-card-gap: 16px;
+
+  /* Icon */
+  --icon-size-sm: 16px;
+  --icon-size-md: 20px;
+  --icon-size-lg: 24px;
+
+  /* Chart */
+  --chart-1: var(--sys-color-brand-secondary);
+  --chart-2: var(--sys-color-brand-primary);
+  --chart-3: var(--sys-color-status-warning);
+  --chart-4: var(--sys-color-status-danger);
+  --chart-5: var(--sys-color-status-success);
+
+  /* Legacy aliases for current components */
+  --bg-page: var(--sys-color-bg-page);
+  --bg-surface: var(--sys-color-surface-1);
+  --bg-card: var(--sys-color-surface-2);
+  --bg-card-soft: var(--sys-color-surface-3);
+  --line-color: var(--sys-color-border-primary);
+  --text-primary: var(--sys-color-text-primary);
+  --text-secondary: var(--sys-color-text-secondary);
+  --accent-blue: var(--sys-color-brand-primary);
+  --accent-cyan: var(--sys-color-brand-secondary);
+  --accent-green: var(--sys-color-status-success);
+  --accent-orange: var(--sys-color-status-warning);
+  --accent-red: var(--sys-color-status-danger);
+  --shadow: var(--shadow-md);
+}

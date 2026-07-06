@@ -1,0 +1,27 @@
+{
+  "name": "business-security-dashboard-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --mode integration",
+    "dev:integration": "vite --mode integration",
+    "dev:mock": "vite --mode mock",
+    "build": "vue-tsc --noEmit && vite build --mode integration",
+    "build:mock": "vue-tsc --noEmit && vite build --mode mock",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "echarts": "^5.6.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.6",
+    "vue-tsc": "^2.2.0"
+  }
+}

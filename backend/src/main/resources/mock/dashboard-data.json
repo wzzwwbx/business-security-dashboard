@@ -1,0 +1,1247 @@
+{
+  "menu": [
+    {
+      "code": "overview",
+      "name": "态势总览",
+      "route": "/overview",
+      "badge": null
+    },
+    {
+      "code": "terminal",
+      "name": "终端态势",
+      "route": "/terminal",
+      "badge": null
+    },
+    {
+      "code": "business",
+      "name": "业务态势",
+      "route": "/business",
+      "badge": null
+    },
+    {
+      "code": "security",
+      "name": "安全保密态势",
+      "route": "/security",
+      "badge": 3
+    },
+    {
+      "code": "ops",
+      "name": "运维态势",
+      "route": "/ops",
+      "badge": null
+    }
+  ],
+  "pages": [
+    {
+      "code": "overview",
+      "name": "态势总览",
+      "title": "业 务 安 全 态 势 总 览",
+      "subtitle": "后台服务中心机房 · 全链路感知",
+      "location": "后台服务中心机房",
+      "lastUpdated": "2026-07-06 23:05:00",
+      "dataMode": "api",
+      "summaryMetrics": [
+        {
+          "label": "在线终端",
+          "value": "128",
+          "unit": "台",
+          "trend": "+4 较昨日",
+          "status": "success",
+          "description": "覆盖 19 个保障节点"
+        },
+        {
+          "label": "今日收发",
+          "value": "2486",
+          "unit": "份",
+          "trend": "+8.2%",
+          "status": "info",
+          "description": "消息流量平稳提升"
+        },
+        {
+          "label": "待处置告警",
+          "value": "7",
+          "unit": "条",
+          "trend": "-2",
+          "status": "warning",
+          "description": "高优先告警已收敛"
+        },
+        {
+          "label": "链路可用率",
+          "value": "99.2",
+          "unit": "%",
+          "trend": "+0.2%",
+          "status": "success",
+          "description": "双链路热备状态正常"
+        }
+      ],
+      "widgets": [
+        {
+          "code": "overview-topology",
+          "title": "后台服务中心机房 · 系统拓扑",
+          "type": "topology",
+          "colSpan": 12,
+          "minHeight": 440,
+          "tags": [
+            "拓扑",
+            "主链路",
+            "中枢"
+          ],
+          "payload": {
+            "nodes": [
+              {
+                "id": "gateway",
+                "name": "接入网关",
+                "meta": "4G / 卫星双链路",
+                "status": "success",
+                "x": 12,
+                "y": 50
+              },
+              {
+                "id": "collector",
+                "name": "态势采集服务",
+                "meta": "归一化接入 5 类系统",
+                "status": "info",
+                "x": 30,
+                "y": 22
+              },
+              {
+                "id": "mail",
+                "name": "密信交换系统",
+                "meta": "电报 / 消息 / 数字信封",
+                "status": "success",
+                "x": 24,
+                "y": 50
+              },
+              {
+                "id": "analysis",
+                "name": "智能分析中心",
+                "meta": "KNN / LSTM 融合引擎",
+                "status": "success",
+                "x": 50,
+                "y": 50
+              },
+              {
+                "id": "sign",
+                "name": "签阅流转系统",
+                "meta": "OFD 批注 / 签章验证",
+                "status": "warning",
+                "x": 76,
+                "y": 50
+              },
+              {
+                "id": "zt",
+                "name": "零信任策略中心",
+                "meta": "策略下发 + 风险评估",
+                "status": "warning",
+                "x": 70,
+                "y": 22
+              },
+              {
+                "id": "defense",
+                "name": "动态防御系统",
+                "meta": "终端行为采集 / 安全事件",
+                "status": "success",
+                "x": 30,
+                "y": 80
+              },
+              {
+                "id": "db",
+                "name": "数据存储集群",
+                "meta": "MySQL + 时序归档",
+                "status": "info",
+                "x": 50,
+                "y": 84
+              },
+              {
+                "id": "screen",
+                "name": "态势展示门户",
+                "meta": "大屏 / 值守门户 / 运维台",
+                "status": "success",
+                "x": 88,
+                "y": 52
+              }
+            ],
+            "lines": [
+              {
+                "from": "gateway",
+                "to": "collector"
+              },
+              {
+                "from": "collector",
+                "to": "analysis"
+              },
+              {
+                "from": "mail",
+                "to": "analysis"
+              },
+              {
+                "from": "analysis",
+                "to": "sign"
+              },
+              {
+                "from": "analysis",
+                "to": "zt"
+              },
+              {
+                "from": "analysis",
+                "to": "defense"
+              },
+              {
+                "from": "analysis",
+                "to": "db"
+              },
+              {
+                "from": "zt",
+                "to": "screen"
+              },
+              {
+                "from": "sign",
+                "to": "screen"
+              }
+            ]
+          }
+        },
+        {
+          "code": "risk-trend",
+          "title": "综合风险趋势（近12h）",
+          "type": "lineChart",
+          "colSpan": 8,
+          "minHeight": 320,
+          "tags": [
+            "风险",
+            "趋势"
+          ],
+          "payload": {
+            "option": {
+              "tooltip": {
+                "trigger": "axis"
+              },
+              "legend": {
+                "top": 8,
+                "textStyle": {
+                  "color": "#d9e8ff"
+                }
+              },
+              "grid": {
+                "left": 18,
+                "right": 18,
+                "top": 48,
+                "bottom": 20,
+                "containLabel": true
+              },
+              "xAxis": {
+                "type": "category",
+                "boundaryGap": false,
+                "axisLabel": {
+                  "color": "#d9e8ff"
+                },
+                "data": [
+                  "08",
+                  "10",
+                  "12",
+                  "14",
+                  "16",
+                  "18",
+                  "20"
+                ]
+              },
+              "yAxis": {
+                "type": "value",
+                "axisLabel": {
+                  "color": "#d9e8ff"
+                }
+              },
+              "series": [
+                {
+                  "name": "风险指数",
+                  "type": "line",
+                  "smooth": true,
+                  "data": [
+                    42,
+                    46,
+                    51,
+                    59,
+                    56,
+                    52,
+                    49
+                  ]
+                },
+                {
+                  "name": "策略命中",
+                  "type": "line",
+                  "smooth": true,
+                  "data": [
+                    25,
+                    31,
+                    36,
+                    44,
+                    40,
+                    37,
+                    34
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "code": "overview-status",
+          "title": "关键子系统健康度",
+          "type": "statusGrid",
+          "colSpan": 4,
+          "minHeight": 320,
+          "tags": [
+            "健康度",
+            "汇总"
+          ],
+          "payload": {
+            "items": [
+              {
+                "name": "终端接入",
+                "description": "在线接入稳定",
+                "status": "success",
+                "progress": 96
+              },
+              {
+                "name": "零信任策略",
+                "description": "两条策略待复核",
+                "status": "warning",
+                "progress": 78
+              },
+              {
+                "name": "日志审计",
+                "description": "采集时延低于 2s",
+                "status": "success",
+                "progress": 93
+              },
+              {
+                "name": "数据同步",
+                "description": "归档链路波动已收敛",
+                "status": "info",
+                "progress": 88
+              }
+            ]
+          }
+        },
+        {
+          "code": "overview-alerts",
+          "title": "重点告警清单",
+          "type": "alertList",
+          "colSpan": 6,
+          "minHeight": 320,
+          "tags": [
+            "告警",
+            "处置"
+          ],
+          "payload": {
+            "items": [
+              {
+                "level": "中危",
+                "title": "零信任策略命中上升",
+                "description": "14:00 后访问控制命中率上升，需要复核策略差异",
+                "time": "23:00",
+                "status": "warning"
+              },
+              {
+                "level": "高危",
+                "title": "跨域消息二次签收超时",
+                "description": "1 条跨域消息超过 SLA，已通知值班员跟进",
+                "time": "22:42",
+                "status": "danger"
+              },
+              {
+                "level": "提示",
+                "title": "链路热备切换演练完成",
+                "description": "卫星链路切换耗时 1.8 秒，结果达标",
+                "time": "21:36",
+                "status": "info"
+              }
+            ]
+          }
+        },
+        {
+          "code": "overview-table",
+          "title": "当日关键工单与事件",
+          "type": "table",
+          "colSpan": 6,
+          "minHeight": 320,
+          "tags": [
+            "工单",
+            "事件"
+          ],
+          "payload": {
+            "columns": [
+              {
+                "key": "event",
+                "label": "事件"
+              },
+              {
+                "key": "owner",
+                "label": "负责人"
+              },
+              {
+                "key": "status",
+                "label": "状态",
+                "type": "status"
+              }
+            ],
+            "rows": [
+              {
+                "event": "链路压测复盘",
+                "owner": "张涛",
+                "status": "已执行"
+              },
+              {
+                "event": "策略差异复核",
+                "owner": "李策",
+                "status": "处理中"
+              },
+              {
+                "event": "终端驱动回归",
+                "owner": "周明",
+                "status": "正常"
+              },
+              {
+                "event": "密钥盘点抽查",
+                "owner": "王玥",
+                "status": "待确认"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "code": "terminal",
+      "name": "终端态势",
+      "title": "终 端 主 题 态 势",
+      "subtitle": "移动电报终端 / USB Key / 补丁合规",
+      "location": "境外保障节点 + 中心机房",
+      "lastUpdated": "2026-07-06 23:05:00",
+      "dataMode": "api",
+      "summaryMetrics": [
+        {
+          "label": "受管终端",
+          "value": "140",
+          "unit": "台",
+          "trend": "+6",
+          "status": "success",
+          "description": "覆盖 19 个节点"
+        },
+        {
+          "label": "在线率",
+          "value": "92.4",
+          "unit": "%",
+          "trend": "+0.8%",
+          "status": "success",
+          "description": "高峰时段稳定在线"
+        },
+        {
+          "label": "故障终端",
+          "value": "2",
+          "unit": "台",
+          "trend": "-1",
+          "status": "warning",
+          "description": "驱动异常待恢复"
+        },
+        {
+          "label": "补丁达标率",
+          "value": "97.2",
+          "unit": "%",
+          "trend": "+1.6%",
+          "status": "info",
+          "description": "补丁窗口推进中"
+        }
+      ],
+      "widgets": [
+        {
+          "code": "terminal-distribution",
+          "title": "终端区域分布",
+          "type": "nodeMap",
+          "colSpan": 6,
+          "minHeight": 320,
+          "tags": [
+            "节点",
+            "分布"
+          ],
+          "payload": {
+            "regions": [
+              {
+                "name": "亚太",
+                "count": 5,
+                "items": [
+                  "北京",
+                  "新加坡",
+                  "曼谷",
+                  "雅加达",
+                  "首尔"
+                ]
+              },
+              {
+                "name": "欧洲",
+                "count": 4,
+                "items": [
+                  "巴黎",
+                  "柏林",
+                  "华沙",
+                  "布达佩斯"
+                ]
+              },
+              {
+                "name": "中东非",
+                "count": 3,
+                "items": [
+                  "迪拜",
+                  "开罗",
+                  "内罗毕"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "code": "terminal-health",
+          "title": "终端健康态势",
+          "type": "barChart",
+          "colSpan": 6,
+          "minHeight": 320,
+          "tags": [
+            "终端",
+            "健康"
+          ],
+          "payload": {
+            "option": {
+              "tooltip": {
+                "trigger": "axis"
+              },
+              "legend": {
+                "top": 8,
+                "textStyle": {
+                  "color": "#d9e8ff"
+                }
+              },
+              "grid": {
+                "left": 18,
+                "right": 18,
+                "top": 48,
+                "bottom": 20,
+                "containLabel": true
+              },
+              "xAxis": {
+                "type": "category",
+                "axisLabel": {
+                  "color": "#d9e8ff"
+                },
+                "data": [
+                  "在线",
+                  "缓存",
+                  "异常",
+                  "待升级"
+                ]
+              },
+              "yAxis": {
+                "type": "value",
+                "axisLabel": {
+                  "color": "#d9e8ff"
+                }
+              },
+              "series": [
+                {
+                  "name": "终端数",
+                  "type": "bar",
+                  "data": [
+                    128,
+                    4,
+                    2,
+                    6
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "code": "terminal-table",
+          "title": "故障终端跟踪",
+          "type": "table",
+          "colSpan": 12,
+          "minHeight": 320,
+          "tags": [
+            "故障",
+            "跟踪"
+          ],
+          "payload": {
+            "columns": [
+              {
+                "key": "terminal",
+                "label": "终端编号"
+              },
+              {
+                "key": "region",
+                "label": "区域"
+              },
+              {
+                "key": "issue",
+                "label": "异常描述"
+              },
+              {
+                "key": "status",
+                "label": "状态",
+                "type": "status"
+              }
+            ],
+            "rows": [
+              {
+                "terminal": "PAD-021",
+                "region": "巴黎",
+                "issue": "驱动加载异常",
+                "status": "处理中"
+              },
+              {
+                "terminal": "MSG-117",
+                "region": "迪拜",
+                "issue": "USB Key 识别波动",
+                "status": "待确认"
+              },
+              {
+                "terminal": "PAD-003",
+                "region": "北京",
+                "issue": "补丁验证完成",
+                "status": "已恢复"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "code": "business",
+      "name": "业务态势",
+      "title": "业 务 运 行 主 题 态 势",
+      "subtitle": "消息收发 / 签阅流转 / 数字信封",
+      "location": "后台服务中心机房",
+      "lastUpdated": "2026-07-06 23:05:00",
+      "dataMode": "api",
+      "summaryMetrics": [
+        {
+          "label": "消息收发量",
+          "value": "2486",
+          "unit": "份",
+          "trend": "+8.2%",
+          "status": "success",
+          "description": "峰值出现在 14:00-16:00"
+        },
+        {
+          "label": "签阅完成率",
+          "value": "94.8",
+          "unit": "%",
+          "trend": "+1.2%",
+          "status": "success",
+          "description": "超时签阅明显减少"
+        },
+        {
+          "label": "数字信封异常",
+          "value": "3",
+          "unit": "条",
+          "trend": "持平",
+          "status": "warning",
+          "description": "均已进入复核流程"
+        },
+        {
+          "label": "平均处理时延",
+          "value": "1.7",
+          "unit": "秒",
+          "trend": "-0.2 秒",
+          "status": "info",
+          "description": "链路与服务协同优化"
+        }
+      ],
+      "widgets": [
+        {
+          "code": "message-trend",
+          "title": "消息业务趋势",
+          "type": "lineChart",
+          "colSpan": 8,
+          "minHeight": 320,
+          "tags": [
+            "消息",
+            "趋势"
+          ],
+          "payload": {
+            "option": {
+              "tooltip": {
+                "trigger": "axis"
+              },
+              "legend": {
+                "top": 8,
+                "textStyle": {
+                  "color": "#d9e8ff"
+                }
+              },
+              "grid": {
+                "left": 18,
+                "right": 18,
+                "top": 48,
+                "bottom": 20,
+                "containLabel": true
+              },
+              "xAxis": {
+                "type": "category",
+                "boundaryGap": false,
+                "axisLabel": {
+                  "color": "#d9e8ff"
+                },
+                "data": [
+                  "08",
+                  "10",
+                  "12",
+                  "14",
+                  "16",
+                  "18",
+                  "20"
+                ]
+              },
+              "yAxis": {
+                "type": "value",
+                "axisLabel": {
+                  "color": "#d9e8ff"
+                }
+              },
+              "series": [
+                {
+                  "name": "收报",
+                  "type": "line",
+                  "smooth": true,
+                  "data": [
+                    210,
+                    260,
+                    310,
+                    420,
+                    390,
+                    350,
+                    300
+                  ]
+                },
+                {
+                  "name": "发报",
+                  "type": "line",
+                  "smooth": true,
+                  "data": [
+                    180,
+                    230,
+                    280,
+                    360,
+                    340,
+                    320,
+                    290
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "code": "business-timeline",
+          "title": "当日关键流程时间线",
+          "type": "timeline",
+          "colSpan": 4,
+          "minHeight": 320,
+          "tags": [
+            "流程",
+            "时间线"
+          ],
+          "payload": {
+            "items": [
+              {
+                "time": "09:10",
+                "title": "晨检完成",
+                "description": "消息、签阅、信封服务检查通过",
+                "status": "success"
+              },
+              {
+                "time": "13:40",
+                "title": "高峰前扩容",
+                "description": "消息接入实例扩容 1 组",
+                "status": "info"
+              },
+              {
+                "time": "17:25",
+                "title": "异常信封复核",
+                "description": "3 条异常信封已完成流转复核",
+                "status": "warning"
+              }
+            ]
+          }
+        },
+        {
+          "code": "business-recommendation",
+          "title": "业务优化建议",
+          "type": "recommendationList",
+          "colSpan": 12,
+          "minHeight": 320,
+          "tags": [
+            "建议",
+            "优化"
+          ],
+          "payload": {
+            "items": [
+              {
+                "title": "优化高峰时段实例预热",
+                "priority": "中优先",
+                "description": "建议在 13:30 前预热业务实例，降低瞬时延时波动。",
+                "action": "调整扩容时点",
+                "target": "消息接入服务"
+              },
+              {
+                "title": "固化异常信封二次校验流程",
+                "priority": "高优先",
+                "description": "将人工复核步骤沉淀为标准 SOP，减少处理分歧。",
+                "action": "补充流程卡片",
+                "target": "业务值班台"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "code": "security",
+      "name": "安全保密态势",
+      "title": "安 全 保 密 主 题 态 势",
+      "subtitle": "账号异常 / 零信任 / 数据加密传输",
+      "location": "中心安全域",
+      "lastUpdated": "2026-07-06 23:05:00",
+      "dataMode": "api",
+      "summaryMetrics": [
+        {
+          "label": "高优先事件",
+          "value": "3",
+          "unit": "条",
+          "trend": "-1",
+          "status": "warning",
+          "description": "较昨晚进一步下降"
+        },
+        {
+          "label": "策略命中率",
+          "value": "98.6",
+          "unit": "%",
+          "trend": "+0.4%",
+          "status": "success",
+          "description": "拦截链路稳定"
+        },
+        {
+          "label": "账号异常",
+          "value": "5",
+          "unit": "起",
+          "trend": "持平",
+          "status": "warning",
+          "description": "均已完成风险确认"
+        },
+        {
+          "label": "加密传输覆盖",
+          "value": "100",
+          "unit": "%",
+          "trend": "持平",
+          "status": "success",
+          "description": "涉密业务全量加密"
+        }
+      ],
+      "widgets": [
+        {
+          "code": "security-events",
+          "title": "安全事件分布",
+          "type": "barChart",
+          "colSpan": 6,
+          "minHeight": 320,
+          "tags": [
+            "安全",
+            "事件"
+          ],
+          "payload": {
+            "option": {
+              "tooltip": {
+                "trigger": "axis"
+              },
+              "legend": {
+                "top": 8,
+                "textStyle": {
+                  "color": "#d9e8ff"
+                }
+              },
+              "grid": {
+                "left": 18,
+                "right": 18,
+                "top": 48,
+                "bottom": 20,
+                "containLabel": true
+              },
+              "xAxis": {
+                "type": "category",
+                "axisLabel": {
+                  "color": "#d9e8ff"
+                },
+                "data": [
+                  "账号异常",
+                  "终端违规",
+                  "策略拦截",
+                  "链路波动"
+                ]
+              },
+              "yAxis": {
+                "type": "value",
+                "axisLabel": {
+                  "color": "#d9e8ff"
+                }
+              },
+              "series": [
+                {
+                  "name": "一般",
+                  "type": "bar",
+                  "data": [
+                    12,
+                    9,
+                    8,
+                    15
+                  ]
+                },
+                {
+                  "name": "中危",
+                  "type": "bar",
+                  "data": [
+                    6,
+                    7,
+                    9,
+                    4
+                  ]
+                },
+                {
+                  "name": "高危",
+                  "type": "bar",
+                  "data": [
+                    2,
+                    3,
+                    4,
+                    1
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "code": "security-access",
+          "title": "安全能力覆盖雷达",
+          "type": "radarChart",
+          "colSpan": 6,
+          "minHeight": 320,
+          "tags": [
+            "覆盖",
+            "雷达"
+          ],
+          "payload": {
+            "option": {
+              "tooltip": {},
+              "radar": {
+                "radius": "64%",
+                "indicator": [
+                  {
+                    "name": "账号异常",
+                    "max": 100
+                  },
+                  {
+                    "name": "终端合规",
+                    "max": 100
+                  },
+                  {
+                    "name": "链路稳定",
+                    "max": 100
+                  },
+                  {
+                    "name": "密钥安全",
+                    "max": 100
+                  },
+                  {
+                    "name": "策略覆盖",
+                    "max": 100
+                  },
+                  {
+                    "name": "审计完整",
+                    "max": 100
+                  }
+                ],
+                "axisName": {
+                  "color": "#d9e8ff"
+                }
+              },
+              "series": [
+                {
+                  "type": "radar",
+                  "data": [
+                    {
+                      "value": [
+                        86,
+                        92,
+                        81,
+                        95,
+                        88,
+                        90
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "code": "security-alerts",
+          "title": "安全告警处置",
+          "type": "alertList",
+          "colSpan": 12,
+          "minHeight": 320,
+          "tags": [
+            "告警",
+            "处置"
+          ],
+          "payload": {
+            "items": [
+              {
+                "level": "高危",
+                "title": "异常跨域访问尝试",
+                "description": "策略已拦截，建议复核访问白名单。",
+                "time": "22:48",
+                "status": "danger"
+              },
+              {
+                "level": "中危",
+                "title": "账号切换频率异常",
+                "description": "同一终端多次账号切换，已通知管理员确认。",
+                "time": "21:36",
+                "status": "warning"
+              },
+              {
+                "level": "提示",
+                "title": "密码装备抽检完成",
+                "description": "抽检结果正常，已归档。",
+                "time": "20:12",
+                "status": "success"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "code": "ops",
+      "name": "运维态势",
+      "title": "运 维 支 撑 主 题 态 势",
+      "subtitle": "主机资源 / 工单流转 / 拓扑链路",
+      "location": "运维支撑中心",
+      "lastUpdated": "2026-07-06 23:05:00",
+      "dataMode": "api",
+      "summaryMetrics": [
+        {
+          "label": "CPU 均值",
+          "value": "43",
+          "unit": "%",
+          "trend": "+2%",
+          "status": "success",
+          "description": "整体负载可控"
+        },
+        {
+          "label": "内存均值",
+          "value": "58",
+          "unit": "%",
+          "trend": "+3%",
+          "status": "info",
+          "description": "消息高峰带来轻微抬升"
+        },
+        {
+          "label": "处理中工单",
+          "value": "5",
+          "unit": "项",
+          "trend": "-2",
+          "status": "warning",
+          "description": "积压持续下降"
+        },
+        {
+          "label": "链路切换次数",
+          "value": "1",
+          "unit": "次",
+          "trend": "持平",
+          "status": "info",
+          "description": "为演练触发切换"
+        }
+      ],
+      "widgets": [
+        {
+          "code": "ops-gauge",
+          "title": "系统运行评分",
+          "type": "gaugeChart",
+          "colSpan": 4,
+          "minHeight": 320,
+          "tags": [
+            "评分",
+            "运行"
+          ],
+          "payload": {
+            "option": {
+              "series": [
+                {
+                  "type": "gauge",
+                  "min": 0,
+                  "max": 100,
+                  "progress": {
+                    "show": true,
+                    "roundCap": true,
+                    "width": 12
+                  },
+                  "axisLine": {
+                    "lineStyle": {
+                      "width": 12
+                    }
+                  },
+                  "detail": {
+                    "formatter": "{value} 分",
+                    "color": "#f3f8ff",
+                    "fontSize": 22
+                  },
+                  "data": [
+                    {
+                      "value": 82
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "code": "ops-topology",
+          "title": "运维拓扑链路",
+          "type": "topology",
+          "colSpan": 8,
+          "minHeight": 360,
+          "tags": [
+            "拓扑",
+            "链路"
+          ],
+          "payload": {
+            "nodes": [
+              {
+                "id": "gateway",
+                "name": "接入网关",
+                "meta": "4G/卫星双链路",
+                "status": "success",
+                "x": 12,
+                "y": 46
+              },
+              {
+                "id": "collector",
+                "name": "采集服务",
+                "meta": "统一接入 5 类系统",
+                "status": "info",
+                "x": 34,
+                "y": 28
+              },
+              {
+                "id": "analysis",
+                "name": "分析中心",
+                "meta": "实时关联分析",
+                "status": "success",
+                "x": 56,
+                "y": 50
+              },
+              {
+                "id": "db",
+                "name": "存储集群",
+                "meta": "MySQL + 归档",
+                "status": "success",
+                "x": 54,
+                "y": 76
+              },
+              {
+                "id": "screen",
+                "name": "展示门户",
+                "meta": "多主题大屏",
+                "status": "warning",
+                "x": 82,
+                "y": 56
+              }
+            ],
+            "lines": [
+              {
+                "from": "gateway",
+                "to": "collector"
+              },
+              {
+                "from": "collector",
+                "to": "analysis"
+              },
+              {
+                "from": "analysis",
+                "to": "db"
+              },
+              {
+                "from": "analysis",
+                "to": "screen"
+              }
+            ]
+          }
+        },
+        {
+          "code": "ops-tickets",
+          "title": "工单流转清单",
+          "type": "table",
+          "colSpan": 12,
+          "minHeight": 320,
+          "tags": [
+            "工单",
+            "流转"
+          ],
+          "payload": {
+            "columns": [
+              {
+                "key": "ticket",
+                "label": "工单号"
+              },
+              {
+                "key": "topic",
+                "label": "主题"
+              },
+              {
+                "key": "owner",
+                "label": "处理人"
+              },
+              {
+                "key": "status",
+                "label": "状态",
+                "type": "status"
+              }
+            ],
+            "rows": [
+              {
+                "ticket": "OPS-231",
+                "topic": "策略中心性能复核",
+                "owner": "韩立",
+                "status": "处理中"
+              },
+              {
+                "ticket": "OPS-228",
+                "topic": "日志归档扩容",
+                "owner": "沈悦",
+                "status": "已执行"
+              },
+              {
+                "ticket": "OPS-225",
+                "topic": "展示门户链路巡检",
+                "owner": "周政",
+                "status": "正常"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

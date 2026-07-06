@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: business-security-dashboard
+  profiles:
+    active: mock
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
