@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import DashboardPageView from '@/views/DashboardPageView.vue';
+import OpsPageView from '@/views/OpsPageView.vue';
 
 const routes = [
   { path: '/', redirect: '/overview' },
@@ -30,7 +31,7 @@ const routes = [
   {
     path: '/ops',
     name: 'ops',
-    component: DashboardPageView,
+    component: OpsPageView,
     meta: { pageCode: 'ops' }
   }
 ];

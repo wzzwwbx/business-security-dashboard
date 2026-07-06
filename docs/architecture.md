@@ -1,107 +1,125 @@
-# 业务安全态势系统工程化架构说明
+# 架构说明（多源接入运维态势域）
 
-## 1. 总体形态
+## 1. 总体架构
 
-项目采用前后端分离模式：
+系统采用前后端分离结构：
 
-- **前端**：Vue 3 + TypeScript + Vite + Vue Router + ECharts
-- **后端**：Spring Boot 3 + Java 17 + JDBC
-- **数据库**：MySQL 8
-- **部署形态**：本地开发 + Docker Compose 交付骨架
+- `frontend/`：面向运营、安全、运维的态势展示
+- `backend/`：统一 API 与运维态势域
+- `probe/`：Linux ARM Java 探针
+- `mysql`：结构化存储与快照留存
 
-## 2. 目录结构
+```mermaid
+flowchart LR
+  probe["Java Probe\nLinux ARM"] --> ingest["/api/ops/ingest/probe"]
+  ext["External System\n(CMDB / 监控 / 资产)"] --> ingest2["/api/ops/ingest/external"]
+  manual["Manual Inject"] --> ingest3["/api/ops/ingest/manual"]
 
-```text
-业务安全态势系统_项目资料/
-├── frontend/                # Vue 前端工程
-├── backend/                 # Java 后端工程
-├── database/mysql/          # MySQL 初始化脚本
-├── docs/                    # 架构 / 接口 / 部署文档
-├── artifacts/               # 截图与验证产物
-├── compose.yml              # 交付编排文件
-├── 业务安全态势系统_原型界面.html
-└── 业务安全态势系统_完善方案.docx
+  ingest --> normalize["Normalize / Host Resolve"]
+  ingest2 --> normalize
+  ingest3 --> normalize
+
+  normalize --> mysql["MySQL ops_* tables"]
+  mysql --> query["/api/ops/** query"]
+  query --> frontend["Vue /ops 页面"]
 ```
 
-## 3. 前端分层
+## 2. 运维域分层
 
-- `src/layout/`：整体框架、左侧导航、运行态提示
-- `src/views/`：页面级视图，按态势主题装配组件
-- `src/components/common/`：通用卡片、指标卡、头部组件
-- `src/components/dashboard/`：页面摘要区和运行关注区
-- `src/components/widgets/`：图表 / 列表 / 表格 / 拓扑 / 节点图等部件
-- `src/composables/`：页面数据装配与摘要逻辑
-- `src/api/`：后端接口调用封装
-- `src/types/`：接口数据结构声明
-- `src/mocks/`：前端演示数据
+### ingest
 
-## 4. 后端分层
+负责处理多来源入站：
 
-- `controller`：REST API 对外暴露
-- `service`：页面查询与运行态服务接口
-- `service/impl`：`mock` 与 `mysql` 双实现
-- `support`：演示数据加载器、运行态解析器、MySQL 自动灌数逻辑
-- `config`：跨域与 Web 配置
-- `exception`：统一异常处理
-- `dto`：菜单、页面、指标、组件、运行态 DTO
+- probe 主动上报
+- external 占位推送
+- manual 测试注入
 
-## 5. 联调模式设计
+### normalize
 
-### 5.1 前端双模式
+统一转换不同来源的数据结构：
 
-- `mock`：完全前端自给数据，适合视觉评审与无后端演示；
-- `integration`：仅调用后端 API，不再静默回退页面 mock 数据。
+- 统一主机模型
+- 统一快照模型
+- 统一来源模型
+- 统一告警模型
 
-### 5.2 后端双模式
+### domain
 
-- `mock` profile：从 `mock/dashboard-data.json` 读取演示数据；
-- `mysql` profile：从 MySQL 查询页面、指标与组件数据，并在空表时自动灌数。
+维护核心运维实体：
 
-### 5.3 运行态感知
+- 主机
+- 绑定
+- 快照
+- 进程
+- 告警
+- 来源
 
-新增 `GET /api/dashboard/runtime` 用于让前端识别：
+### query
 
-- 当前是否真的接上后端；
-- 当前后端处于 `mock` 还是 `mysql`；
-- 当前数据库灌数链路是否启用。
+为 `/ops` 页面提供聚合查询：
 
-## 6. 数据模型设计
+- 总览
+- 主机列表
+- 主机详情
+- 趋势曲线
+- 告警
+- 来源健康度
 
-当前第一阶段采用“页面 + 指标 + 组件”三层模型：
+## 3. 多源接入策略
 
-- `dashboard_page`：页面主信息
-- `dashboard_metric`：头部摘要指标
-- `dashboard_widget`：页面组件定义及配置负载
+探针不是唯一入口，只是第一种 `source adapter`。
 
-这种做法适合：
+首期支持：
 
-1. 先把静态原型稳定转成可联调工程；
-2. 后续逐个替换为真实业务域表；
-3. 通过 `payload_json` 承接图表配置与列表数据，降低首期开发复杂度。
+- `PROBE`
+- `EXTERNAL_API`
+- `MANUAL_IMPORT`
 
-## 7. 后续演进建议
+所有来源最终都写入统一 `ops_*` 表，前端不再按各来源原始格式分别取数。
 
-### 7.1 后端演进
+## 4. 主机归一策略
 
-建议逐步按业务域拆表：
+采用双标识并存：
 
-- 终端域：终端台账、终端状态、链路状态、USB Key 状态
-- 业务域：密信消息统计、签阅流转、数字信封操作日志
-- 安全域：安全事件、风险评估、AI 告警结果、策略联动
-- 运维域：设备资源、工单、策略下发日志、审计日志
+- 内部：`host_code`
+- 外部：`external_asset_id`
 
-### 7.2 前端演进
+归一逻辑：
 
-建议补充：
+1. 若存在 `source_system + external_asset_id` 绑定，优先命中绑定
+2. 否则按 `host_code` 查找内部主机
+3. 若都不存在，则创建新主机
+4. 若外部资产 ID 后续补齐，仅需新增/更新绑定关系
 
-- Pinia 状态管理
-- 权限模型与登录页
-- 大屏模式 / 运维台模式切换
-- 组件配置化渲染与主题皮肤管理
-- WebSocket / SSE 实时刷新
+## 5. 主机状态与来源状态
 
-### 7.3 工程演进
+### 主机状态
 
-- 增加后端单测 / API 测试
-- 增加前端组件测试 / E2E
-- 增加镜像发布、环境变量模板、CI/CD
+基于 `observed_at` 与采样周期计算：
+
+- 2 个采样周期未更新：`STALE`
+- 5 个采样周期未更新：`OFFLINE`
+- 其余：`ONLINE`
+
+### 来源状态
+
+基于最近一次 ingest 事件推导：
+
+- enabled=false：`DISABLED`
+- 最近状态在线：`HEALTHY`
+- 最近状态陈旧：`DEGRADED`
+- 最近状态离线：`OFFLINE`
+- 无事件：`UNKNOWN`
+
+## 6. Probe 闭环
+
+Probe 负责：
+
+- 读取 `/proc`
+- 生成稳定 `host_code`
+- 周期采集系统指标
+- 推送到后端
+- 后端不可达时 spool 缓冲
+- 恢复后自动补报
+
+Probe 不直接写业务数据库，也不参与前端逻辑。

@@ -36,6 +36,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/business_security_dashboard?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
+      OPS_PROBE_SHARED_SECRET: dev-probe-secret
+      OPS_EXTERNAL_INGEST_TOKEN: external-dev-token
+      OPS_MANUAL_INGEST_TOKEN: manual-dev-token
     ports:
       - "8080:8080"
 

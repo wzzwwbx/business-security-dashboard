@@ -12,3 +12,18 @@ management:
     web:
       exposure:
         include: health,info
+
+ops:
+  sampling-interval-seconds: 60
+  stale-after-periods: 2
+  offline-after-periods: 5
+  snapshot-retention-days: 30
+  process-retention-days: 7
+  payload-retention-days: 3
+  probe:
+    auto-register: true
+    shared-secret: ${OPS_PROBE_SHARED_SECRET:dev-probe-secret}
+  external:
+    ingest-token: ${OPS_EXTERNAL_INGEST_TOKEN:external-dev-token}
+  manual:
+    ingest-token: ${OPS_MANUAL_INGEST_TOKEN:manual-dev-token}

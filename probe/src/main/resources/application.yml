@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: business-security-probe
+  main:
+    web-application-type: none
+
+probe:
+  server-url: http://127.0.0.1:8080/api/ops/ingest/probe
+  source-system: linux-arm-probe
+  agent-key: probe-dev-agent
+  agent-secret: dev-probe-secret
+  request-timeout-ms: 10000
+  schedule:
+    fixed-delay-ms: 60000
+  spool-dir: ./data/spool
+  spool-max-size-mb: 200
+  process-top-n: 10
+  whitelist-processes:
+    - java
+    - nginx
+    - redis-server
+    - mysqld
+logging:
+  level:
+    com.bss.probe: INFO

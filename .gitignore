@@ -9,3 +9,6 @@ backend/target/
 .DS_Store
 .idea/
 .vscode/
+# probe
+probe/target/
+probe/data/

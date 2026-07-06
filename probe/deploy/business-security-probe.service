@@ -1,0 +1,18 @@
+[Unit]
+Description=Business Security Probe
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/business-security-probe
+ExecStart=/usr/bin/java -jar /opt/business-security-probe/business-security-probe.jar --spring.config.location=/opt/business-security-probe/application.yml
+Restart=always
+RestartSec=10
+SuccessExitStatus=143
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
