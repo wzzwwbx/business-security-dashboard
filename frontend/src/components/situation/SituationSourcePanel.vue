@@ -5,7 +5,14 @@
     </template>
 
     <div class="source-list">
-      <article v-for="item in section.items" :key="item.source" class="source-item" :class="item.tone">
+      <button
+        v-for="item in section.items"
+        :key="item.source"
+        type="button"
+        class="source-item"
+        :class="item.tone"
+        @click="handleSelect(item)"
+      >
         <div class="source-top">
           <strong>{{ item.source }}</strong>
           <span class="source-status">{{ item.status }}</span>
@@ -15,18 +22,36 @@
           <span>覆盖范围：{{ item.coverage }}</span>
         </div>
         <p>{{ item.note }}</p>
-      </article>
+      </button>
     </div>
   </PanelCard>
 </template>
 
 <script setup lang="ts">
 import PanelCard from '@/components/common/PanelCard.vue';
-import type { SituationSourcesSection } from '@/types/situation';
+import type { SituationInsight, SituationSourceItem, SituationSourcesSection } from '@/types/situation';
 
-defineProps<{
+const props = defineProps<{
   section: SituationSourcesSection;
 }>();
+
+const emit = defineEmits<{
+  selectInsight: [insight: SituationInsight];
+}>();
+
+const handleSelect = (item: SituationSourceItem) => {
+  emit('selectInsight', {
+    id: `${props.section.code}-${item.source}`,
+    label: '数据来源',
+    title: item.source,
+    description: item.note,
+    tone: item.tone,
+    metric: item.status,
+    meta: `${item.latency} · ${item.coverage}`,
+    sourceSectionCode: props.section.code,
+    sourceSectionTitle: props.section.title
+  });
+};
 </script>
 
 <style scoped>
@@ -45,6 +70,18 @@ defineProps<{
   border-radius: var(--radius-lg);
   border: 1px solid var(--sys-color-border-secondary);
   background: var(--sys-color-surface-panel);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.source-item:hover,
+.source-item:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--sys-color-brand-secondary);
+  outline: none;
 }
 
 .source-top,

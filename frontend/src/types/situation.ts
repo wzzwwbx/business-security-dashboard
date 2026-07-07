@@ -1,6 +1,7 @@
 export type SituationTone = 'success' | 'warning' | 'danger' | 'info';
 export type SituationPageCode = 'overview' | 'security' | 'business' | 'terminal';
 export type SituationDataMode = 'mock' | 'planned';
+export type SituationResolvedSource = 'integration' | 'mock';
 
 export interface SituationHeroTag {
   label: string;
@@ -156,4 +157,28 @@ export interface SituationPage {
   kpis: SituationKpi[];
   highlights: SituationHighlight[];
   sections: SituationSection[];
+}
+
+export interface SituationPageResult {
+  page: SituationPage;
+  source: SituationResolvedSource;
+  warningMessage?: string;
+}
+
+export interface SituationFilterChip {
+  key: string;
+  label: string;
+  count: number;
+}
+
+export interface SituationInsight {
+  id: string;
+  label: string;
+  title: string;
+  description: string;
+  tone: SituationTone;
+  metric?: string;
+  meta?: string;
+  sourceSectionCode?: string;
+  sourceSectionTitle?: string;
 }

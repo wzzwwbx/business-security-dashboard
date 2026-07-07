@@ -1,11 +1,11 @@
-# 架构说明（多源接入运维态势域）
+# 架构说明（多域态势 + 多源接入）
 
 ## 1. 总体架构
 
 系统采用前后端分离结构：
 
-- `frontend/`：面向运营、安全、运维的态势展示
-- `backend/`：统一 API 与运维态势域
+- `frontend/`：综合、安全、业务、终端、运维五类态势展示
+- `backend/`：统一 API、运维态势域、主题态势占位域
 - `probe/`：Linux ARM Java 探针
 - `mysql`：结构化存储与快照留存
 
@@ -20,52 +20,49 @@ flowchart LR
   ingest3 --> normalize
 
   normalize --> mysql["MySQL ops_* tables"]
-  mysql --> query["/api/ops/** query"]
-  query --> frontend["Vue /ops 页面"]
+  mysql --> opsQuery["/api/ops/** query"]
+  opsQuery --> opsFrontend["Vue /ops 页面"]
+
+  situationMock["Situation JSON / Future adapters"] --> situationApi["/api/situation/**"]
+  situationApi --> situationFrontend["Vue overview / security / business / terminal"]
 ```
 
-## 2. 运维域分层
+## 2. 领域拆分
 
-### ingest
+### 2.1 `/api/ops/**` 真实运维域
 
-负责处理多来源入站：
+定位：
 
-- probe 主动上报
-- external 占位推送
-- manual 测试注入
+- 承接真实基础设施数据
+- 完成主机归一、快照沉淀、告警计算、来源健康计算
+- 为 `/ops` 页面提供真实联调能力
 
-### normalize
+内部按四层组织：
 
-统一转换不同来源的数据结构：
+- `ingest`
+- `normalize`
+- `domain`
+- `query`
 
-- 统一主机模型
-- 统一快照模型
-- 统一来源模型
-- 统一告警模型
+### 2.2 `/api/situation/**` 主题态势占位域
 
-### domain
+定位：
 
-维护核心运维实体：
+- 支撑综合 / 安全 / 业务 / 终端四类主题态势页面
+- 当前先提供统一 DTO 与稳定接口契约
+- 后续逐步替换为真实外部数据源编排
 
-- 主机
-- 绑定
-- 快照
-- 进程
-- 告警
-- 来源
+当前数据载体：
 
-### query
+- `backend/src/main/resources/mock/situations.json`
 
-为 `/ops` 页面提供聚合查询：
+设计原则：
 
-- 总览
-- 主机列表
-- 主机详情
-- 趋势曲线
-- 告警
-- 来源健康度
+- 不让前端直接绑死 mock 文件结构
+- 不让四个页面各自维护零散 DTO
+- 用统一 `SituationPageDto + SituationSectionDto` 表达多类页面布局与内容
 
-## 3. 多源接入策略
+## 3. 运维域接入策略
 
 探针不是唯一入口，只是第一种 `source adapter`。
 
@@ -111,7 +108,24 @@ flowchart LR
 - 最近状态离线：`OFFLINE`
 - 无事件：`UNKNOWN`
 
-## 6. Probe 闭环
+## 6. 前端主题态势工程化策略
+
+综合 / 安全 / 业务 / 终端页面共享同一套前端能力：
+
+- route-level view 保持轻量，仅负责路由页装配
+- 视图逻辑集中在 `useSituationPage`
+- 各 section 组件只负责单一版块展现与事件抛出
+- 数据策略为：**integration 优先，mock 仅作故障回退**
+
+当前已支持的交互：
+
+- 板块过滤 chips
+- 数据来源 pill
+- warning banner
+- 焦点详情面板
+- 空态 / 加载态 / 错误态
+
+## 7. Probe 闭环
 
 Probe 负责：
 

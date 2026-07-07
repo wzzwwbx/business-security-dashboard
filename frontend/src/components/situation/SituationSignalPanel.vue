@@ -5,25 +5,49 @@
     </template>
 
     <div class="signal-list">
-      <article v-for="item in section.items" :key="`${item.label}-${item.title}`" class="signal-item" :class="item.tone">
+      <button
+        v-for="item in section.items"
+        :key="`${item.label}-${item.title}`"
+        type="button"
+        class="signal-item"
+        :class="item.tone"
+        @click="handleSelect(item)"
+      >
         <div class="signal-top">
           <span class="signal-label">{{ item.label }}</span>
           <span class="signal-meta">{{ item.meta }}</span>
         </div>
         <strong>{{ item.title }}</strong>
         <p>{{ item.description }}</p>
-      </article>
+      </button>
     </div>
   </PanelCard>
 </template>
 
 <script setup lang="ts">
 import PanelCard from '@/components/common/PanelCard.vue';
-import type { SituationSignalsSection } from '@/types/situation';
+import type { SituationInsight, SituationSignalItem, SituationSignalsSection } from '@/types/situation';
 
-defineProps<{
+const props = defineProps<{
   section: SituationSignalsSection;
 }>();
+
+const emit = defineEmits<{
+  selectInsight: [insight: SituationInsight];
+}>();
+
+const handleSelect = (item: SituationSignalItem) => {
+  emit('selectInsight', {
+    id: `${props.section.code}-${item.title}`,
+    label: item.label,
+    title: item.title,
+    description: item.description,
+    tone: item.tone,
+    meta: item.meta,
+    sourceSectionCode: props.section.code,
+    sourceSectionTitle: props.section.title
+  });
+};
 </script>
 
 <style scoped>
@@ -42,6 +66,18 @@ defineProps<{
   border-radius: var(--radius-lg);
   background: rgba(18, 39, 64, 0.74);
   border: 1px solid var(--sys-color-border-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.signal-item:hover,
+.signal-item:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--sys-color-brand-secondary);
+  outline: none;
 }
 
 .signal-top {

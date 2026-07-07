@@ -1,0 +1,15 @@
+package com.bss.dashboard.situation.dto;
+
+import java.util.List;
+
+public record SituationTimelineSectionDto(
+        String kind,
+        String code,
+        String title,
+        String description,
+        List<String> tags,
+        Integer colSpan,
+        Integer minHeight,
+        List<SituationTimelineItemDto> items
+) implements SituationSectionDto {
+}

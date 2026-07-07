@@ -1,6 +1,13 @@
 <template>
   <section class="situation-kpi-grid">
-    <article v-for="kpi in items" :key="kpi.label" class="kpi-card glass-card" :class="kpi.tone">
+    <button
+      v-for="kpi in items"
+      :key="kpi.label"
+      type="button"
+      class="kpi-card glass-card"
+      :class="kpi.tone"
+      @click="handleSelect(kpi)"
+    >
       <div class="kpi-top">
         <span class="kpi-label">{{ kpi.label }}</span>
         <span class="kpi-tone">{{ toneText[kpi.tone] }}</span>
@@ -13,12 +20,12 @@
         <span>{{ kpi.description }}</span>
         <span v-if="kpi.trend" class="kpi-trend">{{ kpi.trend }}</span>
       </div>
-    </article>
+    </button>
   </section>
 </template>
 
 <script setup lang="ts">
-import type { SituationKpi } from '@/types/situation';
+import type { SituationInsight, SituationKpi } from '@/types/situation';
 
 const toneText = {
   success: '稳定',
@@ -27,9 +34,25 @@ const toneText = {
   info: '监测'
 } as const;
 
-defineProps<{
+const props = defineProps<{
   items: SituationKpi[];
 }>();
+
+const emit = defineEmits<{
+  selectInsight: [insight: SituationInsight];
+}>();
+
+const handleSelect = (kpi: SituationKpi) => {
+  emit('selectInsight', {
+    id: `kpi-${kpi.label}`,
+    label: 'KPI 指标',
+    title: kpi.label,
+    description: kpi.description,
+    tone: kpi.tone,
+    metric: `${kpi.value}${kpi.unit ?? ''}`,
+    meta: kpi.trend ? `趋势：${kpi.trend}` : undefined
+  });
+};
 </script>
 
 <style scoped>
@@ -44,6 +67,19 @@ defineProps<{
   padding: var(--space-7);
   min-height: 168px;
   border-color: var(--sys-color-border-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    background var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.kpi-card:hover,
+.kpi-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--sys-color-brand-secondary);
+  outline: none;
 }
 
 .kpi-top,

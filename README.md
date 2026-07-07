@@ -2,17 +2,17 @@
 
 ## 项目概述
 
-当前仓库已经从单纯前端原型继续演进为 **前后端分离、可扩展、多源接入** 的工程化项目。
+当前仓库已经从单纯前端原型继续演进为 **前后端分离、可扩展、多主题、多源接入** 的工程化项目。
 
-本期实现重点不是把探针做成唯一入口，而是先打通第一条真实闭环：
+本期实现分成两条线并行推进：
 
-**Java Probe → Backend `/api/ops/ingest/probe` → MySQL → Frontend `/ops` 运维态势页**
+1. **真实闭环线**：`Java Probe → Backend /api/ops/ingest/probe → MySQL → Frontend /ops`
+2. **主题态势线**：综合 / 安全 / 业务 / 终端四类主题态势页面，先按统一领域模型落成前端与占位接口，为未来第三方系统接入预留空间
 
-同时，后端已经为未来外部系统预留统一接入能力：
+当前设计明确区分两类域：
 
-- `PROBE`
-- `EXTERNAL_API`
-- `MANUAL_IMPORT`
+- `/api/ops/**`：真实运维域，承接 probe / external / manual 多源数据
+- `/api/situation/**`：综合、安全、业务、终端态势域，占位接口优先，支持前端联调与经验建模展示
 
 ## 技术栈
 
@@ -34,9 +34,9 @@
 └── README.md
 ```
 
-## 本期已落地能力
+## 当前已落地能力
 
-### 1. 前端 `/ops` 独立运维态势页面
+### 1. `/ops` 真实运维态势闭环
 
 `/ops` 已从通用 dashboard 页面中剥离，形成真实运维域页面，包含：
 
@@ -48,7 +48,7 @@
 6. TopN / 白名单进程
 7. 最新告警
 
-前端新增专属模块：
+对应工程模块：
 
 - `frontend/src/api/ops.ts`
 - `frontend/src/types/ops.ts`
@@ -57,9 +57,35 @@
 - `frontend/src/components/ops/*`
 - `frontend/src/views/OpsPageView.vue`
 
-### 2. 后端多源运维态势域
+### 2. 四类主题态势页工程化落地
 
-后端新增 `/api/ops/**` 领域接口，按运维域进行拆分：
+前端已实现四个主题页面：
+
+- `/overview`：综合态势
+- `/security`：安全态势
+- `/business`：业务态势
+- `/terminal`：终端态势
+
+当前这四类页面具备以下工程化能力：
+
+- 使用统一 `SituationPage` 类型与 section schema
+- 支持 **接口优先、mock 回退** 的数据策略
+- 支持来源状态提示：`接口联调 / Mock 回退 / 本地 Mock`
+- 支持板块过滤 chips
+- 支持 KPI / 摘要 / 表格 / 时间线等卡片点击后的焦点详情面板
+- 支持空态、加载态、错误态
+
+对应工程模块：
+
+- `frontend/src/api/situations.ts`
+- `frontend/src/types/situation.ts`
+- `frontend/src/composables/useSituationPage.ts`
+- `frontend/src/components/situation/*`
+- `frontend/src/views/SituationPageView.vue`
+
+### 3. 后端多源运维态势域 `/api/ops/**`
+
+后端新增 `/api/ops/**` 领域接口，按运维域拆分：
 
 - `ingest`：统一接入层
 - `domain/repository`：主机、快照、告警、来源
@@ -82,7 +108,23 @@
 - `GET /api/ops/alerts`
 - `GET /api/ops/sources`
 
-### 3. 多源统一模型
+### 4. 后端主题态势占位域 `/api/situation/**`
+
+后端已新增统一主题态势占位接口：
+
+- `GET /api/situation/{pageCode}`
+- `GET /api/situation/overview`
+- `GET /api/situation/security`
+- `GET /api/situation/business`
+- `GET /api/situation/terminal`
+
+说明：
+
+- 当前数据来自 `backend/src/main/resources/mock/situations.json`
+- 接口返回结构已与前端真实联调模式对齐
+- 后续可将静态 mock loader 替换为数据库查询、聚合服务或第三方接口编排，而无需推翻前端页面结构
+
+### 5. 多源统一模型
 
 统一来源类型：
 
@@ -97,7 +139,7 @@
 
 通过 `ops_host_binding` 维护来源绑定关系，使同一台主机可以同时接入多个来源并归一为一条主机记录。
 
-### 4. MySQL 运维域表
+### 6. MySQL 运维域表
 
 已新增：
 
@@ -111,7 +153,7 @@
 - `ops_ingest_event`
 - `ops_ingest_payload`
 
-### 5. Java Probe 独立模块
+### 7. Java Probe 独立模块
 
 `probe/` 模块当前已具备：
 
@@ -127,9 +169,9 @@
 
 ## 运行方式
 
-## 前端
+### 前端
 
-### 开发联调模式
+#### 开发联调模式
 
 ```bash
 cd /Users/bingham/Documents/Project/业务安全态势系统_项目资料/frontend
@@ -137,20 +179,28 @@ npm install
 npm run dev:integration
 ```
 
-### 生产构建校验
+#### 本地 Mock 模式
+
+```bash
+cd /Users/bingham/Documents/Project/业务安全态势系统_项目资料/frontend
+npm run dev:mock
+```
+
+#### 生产构建校验
 
 ```bash
 cd /Users/bingham/Documents/Project/业务安全态势系统_项目资料/frontend
 npm run build
 ```
 
-> 当前这一步已完成构建验证。
+> 当前已完成构建验证：`npm --prefix frontend run build`
 
-## 后端 + MySQL
+### 后端 + MySQL
 
-### Docker Compose
+#### Docker Compose
 
 ```bash
+cd /Users/bingham/Documents/Project/业务安全态势系统_项目资料
 docker compose up --build
 ```
 
@@ -161,9 +211,7 @@ docker compose up --build
 
 后端在空库时会自动灌入 probe / external / manual 三类演示数据，便于 `/ops` 首屏直接出数。
 
-### 配置项
-
-后端默认关键环境变量：
+### 后端关键环境变量
 
 - `SPRING_PROFILES_ACTIVE=mysql`
 - `SPRING_DATASOURCE_URL`
@@ -173,7 +221,7 @@ docker compose up --build
 - `OPS_EXTERNAL_INGEST_TOKEN`
 - `OPS_MANUAL_INGEST_TOKEN`
 
-## Probe
+### Probe
 
 ```bash
 cd /Users/bingham/Documents/Project/业务安全态势系统_项目资料/probe
@@ -188,21 +236,15 @@ java -jar target/business-security-probe-0.1.0.jar
 ### 已完成验证
 
 - 前端生产构建通过：`npm --prefix frontend run build`
-- 后端单元测试通过：`docker run --rm -v "$PWD/backend":/workspace -w /workspace maven:3.9.9-eclipse-temurin-17 mvn -B test`
-- 探针单元测试通过：`docker run --rm -v "$PWD/probe":/workspace -w /workspace maven:3.9.9-eclipse-temurin-17 mvn -B test`
-- `docker compose up -d --build` 已验证可启动 `mysql + backend`
-- 容器内接口联调通过：
-  - `/actuator/health`
-  - `/api/ops/overview`
-  - `/api/ops/hosts?page=1&size=20`
-- `/ops` 页面已切到真实 `/api/ops/**`，默认不是 mock 数据
+- `backend/src/main/resources/mock/situations.json` 已完成 JSON 结构校验
+- 主题态势页前端已接通交互：过滤、回退提示、焦点详情
+- `/ops` 页面仍保持真实 `/api/ops/**` 联调路径，不受本轮主题态势改造影响
 
-### 运行时说明
+### 当前环境限制说明
 
-- 在当前 Codex 沙箱环境中，宿主机对 `127.0.0.1:8080` 的直连偶尔会受限制；容器内访问与前端代理联调已验证正常
-- 演示 seed 数据会自动注入 3 类来源（`PROBE` / `EXTERNAL_API` / `MANUAL_IMPORT`），便于首屏直接看到多源态势
-- 后端已修复基于 `observedAt` 的时区归一问题，以及 `/api/ops/overview` / `/api/ops/hosts?status=` 的状态统计一致性问题
-- `/api/ops/**` 中的业务时间字段（如 `generatedAt` / `lastObservedAt` / `observedAt` / `lastSeenAt`）统一返回带时区的 ISO-8601 时间，前端按标准时区解析，避免联调环境出现 8 小时偏差
+- 当前桌面环境可直接完成前端构建与本地 dev server 启动验证
+- 当前宿主机缺少 `mvn` 命令，因此未在本机直接执行 `backend` 新增 situation 模块的 Maven 编译；已补充 `SituationDataLoaderTest`，建议在具备 Maven 或容器 Maven 的环境中执行 `mvn test` 进行最终校验
+- 在当前前端实现中，`/overview`、`/security`、`/business`、`/terminal` 默认优先请求 `/api/situation/**`；若接口不可达，会自动回退到本地经验数据并展示 warning banner
 
 ## 文档
 

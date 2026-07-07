@@ -1,3 +1,46 @@
+<script setup lang="ts">
+import BaseButton from '@/components/common/BaseButton.vue';
+import BaseEmpty from '@/components/common/BaseEmpty.vue';
+import BaseSkeleton from '@/components/common/BaseSkeleton.vue';
+import SituationHero from '@/components/situation/SituationHero.vue';
+import SituationHighlights from '@/components/situation/SituationHighlights.vue';
+import SituationInsightPanel from '@/components/situation/SituationInsightPanel.vue';
+import SituationKpiGrid from '@/components/situation/SituationKpiGrid.vue';
+import SituationSectionRenderer from '@/components/situation/SituationSectionRenderer.vue';
+import SituationToolbar from '@/components/situation/SituationToolbar.vue';
+import { useSituationPage } from '@/composables/useSituationPage';
+import type { SituationPageCode } from '@/types/situation';
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+
+const pageCode = computed<SituationPageCode>(() => {
+  const candidate = String(route.meta.pageCode ?? 'overview');
+  return candidate === 'security' || candidate === 'business' || candidate === 'terminal' ? candidate : 'overview';
+});
+
+const {
+  page,
+  loading,
+  errorDescription,
+  warningMessage,
+  resolvedSource,
+  filters,
+  activeFilter,
+  visibleSections,
+  hasFilterResult,
+  filterSummary,
+  selectedInsight,
+  selectFilter,
+  selectInsight,
+  clearInsight,
+  loadPage
+} = useSituationPage(pageCode);
+
+const defaultFilterKey = computed(() => filters.value[0]?.key ?? 'all');
+</script>
+
 <template>
   <div v-if="loading" class="situation-page" aria-busy="true">
     <section class="glass-card skeleton-hero">
@@ -37,18 +80,40 @@
 
   <div v-else-if="page" class="situation-page">
     <SituationHero :page="page" />
-    <SituationKpiGrid :items="page.kpis" />
-    <SituationHighlights :items="page.highlights" />
+    <SituationToolbar
+      title="数据状态与视图过滤"
+      :summary="filterSummary"
+      :filters="filters"
+      :active-filter="activeFilter"
+      :resolved-source="resolvedSource"
+      :warning-message="warningMessage"
+      :selected-insight-title="selectedInsight?.title"
+      @select-filter="selectFilter"
+      @refresh="loadPage"
+      @clear-focus="clearInsight"
+    />
+    <SituationKpiGrid :items="page.kpis" @select-insight="selectInsight" />
+    <SituationHighlights :items="page.highlights" @select-insight="selectInsight" />
 
-    <section class="page-grid">
+    <SituationInsightPanel v-if="selectedInsight" :insight="selectedInsight" @close="clearInsight" />
+
+    <section v-if="hasFilterResult" class="page-grid">
       <div
-        v-for="section in page.sections"
+        v-for="section in visibleSections"
         :key="section.code"
         class="grid-item"
         :style="{ gridColumn: `span ${section.colSpan}` }"
       >
-        <SituationSectionRenderer :section="section" />
+        <SituationSectionRenderer :section="section" @select-insight="selectInsight" />
       </div>
+    </section>
+
+    <section v-else class="glass-card filter-empty-state" aria-live="polite">
+      <div>
+        <strong>当前过滤条件下暂无板块</strong>
+        <p>可以切换到“全部板块”，或选择其他标签查看当前主题态势的更多内容。</p>
+      </div>
+      <BaseButton variant="secondary" @click="selectFilter(defaultFilterKey)">查看全部板块</BaseButton>
     </section>
   </div>
 
@@ -56,29 +121,6 @@
     <BaseButton class="retry-button" variant="secondary" @click="loadPage">重新加载</BaseButton>
   </BaseEmpty>
 </template>
-
-<script setup lang="ts">
-import BaseButton from '@/components/common/BaseButton.vue';
-import BaseEmpty from '@/components/common/BaseEmpty.vue';
-import BaseSkeleton from '@/components/common/BaseSkeleton.vue';
-import SituationHero from '@/components/situation/SituationHero.vue';
-import SituationHighlights from '@/components/situation/SituationHighlights.vue';
-import SituationKpiGrid from '@/components/situation/SituationKpiGrid.vue';
-import SituationSectionRenderer from '@/components/situation/SituationSectionRenderer.vue';
-import { useSituationPage } from '@/composables/useSituationPage';
-import type { SituationPageCode } from '@/types/situation';
-import { computed } from 'vue';
-import { useRoute } from 'vue-router';
-
-const route = useRoute();
-
-const pageCode = computed<SituationPageCode>(() => {
-  const candidate = String(route.meta.pageCode ?? 'overview');
-  return candidate === 'security' || candidate === 'business' || candidate === 'terminal' ? candidate : 'overview';
-});
-
-const { page, loading, errorDescription, loadPage } = useSituationPage(pageCode);
-</script>
 
 <style scoped>
 .situation-page {
@@ -124,6 +166,25 @@ const { page, loading, errorDescription, loadPage } = useSituationPage(pageCode)
   gap: var(--space-4);
 }
 
+.filter-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: var(--space-7);
+  border: 1px dashed var(--sys-color-border-primary);
+}
+
+.filter-empty-state strong {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+}
+
+.filter-empty-state p {
+  margin: 0;
+  color: var(--sys-color-text-secondary);
+}
+
 .retry-button {
   margin-top: var(--space-4);
 }
@@ -131,6 +192,13 @@ const { page, loading, errorDescription, loadPage } = useSituationPage(pageCode)
 @media (max-width: 1440px) {
   .skeleton-kpi-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .filter-empty-state {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

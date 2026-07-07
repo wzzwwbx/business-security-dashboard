@@ -5,7 +5,14 @@
     </template>
 
     <div class="cards-grid">
-      <article v-for="item in section.items" :key="item.name" class="status-card" :class="item.tone">
+      <button
+        v-for="item in section.items"
+        :key="item.name"
+        type="button"
+        class="status-card"
+        :class="item.tone"
+        @click="handleSelect(item)"
+      >
         <div class="status-card-top">
           <strong>{{ item.name }}</strong>
           <span class="status-card-metric">{{ item.metric }}</span>
@@ -15,18 +22,36 @@
           <span class="progress-fill" :style="{ width: `${item.progress}%` }"></span>
         </div>
         <p>{{ item.detail }}</p>
-      </article>
+      </button>
     </div>
   </PanelCard>
 </template>
 
 <script setup lang="ts">
 import PanelCard from '@/components/common/PanelCard.vue';
-import type { SituationCardsSection } from '@/types/situation';
+import type { SituationCardItem, SituationCardsSection, SituationInsight } from '@/types/situation';
 
-defineProps<{
+const props = defineProps<{
   section: SituationCardsSection;
 }>();
+
+const emit = defineEmits<{
+  selectInsight: [insight: SituationInsight];
+}>();
+
+const handleSelect = (item: SituationCardItem) => {
+  emit('selectInsight', {
+    id: `${props.section.code}-${item.name}`,
+    label: '服务卡片',
+    title: item.name,
+    description: item.detail,
+    tone: item.tone,
+    metric: item.metric,
+    meta: item.summary,
+    sourceSectionCode: props.section.code,
+    sourceSectionTitle: props.section.title
+  });
+};
 </script>
 
 <style scoped>
@@ -46,6 +71,18 @@ defineProps<{
   border-radius: var(--radius-lg);
   border: 1px solid var(--sys-color-border-secondary);
   background: rgba(18, 39, 64, 0.74);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.status-card:hover,
+.status-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--sys-color-brand-secondary);
+  outline: none;
 }
 
 .status-card-top {

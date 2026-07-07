@@ -1,0 +1,593 @@
+{
+  "pages": [
+    {
+      "code": "overview",
+      "name": "态势总览",
+      "title": "综合态势总览",
+      "subtitle": "cross-domain command view",
+      "location": "后台服务中心机房 · 综合态势驾驶舱",
+      "lastUpdated": "2026-07-07 19:18",
+      "dataMode": "planned",
+      "summary": "综合态势页通过统一接口占位模型聚合终端、安全、业务与运维四大主题，先形成真实可联调的工程化前端骨架，为后续逐步替换第三方来源预留明确卡位。",
+      "heroTags": [
+        { "label": "综合健康度", "value": "89/100", "tone": "success" },
+        { "label": "高优先级事项", "value": "7 项", "tone": "warning" },
+        { "label": "联动来源", "value": "5 类", "tone": "info" },
+        { "label": "需要闭环事件", "value": "3 起", "tone": "danger" }
+      ],
+      "actions": [
+        { "label": "本轮重点", "detail": "优先关注终端异常登录、签批业务高峰时延与夜间数据导出等跨域复合信号。", "tone": "warning" },
+        { "label": "工程建议", "detail": "以 /api/situation/** 作为四类主题态势页的稳定占位接口，后续逐个替换为真实系统来源。", "tone": "info" },
+        { "label": "展示策略", "detail": "首屏先呈现综合健康、跨域联动与闭环进展，再下钻到各专题态势。", "tone": "success" }
+      ],
+      "kpis": [
+        { "label": "综合风险分", "value": "62", "unit": "分", "trend": "-4", "description": "较上一周期下降 4 分", "tone": "warning" },
+        { "label": "跨域事件", "value": "18", "unit": "起", "trend": "+3", "description": "来自多来源融合的事件池", "tone": "info" },
+        { "label": "已闭环", "value": "11", "unit": "起", "trend": "+2", "description": "已完成处置与复盘", "tone": "success" },
+        { "label": "待确认", "value": "4", "unit": "起", "trend": "持平", "description": "仍需补齐外部数据证明", "tone": "warning" },
+        { "label": "关键服务", "value": "9", "unit": "个", "trend": "100%", "description": "核心业务服务均已纳入观察", "tone": "success" },
+        { "label": "接入来源", "value": "5", "unit": "类", "trend": "+1", "description": "新增终端占位来源契约", "tone": "info" }
+      ],
+      "highlights": [
+        { "title": "终端与账号复合异常", "description": "同一账号在 USB Key 校验失败后又触发深夜高频访问，应优先联动处置。", "metric": "2 起", "meta": "零信任 / 终端 / 安全", "tone": "danger" },
+        { "title": "签批业务高峰波动", "description": "备用通道切换后成功率恢复，但 95 线时延仍高于目标水位。", "metric": "420ms", "meta": "业务运行域", "tone": "warning" },
+        { "title": "运维数据链路稳定", "description": "Probe 与 manual/external 占位链路状态正常，可支撑真实演示与联调。", "metric": "5 来源", "meta": "运维域", "tone": "success" },
+        { "title": "数据契约仍待补齐", "description": "CMDB、审计与业务日志中心接口协议未定，当前通过统一 DTO 占位。", "metric": "3 缺口", "meta": "工程规划", "tone": "info" }
+      ],
+      "sections": [
+        {
+          "kind": "matrix",
+          "code": "overview-domain-matrix",
+          "title": "主题域健康矩阵",
+          "description": "从综合视角同时观察四类主题域的成熟度、风险态势与数据来源状态。",
+          "tags": ["综合总览", "主题域", "健康矩阵"],
+          "colSpan": 7,
+          "minHeight": 360,
+          "items": [
+            { "name": "运维态势", "owner": "平台运维组", "score": "91", "status": "稳定联调", "trend": "持续提升", "source": "Probe + Manual + External", "description": "已具备真实后端、多源接入与主机趋势闭环。", "tone": "success" },
+            { "name": "安全态势", "owner": "安全保密组", "score": "76", "status": "规则待丰富", "trend": "关注夜间导出", "source": "审计 / 策略 / 占位接口", "description": "页面工程化已完成，待引入账户与行为来源。", "tone": "warning" },
+            { "name": "业务态势", "owner": "业务运行组", "score": "81", "status": "主链路可视", "trend": "高峰期波动", "source": "链路日志 / SLA / 占位接口", "description": "核心业务服务已完成模型设计与前端呈现。", "tone": "info" },
+            { "name": "终端态势", "owner": "终端保障组", "score": "73", "status": "资产待补全", "trend": "境外点位离线", "source": "MDM / USB Key / 补丁系统", "description": "以在线、补丁、证书、区域分布为首期重点。", "tone": "warning" }
+          ]
+        },
+        {
+          "kind": "sources",
+          "code": "overview-sources",
+          "title": "来源接入概览",
+          "description": "明确告诉值班人员当前展示来自哪里、哪些还只是占位模型。",
+          "tags": ["综合总览", "数据来源"],
+          "colSpan": 5,
+          "minHeight": 360,
+          "items": [
+            { "source": "运维 Probe", "status": "实时", "latency": "< 1 min", "coverage": "主机 / 进程 / 网卡", "note": "已接真实 Spring Boot + MySQL 链路。", "tone": "success" },
+            { "source": "External 占位接口", "status": "可联调", "latency": "按推送周期", "coverage": "资产 / 状态 / 快照", "note": "用于未来对接 CMDB、第三方监控或日志中心。", "tone": "info" },
+            { "source": "终端管理平台", "status": "待接入", "latency": "协议未定", "coverage": "终端在线 / 补丁 / 证书", "note": "已完成前端结构与后端 DTO 占位。", "tone": "warning" },
+            { "source": "安全审计系统", "status": "待接入", "latency": "协议未定", "coverage": "行为 / 告警 / 策略命中", "note": "后续建议统一 externalAssetId / accountCode。", "tone": "warning" }
+          ]
+        },
+        {
+          "kind": "chart",
+          "code": "overview-trend",
+          "title": "跨域关键指标趋势",
+          "description": "把各域最有代表性的量放在一条时间线中，便于判断联动关系。",
+          "tags": ["综合总览", "趋势"],
+          "colSpan": 7,
+          "minHeight": 360,
+          "option": {
+            "tooltip": { "trigger": "axis" },
+            "legend": { "top": 8, "textStyle": { "color": "#d9e8ff" } },
+            "grid": { "left": 18, "right": 18, "top": 48, "bottom": 20, "containLabel": true },
+            "xAxis": { "type": "category", "boundaryGap": false, "axisLabel": { "color": "#d9e8ff" }, "data": ["14:00", "15:00", "16:00", "17:00", "18:00", "19:00"] },
+            "yAxis": { "type": "value", "axisLabel": { "color": "#d9e8ff" } },
+            "series": [
+              { "name": "业务成功率", "type": "line", "smooth": true, "data": [98.8, 99.1, 98.4, 99.0, 99.2, 99.3], "lineStyle": { "color": "#2de2e6", "width": 3 }, "areaStyle": { "color": "rgba(45,226,230,0.12)" } },
+              { "name": "高危信号数", "type": "line", "smooth": true, "data": [3, 4, 5, 4, 6, 5], "lineStyle": { "color": "#ff6b7d", "width": 3 }, "areaStyle": { "color": "rgba(255,107,125,0.12)" } },
+              { "name": "终端在线率", "type": "line", "smooth": true, "data": [93, 94, 92, 95, 94, 94], "lineStyle": { "color": "#3ddc97", "width": 3 }, "areaStyle": { "color": "rgba(61,220,151,0.12)" } }
+            ]
+          },
+          "footer": "当业务成功率下降且安全高危信号抬升时，应联合检查终端与账户异常。"
+        },
+        {
+          "kind": "signals",
+          "code": "overview-signals",
+          "title": "跨域重点信号",
+          "description": "面向综合驾驶舱的一组重点关注，而非简单告警流水。",
+          "tags": ["综合总览", "重点信号"],
+          "colSpan": 5,
+          "minHeight": 360,
+          "items": [
+            { "label": "复合风险", "title": "账号 U-0812 在终端 T-089 上触发复合告警", "description": "存在异常访问、USB Key 失败与地理位置偏移三类信号，需联合终端与安全排查。", "meta": "零信任 + 终端联动 · 置信度高", "tone": "danger" },
+            { "label": "容量关注", "title": "采集节点晚高峰 CPU 峰值达到 78%", "description": "若业务与安全来源同时放量，建议提前准备水平扩展或拆分采集任务。", "meta": "Ops 实时数据", "tone": "warning" },
+            { "label": "建设缺口", "title": "CMDB 与业务日志中心仍缺统一契约", "description": "建议先沉淀 externalAssetId、serviceCode 与 accountCode 的统一映射关系。", "meta": "工程规划", "tone": "info" }
+          ]
+        },
+        {
+          "kind": "table",
+          "code": "overview-watchlist",
+          "title": "联动观察清单",
+          "description": "值班席位需要的一张可执行清单，而不是只有指标。",
+          "tags": ["综合总览", "观察清单"],
+          "colSpan": 7,
+          "minHeight": 320,
+          "columns": [
+            { "key": "domain", "label": "主题域", "tone": false },
+            { "key": "object", "label": "对象", "tone": false },
+            { "key": "signal", "label": "观测信号", "tone": false },
+            { "key": "owner", "label": "责任团队", "tone": false },
+            { "key": "status", "label": "状态", "tone": true }
+          ],
+          "rows": [
+            { "cells": { "domain": "终端", "object": "T-089 / U-0812", "signal": "终端锁定 + 异常访问", "owner": "终端运维 / 安全", "status": "联动处置中" }, "tones": { "status": "danger" } },
+            { "cells": { "domain": "业务", "object": "签批服务", "signal": "95 线时延抬升至 420ms", "owner": "业务运行组", "status": "持续观察" }, "tones": { "status": "warning" } },
+            { "cells": { "domain": "运维", "object": "采集节点", "signal": "CPU 峰值 78%", "owner": "平台运维组", "status": "已出扩容建议" }, "tones": { "status": "info" } },
+            { "cells": { "domain": "安全", "object": "夜间导出行为", "signal": "短时高频导出模式", "owner": "安全保密组", "status": "规则已升级" }, "tones": { "status": "success" } }
+          ]
+        },
+        {
+          "kind": "timeline",
+          "code": "overview-timeline",
+          "title": "近 2 小时协同闭环时间线",
+          "description": "综合态势需要看事件如何流转，而不仅是事件本身。",
+          "tags": ["综合总览", "闭环"],
+          "colSpan": 5,
+          "minHeight": 320,
+          "items": [
+            { "time": "19:12", "title": "更新综合风险评分", "description": "结合业务链路、终端在线与高危告警重新计算综合态势评分 62。", "actor": "综合分析引擎", "tone": "info" },
+            { "time": "18:56", "title": "生成终端与账户复合告警", "description": "终端 T-089 与账号 U-0812 的多维风险信号被统一聚合。", "actor": "安全保密组", "tone": "danger" },
+            { "time": "18:34", "title": "运维域生成资源扩容建议", "description": "采集节点 CPU 达到阈值，建议将工作线程扩容 2 个。", "actor": "平台运维组", "tone": "warning" },
+            { "time": "18:05", "title": "签批业务自动切换备用通道", "description": "高峰期自动分流后，业务成功率恢复到 99.2% 以上。", "actor": "业务运行组", "tone": "success" }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "terminal",
+      "name": "终端态势",
+      "title": "终端接入与资产态势",
+      "subtitle": "endpoint posture & compliance",
+      "location": "终端保障中心 · 设备与接入态势",
+      "lastUpdated": "2026-07-07 19:16",
+      "dataMode": "planned",
+      "summary": "终端态势页围绕设备在线、补丁合规、USB Key 认证、地域分布与高风险终端处置展开，当前先以占位接口驱动真实工程化页面。",
+      "heroTags": [
+        { "label": "在线终端", "value": "131 / 140", "tone": "success" },
+        { "label": "补丁覆盖率", "value": "94.2%", "tone": "success" },
+        { "label": "证书临期", "value": "7 台", "tone": "warning" },
+        { "label": "异常终端", "value": "5 台", "tone": "warning" }
+      ],
+      "actions": [
+        { "label": "本轮重点", "detail": "优先关注境外保障点位离线终端、证书临期设备与 USB Key 认证失败终端。", "tone": "warning" },
+        { "label": "数据建议", "detail": "建议后续对接 MDM、补丁平台、证书中心与 USB Key 管理系统。", "tone": "info" },
+        { "label": "展示策略", "detail": "首屏聚焦资产覆盖、合规水位与重点终端观察表，再做终端级 drill-down。", "tone": "success" }
+      ],
+      "kpis": [
+        { "label": "在线终端", "value": "131", "unit": "台", "trend": "+2", "description": "较昨日同期新增 2 台在线", "tone": "success" },
+        { "label": "离线终端", "value": "9", "unit": "台", "trend": "-1", "description": "其中 3 台位于境外保障点位", "tone": "warning" },
+        { "label": "USB Key 通过率", "value": "97.8", "unit": "%", "trend": "+0.6%", "description": "当日认证失败 3 次", "tone": "success" },
+        { "label": "补丁滞后设备", "value": "8", "unit": "台", "trend": "-2", "description": "高危补丁已补齐 4 台", "tone": "warning" },
+        { "label": "证书临期设备", "value": "7", "unit": "台", "trend": "+1", "description": "7 天内到期设备需要轮换", "tone": "warning" },
+        { "label": "高风险终端", "value": "2", "unit": "台", "trend": "持平", "description": "存在复合异常行为与认证失败", "tone": "danger" }
+      ],
+      "highlights": [
+        { "title": "境外保障点位离线", "description": "3 台境外保障终端离线超过 6 小时，需要确认网络条件与设备状态。", "metric": "3 台", "meta": "境外节点", "tone": "warning" },
+        { "title": "高风险终端待隔离", "description": "终端 T-089 与 T-104 出现认证失败、补丁滞后和访问异常叠加。", "metric": "2 台", "meta": "高风险", "tone": "danger" },
+        { "title": "补丁合规持续改善", "description": "本轮批量补丁后，整体覆盖率提升至 94.2%。", "metric": "+2.1%", "meta": "补丁域", "tone": "success" },
+        { "title": "接口规划已稳定", "description": "终端域的字段口径与前后端结构已稳定，可逐步替换真实来源。", "metric": "DTO Ready", "meta": "工程化", "tone": "info" }
+      ],
+      "sections": [
+        {
+          "kind": "cards",
+          "code": "terminal-regions",
+          "title": "重点区域分布",
+          "description": "通过区域卡片快速感知保障点位的在线与风险分布。",
+          "tags": ["终端", "区域分布"],
+          "colSpan": 5,
+          "minHeight": 340,
+          "items": [
+            { "name": "北京主中心", "summary": "在线终端稳定，补丁已进入常态补齐。", "metric": "48 台", "detail": "在线率 97%，近 24 小时无高风险终端。", "tone": "success", "progress": 97 },
+            { "name": "华东保障区", "summary": "存在证书临期与少量补丁滞后设备。", "metric": "31 台", "detail": "7 天内证书到期 3 台，建议本周轮换。", "tone": "warning", "progress": 89 },
+            { "name": "西南保障区", "summary": "离线设备较多，需要检查弱网与终端管理策略。", "metric": "19 台", "detail": "离线 4 台，其中 2 台持续超过 12 小时。", "tone": "warning", "progress": 79 },
+            { "name": "境外点位", "summary": "需优先关注保障时段的可达性与认证状态。", "metric": "12 台", "detail": "离线 3 台，USB Key 失败 1 次。", "tone": "danger", "progress": 68 }
+          ]
+        },
+        {
+          "kind": "chart",
+          "code": "terminal-trend",
+          "title": "近 7 天终端在线与补丁趋势",
+          "description": "同时观察在线终端与补丁覆盖率变化。",
+          "tags": ["终端", "趋势"],
+          "colSpan": 7,
+          "minHeight": 340,
+          "option": {
+            "tooltip": { "trigger": "axis" },
+            "legend": { "top": 8, "textStyle": { "color": "#d9e8ff" } },
+            "grid": { "left": 18, "right": 18, "top": 48, "bottom": 20, "containLabel": true },
+            "xAxis": { "type": "category", "boundaryGap": false, "axisLabel": { "color": "#d9e8ff" }, "data": ["07-01", "07-02", "07-03", "07-04", "07-05", "07-06", "07-07"] },
+            "yAxis": { "type": "value", "axisLabel": { "color": "#d9e8ff" } },
+            "series": [
+              { "name": "在线终端", "type": "line", "smooth": true, "data": [126, 127, 129, 130, 128, 129, 131], "lineStyle": { "color": "#3ddc97", "width": 3 }, "areaStyle": { "color": "rgba(61,220,151,0.12)" } },
+              { "name": "补丁覆盖率", "type": "line", "smooth": true, "data": [89.4, 90.2, 91.8, 92.6, 93.1, 93.7, 94.2], "lineStyle": { "color": "#1e88ff", "width": 3 }, "areaStyle": { "color": "rgba(30,136,255,0.12)" } }
+            ]
+          },
+          "footer": "在线与补丁覆盖都应作为终端保障的双指标共同观察。"
+        },
+        {
+          "kind": "table",
+          "code": "terminal-watchlist",
+          "title": "重点终端观察表",
+          "description": "面向值班人员的终端级观察列表。",
+          "tags": ["终端", "观察表"],
+          "colSpan": 7,
+          "minHeight": 320,
+          "columns": [
+            { "key": "terminal", "label": "终端编号", "tone": false },
+            { "key": "owner", "label": "使用人员", "tone": false },
+            { "key": "location", "label": "区域", "tone": false },
+            { "key": "signal", "label": "主要信号", "tone": false },
+            { "key": "status", "label": "状态", "tone": true }
+          ],
+          "rows": [
+            { "cells": { "terminal": "T-089", "owner": "U-0812", "location": "境外点位", "signal": "USB Key 失败 + 异常访问", "status": "高风险" }, "tones": { "status": "danger" } },
+            { "cells": { "terminal": "T-104", "owner": "U-1033", "location": "华东保障区", "signal": "补丁滞后 + 证书临期", "status": "需处理" }, "tones": { "status": "warning" } },
+            { "cells": { "terminal": "T-027", "owner": "U-0110", "location": "北京主中心", "signal": "离线超 8 小时", "status": "持续观察" }, "tones": { "status": "info" } },
+            { "cells": { "terminal": "T-052", "owner": "U-0561", "location": "西南保障区", "signal": "补丁已补齐", "status": "已恢复" }, "tones": { "status": "success" } }
+          ]
+        },
+        {
+          "kind": "signals",
+          "code": "terminal-signals",
+          "title": "异常终端信号",
+          "description": "可进一步作为后续终端下钻详情的入口。",
+          "tags": ["终端", "异常信号"],
+          "colSpan": 5,
+          "minHeight": 320,
+          "items": [
+            { "label": "认证异常", "title": "USB Key 校验失败后仍尝试访问业务系统", "description": "需要检查终端时间同步、证书状态与接入策略是否异常。", "meta": "终端 T-089", "tone": "danger" },
+            { "label": "合规异常", "title": "高危补丁超期未修复设备仍在线", "description": "建议优先将该类设备划入受限访问策略，并尽快补齐补丁。", "meta": "8 台滞后设备", "tone": "warning" },
+            { "label": "资产缺口", "title": "部分终端未明确权威资产编号", "description": "建议统一终端资产 ID，为后续 CMDB 对齐做准备。", "meta": "工程规划", "tone": "info" }
+          ]
+        },
+        {
+          "kind": "sources",
+          "code": "terminal-sources",
+          "title": "终端域来源规划",
+          "description": "明确哪些系统是一期占位，哪些是未来真实来源。",
+          "tags": ["终端", "数据来源"],
+          "colSpan": 4,
+          "minHeight": 320,
+          "items": [
+            { "source": "MDM / 终端平台", "status": "待接入", "latency": "5-15 min", "coverage": "在线 / 位置 / 策略", "note": "建议作为终端状态与位置的权威来源。", "tone": "warning" },
+            { "source": "补丁管理平台", "status": "待接入", "latency": "按批次", "coverage": "补丁版本 / 修复状态", "note": "与终端资产主数据通过 terminalCode 关联。", "tone": "info" },
+            { "source": "证书 / USB Key", "status": "待接入", "latency": "实时或近实时", "coverage": "认证成功率 / 临期告警", "note": "可与零信任登录日志形成复合判断。", "tone": "warning" }
+          ]
+        },
+        {
+          "kind": "chart",
+          "code": "terminal-radar",
+          "title": "终端合规雷达",
+          "description": "用来展示终端域当前最重要的几类合规能力。",
+          "tags": ["终端", "合规"],
+          "colSpan": 3,
+          "minHeight": 320,
+          "option": {
+            "tooltip": {},
+            "radar": {
+              "radius": "66%",
+              "indicator": [
+                { "name": "在线稳定", "max": 100 },
+                { "name": "补丁合规", "max": 100 },
+                { "name": "认证可靠", "max": 100 },
+                { "name": "证书健康", "max": 100 },
+                { "name": "资产完整", "max": 100 }
+              ]
+            },
+            "series": [
+              {
+                "type": "radar",
+                "data": [
+                  {
+                    "value": [94, 92, 98, 86, 78],
+                    "name": "当前终端态势",
+                    "areaStyle": { "color": "rgba(45,226,230,0.16)" },
+                    "lineStyle": { "color": "#2de2e6" },
+                    "itemStyle": { "color": "#2de2e6" }
+                  }
+                ]
+              }
+            ]
+          },
+          "footer": "资产完整度与证书健康度仍是当前终端域的主要短板。"
+        }
+      ]
+    },
+    {
+      "code": "business",
+      "name": "业务态势",
+      "title": "业务运行与链路态势",
+      "subtitle": "service health & traffic",
+      "location": "业务运行中心 · 核心业务链路态势",
+      "lastUpdated": "2026-07-07 19:14",
+      "dataMode": "planned",
+      "summary": "业务态势页聚焦核心服务健康、业务量、成功率、SLA 与变更恢复节奏，先建立可替换真实来源的工程页面与统一 DTO。",
+      "heroTags": [
+        { "label": "核心服务", "value": "9 个", "tone": "success" },
+        { "label": "成功率", "value": "99.2%", "tone": "success" },
+        { "label": "关注服务", "value": "2 个", "tone": "warning" },
+        { "label": "进行中变更", "value": "1 项", "tone": "info" }
+      ],
+      "actions": [
+        { "label": "本轮重点", "detail": "重点关注签批服务高峰时段延迟抬升与归档服务的恢复窗口。", "tone": "warning" },
+        { "label": "数据建议", "detail": "建议后续对接链路监控、日志中心、SLA 平台与变更系统。", "tone": "info" },
+        { "label": "展示策略", "detail": "以服务卡 + 趋势图 + SLA 表 + 变更时间线构成业务运行主视图。", "tone": "success" }
+      ],
+      "kpis": [
+        { "label": "业务请求量", "value": "126", "unit": "万", "trend": "+8%", "description": "较昨日同期增长", "tone": "info" },
+        { "label": "整体成功率", "value": "99.2", "unit": "%", "trend": "+0.3%", "description": "自动分流后恢复", "tone": "success" },
+        { "label": "95 线时延", "value": "420", "unit": "ms", "trend": "-35ms", "description": "仍高于目标值 350ms", "tone": "warning" },
+        { "label": "SLA 风险服务", "value": "2", "unit": "个", "trend": "持平", "description": "签批 / 归档服务需关注", "tone": "warning" },
+        { "label": "进行中变更", "value": "1", "unit": "项", "trend": "新增", "description": "夜间归档服务优化窗口", "tone": "info" },
+        { "label": "恢复完成", "value": "3", "unit": "次", "trend": "+1", "description": "24 小时内已完成恢复", "tone": "success" }
+      ],
+      "highlights": [
+        { "title": "签批服务高峰波动", "description": "高峰分流后成功率恢复，但用户体感时延仍有抬升。", "metric": "420ms", "meta": "签批链路", "tone": "warning" },
+        { "title": "归档服务恢复完成", "description": "夜间任务恢复后积压已基本清空。", "metric": "98%", "meta": "归档服务", "tone": "success" },
+        { "title": "跨系统接口待落地", "description": "链路日志中心与业务日志标准仍待补齐，暂以统一 DTO 占位。", "metric": "2 缺口", "meta": "工程规划", "tone": "info" },
+        { "title": "复合风险需联动", "description": "业务峰值期间若叠加安全与终端异常，应提前触发跨域联动。", "metric": "协同关注", "meta": "综合态势", "tone": "danger" }
+      ],
+      "sections": [
+        {
+          "kind": "cards",
+          "code": "business-services",
+          "title": "核心业务服务健康卡",
+          "description": "用服务卡片快速查看核心业务的当前健康与瓶颈。",
+          "tags": ["业务", "服务健康"],
+          "colSpan": 5,
+          "minHeight": 340,
+          "items": [
+            { "name": "签批服务", "summary": "高峰期成功率稳定，但 95 线时延偏高。", "metric": "99.2%", "detail": "建议继续优化热点查询与异步落库策略。", "tone": "warning", "progress": 86 },
+            { "name": "归档服务", "summary": "积压已消化，恢复稳定运行。", "metric": "98.9%", "detail": "观察夜间批处理窗口是否再次抬升。", "tone": "success", "progress": 92 },
+            { "name": "消息总线", "summary": "吞吐正常，但需关注高峰重试率。", "metric": "31 万/小时", "detail": "当前重试率 0.8%，尚在可控范围。", "tone": "info", "progress": 88 },
+            { "name": "查询服务", "summary": "热点查询集中，缓存命中率略有下降。", "metric": "93.1%", "detail": "建议补充热门维度的预热策略。", "tone": "warning", "progress": 83 }
+          ]
+        },
+        {
+          "kind": "chart",
+          "code": "business-trend",
+          "title": "近 24 小时业务量与成功率",
+          "description": "量与成功率必须结合观察，避免只看其中一项。",
+          "tags": ["业务", "趋势"],
+          "colSpan": 7,
+          "minHeight": 340,
+          "option": {
+            "tooltip": { "trigger": "axis" },
+            "legend": { "top": 8, "textStyle": { "color": "#d9e8ff" } },
+            "grid": { "left": 18, "right": 18, "top": 48, "bottom": 20, "containLabel": true },
+            "xAxis": { "type": "category", "axisLabel": { "color": "#d9e8ff" }, "data": ["00", "04", "08", "12", "16", "20"] },
+            "yAxis": { "type": "value", "axisLabel": { "color": "#d9e8ff" } },
+            "series": [
+              { "name": "业务量(万)", "type": "bar", "barMaxWidth": 18, "data": [12, 10, 18, 24, 31, 29], "itemStyle": { "color": "#1e88ff", "borderRadius": [8, 8, 0, 0] } },
+              { "name": "成功率(%)", "type": "line", "smooth": true, "data": [99.5, 99.3, 98.9, 99.0, 99.2, 99.1], "lineStyle": { "color": "#2de2e6", "width": 3 }, "areaStyle": { "color": "rgba(45,226,230,0.12)" } }
+            ]
+          },
+          "footer": "业务量上升时需同步观察失败率、时延与重试率，而不是只看 TPS。"
+        },
+        {
+          "kind": "table",
+          "code": "business-sla",
+          "title": "服务 SLA 观察表",
+          "description": "基于服务视角关注核心 SLA 水位与责任团队。",
+          "tags": ["业务", "SLA"],
+          "colSpan": 7,
+          "minHeight": 320,
+          "columns": [
+            { "key": "service", "label": "服务", "tone": false },
+            { "key": "target", "label": "SLA 目标", "tone": false },
+            { "key": "current", "label": "当前值", "tone": false },
+            { "key": "owner", "label": "责任团队", "tone": false },
+            { "key": "status", "label": "状态", "tone": true }
+          ],
+          "rows": [
+            { "cells": { "service": "签批服务", "target": "成功率 ≥ 99.5%", "current": "99.2% / 420ms", "owner": "业务运行组", "status": "关注" }, "tones": { "status": "warning" } },
+            { "cells": { "service": "归档服务", "target": "积压 < 10k", "current": "8.2k", "owner": "数据平台组", "status": "稳定" }, "tones": { "status": "success" } },
+            { "cells": { "service": "消息总线", "target": "重试率 < 1%", "current": "0.8%", "owner": "中间件组", "status": "观察" }, "tones": { "status": "info" } },
+            { "cells": { "service": "查询服务", "target": "95 线 < 300ms", "current": "328ms", "owner": "查询服务组", "status": "需优化" }, "tones": { "status": "warning" } }
+          ]
+        },
+        {
+          "kind": "signals",
+          "code": "business-signals",
+          "title": "业务瓶颈与建议",
+          "description": "帮助值班与研发快速定位问题方向。",
+          "tags": ["业务", "重点信号"],
+          "colSpan": 5,
+          "minHeight": 320,
+          "items": [
+            { "label": "热点查询", "title": "签批查询热点集中导致峰值时延抬升", "description": "建议优先优化查询缓存与热点维度分页策略。", "meta": "签批服务", "tone": "warning" },
+            { "label": "批处理窗口", "title": "归档批处理窗口接近上限", "description": "如果夜间流量继续上升，应提前拆分归档任务批次。", "meta": "归档服务", "tone": "info" },
+            { "label": "复合风险", "title": "业务高峰若叠加终端/安全异常需提前预案", "description": "建议综合态势在高峰时段自动提升相关跨域信号权重。", "meta": "综合联动", "tone": "danger" }
+          ]
+        },
+        {
+          "kind": "chart",
+          "code": "business-compare",
+          "title": "业务类型对比",
+          "description": "用对比图直观看到不同业务类型的负载与成功率差异。",
+          "tags": ["业务", "对比"],
+          "colSpan": 4,
+          "minHeight": 320,
+          "option": {
+            "tooltip": { "trigger": "item" },
+            "legend": { "bottom": 0, "textStyle": { "color": "#d9e8ff" } },
+            "series": [
+              {
+                "type": "pie",
+                "radius": ["56%", "76%"],
+                "center": ["50%", "44%"],
+                "label": { "color": "#d9e8ff", "formatter": "{b}\n{d}%" },
+                "itemStyle": { "borderColor": "#091425", "borderWidth": 4 },
+                "data": [
+                  { "name": "签批", "value": 38, "itemStyle": { "color": "#2de2e6" } },
+                  { "name": "查询", "value": 27, "itemStyle": { "color": "#1e88ff" } },
+                  { "name": "归档", "value": 19, "itemStyle": { "color": "#ffb547" } },
+                  { "name": "通知", "value": 16, "itemStyle": { "color": "#3ddc97" } }
+                ]
+              }
+            ]
+          },
+          "footer": "签批与查询业务构成主要流量来源，应优先保障其高峰稳定性。"
+        },
+        {
+          "kind": "timeline",
+          "code": "business-timeline",
+          "title": "业务变更与恢复时间线",
+          "description": "变更、回滚、恢复都需要在业务态势中直观看到。",
+          "tags": ["业务", "变更闭环"],
+          "colSpan": 3,
+          "minHeight": 320,
+          "items": [
+            { "time": "18:40", "title": "签批服务调整分流策略", "description": "将高峰流量按热点维度拆分到备用通道。", "actor": "业务运行组", "tone": "warning" },
+            { "time": "17:55", "title": "归档积压恢复到可控范围", "description": "自动扩容批处理节点后，积压下降到 8.2k。", "actor": "数据平台组", "tone": "success" },
+            { "time": "16:30", "title": "查询服务缓存命中率下降", "description": "监测到缓存命中率跌到 93.1%，已生成优化建议。", "actor": "查询服务组", "tone": "info" }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "security",
+      "name": "安全态势",
+      "title": "安全保密与零信任态势",
+      "subtitle": "security posture & trust controls",
+      "location": "安全保密中心 · 零信任与审计态势",
+      "lastUpdated": "2026-07-07 19:15",
+      "dataMode": "planned",
+      "summary": "安全态势页聚焦风险矩阵、事件趋势、异常行为研判与防护组件健康度，当前以统一安全态势 DTO 和占位接口支撑工程化前端。",
+      "heroTags": [
+        { "label": "活跃安全事件", "value": "12 起", "tone": "warning" },
+        { "label": "高危事件", "value": "3 起", "tone": "danger" },
+        { "label": "策略命中", "value": "218 次", "tone": "info" },
+        { "label": "防护组件健康", "value": "95%", "tone": "success" }
+      ],
+      "actions": [
+        { "label": "本轮重点", "detail": "关注深夜导出、异常访问路径与零信任认证失败的复合风险。", "tone": "warning" },
+        { "label": "数据建议", "detail": "后续建议接入审计平台、零信任网关、规则引擎与账户中心。", "tone": "info" },
+        { "label": "展示策略", "detail": "用风险矩阵、事件趋势、研判建议与策略排行组成安全主视图。", "tone": "success" }
+      ],
+      "kpis": [
+        { "label": "活跃事件", "value": "12", "unit": "起", "trend": "+2", "description": "近 24 小时仍在跟进", "tone": "warning" },
+        { "label": "高危事件", "value": "3", "unit": "起", "trend": "持平", "description": "需要当天闭环", "tone": "danger" },
+        { "label": "策略命中", "value": "218", "unit": "次", "trend": "+14", "description": "零信任与审计规则共同命中", "tone": "info" },
+        { "label": "认证失败率", "value": "1.7", "unit": "%", "trend": "+0.4%", "description": "主要集中在 USB Key 与弱网场景", "tone": "warning" },
+        { "label": "组件健康度", "value": "95", "unit": "%", "trend": "持平", "description": "主要防护组件运行正常", "tone": "success" },
+        { "label": "待研判", "value": "4", "unit": "起", "trend": "-1", "description": "仍需补充账户与终端信息", "tone": "info" }
+      ],
+      "highlights": [
+        { "title": "深夜高频导出", "description": "连续 3 天在非办公时段出现高频数据导出，需要重点核查。", "metric": "3 次", "meta": "审计行为", "tone": "danger" },
+        { "title": "认证失败抬升", "description": "弱网区域和临期证书终端导致认证失败率上升。", "metric": "1.7%", "meta": "零信任认证", "tone": "warning" },
+        { "title": "防护组件稳定", "description": "主要防护策略与组件健康度保持在 95% 以上。", "metric": "95%", "meta": "防护域", "tone": "success" },
+        { "title": "接口契约已统一", "description": "安全域页面已切到统一 DTO 与工程组件，可平滑替换未来真实接口。", "metric": "Ready", "meta": "工程化", "tone": "info" }
+      ],
+      "sections": [
+        {
+          "kind": "matrix",
+          "code": "security-matrix",
+          "title": "风险视角矩阵",
+          "description": "按风险类别、责任人与来源系统查看当前安全焦点。",
+          "tags": ["安全", "风险矩阵"],
+          "colSpan": 5,
+          "minHeight": 340,
+          "items": [
+            { "name": "异常导出", "owner": "安全保密组", "score": "92", "status": "高危跟进", "trend": "连续 3 天出现", "source": "审计行为 / 账户画像", "description": "夜间短时高频导出模式明显偏离日常基线。", "tone": "danger" },
+            { "name": "认证失败", "owner": "零信任团队", "score": "78", "status": "需要排查", "trend": "弱网场景上升", "source": "零信任网关 / USB Key", "description": "主要集中在证书临期与网络不稳定终端。", "tone": "warning" },
+            { "name": "策略命中", "owner": "策略运营组", "score": "85", "status": "规则有效", "trend": "命中量上升", "source": "规则引擎 / 网关", "description": "说明规则已对异常访问形成有效拦截。", "tone": "success" }
+          ]
+        },
+        {
+          "kind": "chart",
+          "code": "security-trend",
+          "title": "近 24 小时安全事件趋势",
+          "description": "观察事件总量与高危事件的变化。",
+          "tags": ["安全", "趋势"],
+          "colSpan": 7,
+          "minHeight": 340,
+          "option": {
+            "tooltip": { "trigger": "axis" },
+            "legend": { "top": 8, "textStyle": { "color": "#d9e8ff" } },
+            "grid": { "left": 18, "right": 18, "top": 48, "bottom": 20, "containLabel": true },
+            "xAxis": { "type": "category", "boundaryGap": false, "axisLabel": { "color": "#d9e8ff" }, "data": ["00", "04", "08", "12", "16", "20"] },
+            "yAxis": { "type": "value", "axisLabel": { "color": "#d9e8ff" } },
+            "series": [
+              { "name": "安全事件", "type": "line", "smooth": true, "data": [5, 4, 6, 8, 7, 12], "lineStyle": { "color": "#ff6b7d", "width": 3 }, "areaStyle": { "color": "rgba(255,107,125,0.12)" } },
+              { "name": "高危事件", "type": "line", "smooth": true, "data": [1, 1, 2, 2, 2, 3], "lineStyle": { "color": "#ffb547", "width": 3 }, "areaStyle": { "color": "rgba(255,181,71,0.12)" } }
+            ]
+          },
+          "footer": "高危事件与认证失败峰值往往与业务高峰和终端弱网场景有相关性。"
+        },
+        {
+          "kind": "signals",
+          "code": "security-signals",
+          "title": "异常行为与研判建议",
+          "description": "把安全告警翻译成值班可执行的研判建议。",
+          "tags": ["安全", "研判建议"],
+          "colSpan": 5,
+          "minHeight": 320,
+          "items": [
+            { "label": "夜间导出", "title": "同一账号在非办公时段发起多次大批量导出", "description": "建议优先联动账户画像、终端位置与审批记录，确认是否为授权操作。", "meta": "账号 U-0812", "tone": "danger" },
+            { "label": "认证偏移", "title": "认证失败集中在证书临期设备与境外弱网点位", "description": "应区分恶意尝试与环境导致的失败，避免误伤正常保障终端。", "meta": "零信任网关", "tone": "warning" },
+            { "label": "规则优化", "title": "部分命中规则需要补充业务上下文", "description": "建议把 serviceCode、terminalCode 与 accountCode 一并写入安全事件。", "meta": "工程建议", "tone": "info" }
+          ]
+        },
+        {
+          "kind": "timeline",
+          "code": "security-timeline",
+          "title": "安全事件时间线",
+          "description": "面向当前值班窗口的安全事件流转视图。",
+          "tags": ["安全", "事件闭环"],
+          "colSpan": 4,
+          "minHeight": 320,
+          "items": [
+            { "time": "19:08", "title": "升级异常导出规则等级", "description": "将连续夜间导出行为升级为高危并触发联动处置。", "actor": "安全保密组", "tone": "danger" },
+            { "time": "18:22", "title": "补充终端位置上下文", "description": "为认证失败事件增加终端地理位置与证书状态信息。", "actor": "零信任团队", "tone": "info" },
+            { "time": "17:45", "title": "完成一轮误报压降", "description": "对重复命中的弱规则进行参数收敛，降低值班噪声。", "actor": "策略运营组", "tone": "success" }
+          ]
+        },
+        {
+          "kind": "cards",
+          "code": "security-components",
+          "title": "防护组件与策略健康度",
+          "description": "关注组件健康与策略有效性，而不是只看事件数量。",
+          "tags": ["安全", "组件健康"],
+          "colSpan": 7,
+          "minHeight": 320,
+          "items": [
+            { "name": "零信任网关", "summary": "认证链路稳定，策略命中持续有效。", "metric": "99.6%", "detail": "需要进一步降低境外弱网场景的误报率。", "tone": "success", "progress": 96 },
+            { "name": "审计引擎", "summary": "行为采集链路稳定，规则触发准确率较高。", "metric": "95.1%", "detail": "建议补充账户与业务上下文字段。", "tone": "info", "progress": 88 },
+            { "name": "策略中心", "summary": "规则命中量增长，需要持续优化噪声压制。", "metric": "218 次", "detail": "本日已完成一轮误报压降。", "tone": "warning", "progress": 84 },
+            { "name": "证书体系", "summary": "证书临期设备较多，可能影响认证稳定性。", "metric": "7 台", "detail": "建议优先轮换高频使用终端证书。", "tone": "warning", "progress": 76 }
+          ]
+        },
+        {
+          "kind": "table",
+          "code": "security-ranking",
+          "title": "策略命中排行",
+          "description": "帮助快速识别当前最活跃的安全规则与责任域。",
+          "tags": ["安全", "策略排行"],
+          "colSpan": 5,
+          "minHeight": 320,
+          "columns": [
+            { "key": "rule", "label": "规则", "tone": false },
+            { "key": "hits", "label": "命中次数", "tone": false },
+            { "key": "owner", "label": "责任团队", "tone": false },
+            { "key": "action", "label": "当前动作", "tone": false },
+            { "key": "status", "label": "状态", "tone": true }
+          ],
+          "rows": [
+            { "cells": { "rule": "夜间高频导出", "hits": "46", "owner": "安全保密组", "action": "提升等级并联动终端", "status": "高危" }, "tones": { "status": "danger" } },
+            { "cells": { "rule": "USB Key 认证失败", "hits": "31", "owner": "零信任团队", "action": "补充证书/弱网上下文", "status": "关注" }, "tones": { "status": "warning" } },
+            { "cells": { "rule": "异常访问路径", "hits": "22", "owner": "策略运营组", "action": "保持阻断与观察", "status": "稳定" }, "tones": { "status": "success" } },
+            { "cells": { "rule": "高风险终端联动", "hits": "13", "owner": "终端保障组", "action": "终端隔离候选", "status": "观察" }, "tones": { "status": "info" } }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -26,7 +26,7 @@
 }
 ```
 
-## 2. 运维入站接口
+## 2. 运维入站接口 `/api/ops/ingest/**`
 
 ### `POST /api/ops/ingest/probe`
 
@@ -104,7 +104,7 @@ hex(hmac_sha256(sharedSecret, X-Timestamp + "\n" + rawJsonBody))
 
 - 用于联调 / 演示 / 测试数据注入
 
-## 3. 运维查询接口
+## 3. 运维查询接口 `/api/ops/**`
 
 ### 时间字段约定
 
@@ -123,10 +123,6 @@ hex(hmac_sha256(sharedSecret, X-Timestamp + "\n" + rawJsonBody))
 - 来源数
 - 平均 CPU / 内存利用率
 
-说明：
-
-- 总览中的主机状态统计与 `/api/ops/hosts` 使用同一 freshness 规则，保证首屏卡片与主机列表一致
-
 ### `GET /api/ops/hosts`
 
 查询参数：
@@ -139,7 +135,7 @@ hex(hmac_sha256(sharedSecret, X-Timestamp + "\n" + rawJsonBody))
 说明：
 
 - `status` 支持：`ONLINE` / `STALE` / `OFFLINE`
-- 主机状态以最近 `lastObservedAt` freshness 动态计算，不依赖库中历史冗余状态字段直接回显
+- 主机状态以最近 `lastObservedAt` freshness 动态计算
 
 ### `GET /api/ops/hosts/{hostId}`
 
@@ -182,3 +178,98 @@ hex(hmac_sha256(sharedSecret, X-Timestamp + "\n" + rawJsonBody))
 - 健康状态
 - 已归一主机数量
 - 最近同步时间
+
+## 4. 主题态势接口 `/api/situation/**`
+
+### `GET /api/situation/{pageCode}`
+
+支持参数：
+
+- `overview`
+- `security`
+- `business`
+- `terminal`
+
+说明：
+
+- 返回主题态势页面完整结构
+- 当前由后端统一返回 `SituationPageDto`
+- 前端默认优先联调该接口，失败时回退到本地 mock
+
+### 快捷路径
+
+- `GET /api/situation/overview`
+- `GET /api/situation/security`
+- `GET /api/situation/business`
+- `GET /api/situation/terminal`
+
+### 返回结构要点
+
+`SituationPageDto` 核心字段：
+
+- `code`
+- `name`
+- `title`
+- `subtitle`
+- `location`
+- `lastUpdated`
+- `dataMode`
+- `summary`
+- `heroTags`
+- `actions`
+- `kpis`
+- `highlights`
+- `sections`
+
+### `sections` 支持的 `kind`
+
+- `matrix`
+- `chart`
+- `signals`
+- `sources`
+- `cards`
+- `table`
+- `timeline`
+
+### 返回示例（节选）
+
+```json
+{
+  "code": 0,
+  "message": "OK",
+  "data": {
+    "code": "overview",
+    "title": "综合态势总览",
+    "summary": "聚合业务、安全、终端与运维多个主题的关键变化。",
+    "kpis": [
+      {
+        "label": "跨域风险指数",
+        "value": "78",
+        "unit": "/100",
+        "trend": "+6.2%",
+        "description": "高风险信号集中在终端暴露与业务高峰链路。",
+        "tone": "warning"
+      }
+    ],
+    "sections": [
+      {
+        "kind": "matrix",
+        "code": "overview-domain-matrix",
+        "title": "主题态势矩阵",
+        "colSpan": 7,
+        "items": []
+      }
+    ]
+  },
+  "traceId": "uuid",
+  "timestamp": "2026-07-07T00:00:00Z"
+}
+```
+
+## 5. 前端数据策略说明
+
+综合 / 安全 / 业务 / 终端四类页面采用统一策略：
+
+1. 默认按 integration 模式请求 `/api/situation/**`
+2. 若后端未启动、代理不可达或返回结构异常，则自动回退到前端 mock
+3. UI 通过来源 pill 与 warning banner 明确告知当前数据来源

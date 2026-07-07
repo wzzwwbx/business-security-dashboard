@@ -1,22 +1,45 @@
 <template>
   <section class="highlights-grid">
-    <article v-for="item in items" :key="item.title" class="highlight-card glass-card" :class="item.tone">
+    <button
+      v-for="item in items"
+      :key="item.title"
+      type="button"
+      class="highlight-card glass-card"
+      :class="item.tone"
+      @click="handleSelect(item)"
+    >
       <div class="highlight-top">
         <strong>{{ item.title }}</strong>
         <span class="highlight-metric">{{ item.metric }}</span>
       </div>
       <p>{{ item.description }}</p>
       <div class="highlight-meta">{{ item.meta }}</div>
-    </article>
+    </button>
   </section>
 </template>
 
 <script setup lang="ts">
-import type { SituationHighlight } from '@/types/situation';
+import type { SituationHighlight, SituationInsight } from '@/types/situation';
 
-defineProps<{
+const props = defineProps<{
   items: SituationHighlight[];
 }>();
+
+const emit = defineEmits<{
+  selectInsight: [insight: SituationInsight];
+}>();
+
+const handleSelect = (item: SituationHighlight) => {
+  emit('selectInsight', {
+    id: `highlight-${item.title}`,
+    label: '重点摘要',
+    title: item.title,
+    description: item.description,
+    tone: item.tone,
+    metric: item.metric,
+    meta: item.meta
+  });
+};
 </script>
 
 <style scoped>
@@ -30,6 +53,18 @@ defineProps<{
 .highlight-card {
   padding: var(--space-6);
   border-color: var(--sys-color-border-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.highlight-card:hover,
+.highlight-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--sys-color-brand-secondary);
+  outline: none;
 }
 
 .highlight-top {

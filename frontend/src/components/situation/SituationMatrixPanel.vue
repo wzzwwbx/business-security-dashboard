@@ -5,7 +5,14 @@
     </template>
 
     <div class="matrix-list">
-      <article v-for="item in section.items" :key="item.name" class="matrix-item" :class="item.tone">
+      <button
+        v-for="item in section.items"
+        :key="item.name"
+        type="button"
+        class="matrix-item"
+        :class="item.tone"
+        @click="handleSelect(item)"
+      >
         <div class="matrix-row matrix-row--top">
           <div>
             <strong>{{ item.name }}</strong>
@@ -19,18 +26,36 @@
           <span>{{ item.trend }}</span>
           <span class="matrix-status">{{ item.status }}</span>
         </div>
-      </article>
+      </button>
     </div>
   </PanelCard>
 </template>
 
 <script setup lang="ts">
 import PanelCard from '@/components/common/PanelCard.vue';
-import type { SituationMatrixSection } from '@/types/situation';
+import type { SituationInsight, SituationMatrixItem, SituationMatrixSection } from '@/types/situation';
 
-defineProps<{
+const props = defineProps<{
   section: SituationMatrixSection;
 }>();
+
+const emit = defineEmits<{
+  selectInsight: [insight: SituationInsight];
+}>();
+
+const handleSelect = (item: SituationMatrixItem) => {
+  emit('selectInsight', {
+    id: `${props.section.code}-${item.name}`,
+    label: '健康矩阵',
+    title: item.name,
+    description: item.description,
+    tone: item.tone,
+    metric: item.score,
+    meta: `${item.owner} · ${item.status} · ${item.trend}`,
+    sourceSectionCode: props.section.code,
+    sourceSectionTitle: props.section.title
+  });
+};
 </script>
 
 <style scoped>
@@ -49,6 +74,18 @@ defineProps<{
   border-radius: var(--radius-lg);
   background: var(--sys-color-surface-panel);
   border: 1px solid var(--sys-color-border-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.matrix-item:hover,
+.matrix-item:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--sys-color-brand-secondary);
+  outline: none;
 }
 
 .matrix-row {

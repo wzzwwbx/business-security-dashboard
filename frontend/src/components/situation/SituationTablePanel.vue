@@ -12,7 +12,16 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, rowIndex) in section.rows" :key="rowIndex">
+          <tr
+            v-for="(row, rowIndex) in section.rows"
+            :key="rowIndex"
+            class="interactive-row"
+            tabindex="0"
+            role="button"
+            @click="handleSelect(row, rowIndex)"
+            @keydown.enter.prevent="handleSelect(row, rowIndex)"
+            @keydown.space.prevent="handleSelect(row, rowIndex)"
+          >
             <td v-for="column in section.columns" :key="column.key">
               <span v-if="column.tone" class="table-pill" :class="row.tones?.[column.key] ?? 'info'">
                 {{ row.cells[column.key] }}
@@ -28,11 +37,32 @@
 
 <script setup lang="ts">
 import PanelCard from '@/components/common/PanelCard.vue';
-import type { SituationTableSection } from '@/types/situation';
+import type { SituationInsight, SituationTableRow, SituationTableSection } from '@/types/situation';
 
-defineProps<{
+const props = defineProps<{
   section: SituationTableSection;
 }>();
+
+const emit = defineEmits<{
+  selectInsight: [insight: SituationInsight];
+}>();
+
+const handleSelect = (row: SituationTableRow, rowIndex: number) => {
+  const values = props.section.columns
+    .map((column) => row.cells[column.key])
+    .filter((value): value is string => Boolean(value));
+
+  emit('selectInsight', {
+    id: `${props.section.code}-row-${rowIndex}`,
+    label: '观察记录',
+    title: values[1] ?? values[0] ?? `记录 ${rowIndex + 1}`,
+    description: values.join(' · '),
+    tone: row.tones?.status ?? row.tones?.level ?? 'info',
+    meta: props.section.title,
+    sourceSectionCode: props.section.code,
+    sourceSectionTitle: props.section.title
+  });
+};
 </script>
 
 <style scoped>
@@ -61,6 +91,17 @@ defineProps<{
 .table-shell th {
   color: var(--sys-color-text-secondary);
   font-weight: var(--font-weight-semibold);
+}
+
+.interactive-row {
+  cursor: pointer;
+  transition: background var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.interactive-row:hover,
+.interactive-row:focus-visible {
+  background: rgba(30, 136, 255, 0.08);
+  outline: none;
 }
 
 .table-pill {

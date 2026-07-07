@@ -5,7 +5,13 @@
     </template>
 
     <div class="timeline-list">
-      <article v-for="item in section.items" :key="`${item.time}-${item.title}`" class="timeline-item">
+      <button
+        v-for="item in section.items"
+        :key="`${item.time}-${item.title}`"
+        type="button"
+        class="timeline-item"
+        @click="handleSelect(item)"
+      >
         <div class="timeline-marker" :class="item.tone"></div>
         <div class="timeline-content">
           <div class="timeline-head">
@@ -15,18 +21,36 @@
           <p>{{ item.description }}</p>
           <div class="timeline-actor">{{ item.actor }}</div>
         </div>
-      </article>
+      </button>
     </div>
   </PanelCard>
 </template>
 
 <script setup lang="ts">
 import PanelCard from '@/components/common/PanelCard.vue';
-import type { SituationTimelineSection } from '@/types/situation';
+import type { SituationInsight, SituationTimelineItem, SituationTimelineSection } from '@/types/situation';
 
-defineProps<{
+const props = defineProps<{
   section: SituationTimelineSection;
 }>();
+
+const emit = defineEmits<{
+  selectInsight: [insight: SituationInsight];
+}>();
+
+const handleSelect = (item: SituationTimelineItem) => {
+  emit('selectInsight', {
+    id: `${props.section.code}-${item.time}-${item.title}`,
+    label: '事件时间线',
+    title: item.title,
+    description: item.description,
+    tone: item.tone,
+    metric: item.time,
+    meta: item.actor,
+    sourceSectionCode: props.section.code,
+    sourceSectionTitle: props.section.title
+  });
+};
 </script>
 
 <style scoped>
@@ -44,6 +68,14 @@ defineProps<{
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr);
   gap: var(--space-4);
+  text-align: left;
+  cursor: pointer;
+}
+
+.timeline-item:hover .timeline-content,
+.timeline-item:focus-visible .timeline-content {
+  border-color: var(--sys-color-brand-secondary);
+  transform: translateY(-1px);
 }
 
 .timeline-marker {
@@ -90,6 +122,9 @@ defineProps<{
   border-radius: var(--radius-lg);
   background: var(--sys-color-surface-timeline);
   border: 1px solid var(--sys-color-border-secondary);
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .timeline-head {
