@@ -20,21 +20,21 @@ import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
 
 class OpsIngestServiceTest {
 
@@ -106,6 +106,84 @@ class OpsIngestServiceTest {
     }
 
     @Test
+    void shouldNormalizeFlexibleExternalPayloadUsingAttributesAndMetrics() {
+        OpsIngestRequest request = new OpsIngestRequest(
+                SourceType.EXTERNAL_API,
+                "cmdb-sync",
+                "req-flex-001",
+                null,
+                null,
+                "host-health",
+                null,
+                new OpsHostPayload(null, null, "生产主机-A", null, null, null, null, null, null, null),
+                null,
+                null,
+                List.of(new OpsProcessPayload(null, null, "nginx: master process", null, null, null, true)),
+                Map.of("env", "prod"),
+                Map.of(
+                        "externalAssetId", "asset-cmdb-01",
+                        "primaryIp", "172.16.8.15",
+                        "osName", "Linux",
+                        "kernelVersion", "6.6.0",
+                        "arch", "aarch64",
+                        "cpuCores", 16,
+                        "memoryTotalBytes", 34_359_738_368L,
+                        "machineFingerprint", "cmdb-machine-01"
+                ),
+                Map.ofEntries(
+                        Map.entry("cpuUsagePct", 61.5),
+                        Map.entry("memUsedBytes", 14_000_000_000L),
+                        Map.entry("memAvailableBytes", 18_000_000_000L),
+                        Map.entry("diskUsedBytes", 600_000_000_000L),
+                        Map.entry("diskTotalBytes", 1_000_000_000_000L),
+                        Map.entry("diskUsagePct", 60.0),
+                        Map.entry("tcpEstablishedCount", 320),
+                        Map.entry("processCount", 87),
+                        Map.entry("load1", 2.1),
+                        Map.entry("load5", 1.8),
+                        Map.entry("load15", 1.4)
+                ),
+                Map.of("observedAt", OffsetDateTime.now().minusMinutes(1).toString())
+        );
+
+        when(repository.toJson(request)).thenReturn("{\"external\":true,\"schemaVersion\":\"v2\"}");
+        when(repository.resolveOrCreateHost(any())).thenReturn(303L);
+        when(repository.insertHostSnapshot(anyLong(), any(), anyString(), any(), any(), any(Double.class))).thenReturn(10001L);
+
+        OpsIngestResultDto result = service.ingestExternal("external-token", request);
+
+        assertEquals(303L, result.hostId());
+        assertEquals("EXTERNAL_API", result.sourceType());
+
+        ArgumentCaptor<OpsRepository.ResolvedHostUpsert> hostCaptor = ArgumentCaptor.forClass(OpsRepository.ResolvedHostUpsert.class);
+        ArgumentCaptor<OpsSnapshotPayload> snapshotCaptor = ArgumentCaptor.forClass(OpsSnapshotPayload.class);
+        ArgumentCaptor<List<OpsProcessPayload>> processCaptor = ArgumentCaptor.forClass(List.class);
+
+        verify(repository).resolveOrCreateHost(hostCaptor.capture());
+        verify(repository).insertHostSnapshot(eq(303L), eq(SourceType.EXTERNAL_API), eq("cmdb-sync"), any(), snapshotCaptor.capture(), any(Double.class));
+        verify(repository).insertProcessSnapshots(eq(303L), eq(10001L), any(), processCaptor.capture());
+
+        OpsRepository.ResolvedHostUpsert resolvedHost = hostCaptor.getValue();
+        assertEquals("asset-cmdb-01", resolvedHost.externalAssetId());
+        assertEquals("172.16.8.15", resolvedHost.primaryIp());
+        assertEquals("Linux", resolvedHost.osName());
+        assertEquals("aarch64", resolvedHost.arch());
+        assertEquals(16, resolvedHost.cpuCores());
+        assertEquals(34_359_738_368L, resolvedHost.memoryTotalBytes());
+        assertEquals(64, resolvedHost.hostCode().length());
+
+        OpsSnapshotPayload snapshot = snapshotCaptor.getValue();
+        assertEquals(61.5, snapshot.cpuUsagePct());
+        assertEquals(87, snapshot.processCount());
+        assertEquals(320, snapshot.tcpEstablishedCount());
+
+        OpsProcessPayload process = processCaptor.getValue().get(0);
+        assertEquals(-1, process.pid());
+        assertEquals("nginx:", process.processName());
+        assertEquals("UNKNOWN", process.state());
+    }
+
+    @Test
     void shouldRejectExpiredProbeTimestamp() throws Exception {
         OpsIngestRequest request = buildRequest(SourceType.PROBE, 12.0, 3_000_000_000L, 40.0);
         String payloadJson = "{\"probe\":true}";
@@ -145,11 +223,17 @@ class OpsIngestServiceTest {
                 "linux-arm-probe",
                 "req-001",
                 "asset-001",
+                null,
+                null,
                 OffsetDateTime.now().minusSeconds(30).toString(),
                 new OpsHostPayload("host-code-001", "arm-node-01", "ARM 节点 01", "10.0.0.8", "Linux", "6.1.0", "aarch64", 8, 16_000_000_000L, "fingerprint-001"),
                 new OpsSnapshotPayload(cpuUsagePct, 1.2, 1.0, 0.8, memUsedBytes, 500_000_000L, 0L, 480_000_000_000L, 500_000_000_000L, diskUsagePct, 98, 135),
                 List.of(new OpsNetworkInterfacePayload("eth0", 1024L, 2048L, 32L, 48L)),
-                List.of(new OpsProcessPayload(1001, "java", "java -jar probe.jar", 12.0, 256_000_000L, "S", true))
+                List.of(new OpsProcessPayload(1001, "java", "java -jar probe.jar", 12.0, 256_000_000L, "S", true)),
+                Map.of("role", "probe"),
+                Map.of(),
+                Map.of(),
+                Map.of()
         );
     }
 

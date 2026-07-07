@@ -1,5 +1,6 @@
 package com.bss.probe.service;
 
+import com.bss.probe.config.ProbeProperties;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -18,6 +19,12 @@ import java.util.Locale;
 
 @Service
 public class HostIdentityService {
+
+    private final ProbeProperties properties;
+
+    public HostIdentityService(ProbeProperties properties) {
+        this.properties = properties;
+    }
 
     public HostIdentity build(long memoryTotalBytes) {
         String hostname = readHostname();
@@ -41,7 +48,7 @@ public class HostIdentityService {
 
     private String readHostname() {
         try {
-            return Files.readString(Path.of("/proc/sys/kernel/hostname"), StandardCharsets.UTF_8).trim();
+            return Files.readString(Path.of(properties.getHostnameFile()), StandardCharsets.UTF_8).trim();
         } catch (IOException ignored) {
             try {
                 return InetAddress.getLocalHost().getHostName();
@@ -54,7 +61,7 @@ public class HostIdentityService {
     private String resolvePrimaryIp() {
         try {
             List<InetAddress> candidates = java.util.Collections.list(NetworkInterface.getNetworkInterfaces()).stream()
-                    .filter(networkInterface -> isUsable(networkInterface))
+                    .filter(this::isUsable)
                     .flatMap(networkInterface -> java.util.Collections.list(networkInterface.getInetAddresses()).stream())
                     .filter(address -> !address.isLoopbackAddress())
                     .sorted(Comparator.comparingInt(address -> address instanceof Inet4Address ? 0 : 1))
@@ -78,7 +85,7 @@ public class HostIdentityService {
     }
 
     private String readOsName() {
-        for (String line : readLines(Path.of("/etc/os-release"))) {
+        for (String line : readLines(Path.of(properties.getOsReleaseFile()))) {
             if (line.startsWith("PRETTY_NAME=")) {
                 return stripQuotes(line.substring("PRETTY_NAME=".length()));
             }
@@ -87,11 +94,11 @@ public class HostIdentityService {
     }
 
     private String resolveMachineFingerprint() {
-        String machineId = readTrimmed(Path.of("/etc/machine-id"));
+        String machineId = readTrimmed(Path.of(properties.getMachineIdFile()));
         if (!machineId.isBlank()) {
             return machineId;
         }
-        machineId = readTrimmed(Path.of("/var/lib/dbus/machine-id"));
+        machineId = readTrimmed(Path.of(properties.getDbusMachineIdFile()));
         if (!machineId.isBlank()) {
             return machineId;
         }

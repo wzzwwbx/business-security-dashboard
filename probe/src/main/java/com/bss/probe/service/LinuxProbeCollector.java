@@ -30,8 +30,6 @@ import java.util.UUID;
 public class LinuxProbeCollector {
 
     private static final Logger log = LoggerFactory.getLogger(LinuxProbeCollector.class);
-    private static final Path PROC_ROOT = Path.of("/proc");
-
     private final ProbeProperties properties;
     private final HostIdentityService hostIdentityService;
 
@@ -47,9 +45,10 @@ public class LinuxProbeCollector {
 
     public synchronized ProbeIngestRequest collect() {
         OffsetDateTime observedAt = OffsetDateTime.now(ZoneOffset.UTC);
-        ProcFileParsers.CpuTimes currentCpuTimes = ProcFileParsers.parseCpuTimes(readString(PROC_ROOT.resolve("stat")));
-        ProcFileParsers.MemoryStats memoryStats = ProcFileParsers.parseMemoryStats(readString(PROC_ROOT.resolve("meminfo")));
-        ProcFileParsers.LoadAverages loadAverages = ProcFileParsers.parseLoadAverages(readString(PROC_ROOT.resolve("loadavg")));
+        Path procRoot = procRoot();
+        ProcFileParsers.CpuTimes currentCpuTimes = ProcFileParsers.parseCpuTimes(readString(procRoot.resolve("stat")));
+        ProcFileParsers.MemoryStats memoryStats = ProcFileParsers.parseMemoryStats(readString(procRoot.resolve("meminfo")));
+        ProcFileParsers.LoadAverages loadAverages = ProcFileParsers.parseLoadAverages(readString(procRoot.resolve("loadavg")));
         HostIdentityService.HostIdentity identity = hostIdentityService.build(memoryStats.memTotalBytes());
 
         double cpuUsagePct = calculateCpuUsagePct(currentCpuTimes);
@@ -119,7 +118,7 @@ public class LinuxProbeCollector {
         double deltaSeconds = computeDeltaSeconds(observedAt);
         List<ProbeIngestRequest.NetworkInterface> interfaces = new ArrayList<>();
         Map<String, ProcFileParsers.NetDevCounters> currentMap = new HashMap<>();
-        for (ProcFileParsers.NetDevCounters counters : ProcFileParsers.parseNetDev(readString(PROC_ROOT.resolve("net/dev")))) {
+        for (ProcFileParsers.NetDevCounters counters : ProcFileParsers.parseNetDev(readString(procRoot().resolve("net/dev")))) {
             if ("lo".equals(counters.interfaceName())) {
                 continue;
             }
@@ -148,7 +147,7 @@ public class LinuxProbeCollector {
                 .map(name -> name.toLowerCase(Locale.ROOT))
                 .collect(java.util.stream.Collectors.toSet());
 
-        try (DirectoryStream<Path> processDirs = Files.newDirectoryStream(PROC_ROOT, entry -> Files.isDirectory(entry) && isNumeric(entry.getFileName().toString()))) {
+        try (DirectoryStream<Path> processDirs = Files.newDirectoryStream(procRoot(), entry -> Files.isDirectory(entry) && isNumeric(entry.getFileName().toString()))) {
             for (Path processDir : processDirs) {
                 int pid = Integer.parseInt(processDir.getFileName().toString());
                 try {
@@ -217,7 +216,7 @@ public class LinuxProbeCollector {
 
     private DiskUsage collectDiskUsage() {
         try {
-            FileStore fileStore = Files.getFileStore(Path.of("/"));
+            FileStore fileStore = Files.getFileStore(Path.of(properties.getDiskRoot()));
             long total = fileStore.getTotalSpace();
             long usable = fileStore.getUsableSpace();
             long used = Math.max(0L, total - usable);
@@ -229,8 +228,14 @@ public class LinuxProbeCollector {
     }
 
     private int collectTcpEstablishedCount() {
-        return ProcFileParsers.countTcpEstablished(readString(PROC_ROOT.resolve("net/tcp")))
-                + ProcFileParsers.countTcpEstablished(readString(PROC_ROOT.resolve("net/tcp6")));
+        Path procRoot = procRoot();
+        return ProcFileParsers.countTcpEstablished(readString(procRoot.resolve("net/tcp")))
+                + ProcFileParsers.countTcpEstablished(readString(procRoot.resolve("net/tcp6")));
+    }
+
+
+    private Path procRoot() {
+        return Path.of(properties.getProcRoot());
     }
 
     private String readCommandLine(Path path) throws IOException {

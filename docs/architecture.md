@@ -74,6 +74,24 @@ flowchart LR
 
 所有来源最终都写入统一 `ops_*` 表，前端不再按各来源原始格式分别取数。
 
+
+
+## 3.1 灵活接入 Envelope 设计
+
+考虑到外部系统协议尚未收敛，运维接入层采用 **稳定主干字段 + 可扩展 envelope** 的建模方式：
+
+- 主干字段：`sourceType / sourceSystem / requestId / externalAssetId / schemaVersion / payloadType / observedAt`
+- 业务对象：`host / snapshot / networkInterfaces / processes`
+- 扩展容器：`labels / attributes / metrics / extensions`
+
+这样做的目的不是把原始上游格式直接暴露给前端，而是让不同来源在接入层“尽量少改造即可接入”，最终仍统一落库到 `ops_host / ops_host_snapshot / ops_process_snapshot / ops_netif_snapshot`。
+
+一期的约束如下：
+
+- `PROBE` 依然采用严格字段校验，保证真实探针链路质量
+- `EXTERNAL_API` / `MANUAL_IMPORT` 允许部分字段缺失，由后端做归一补全
+- 前端 `/ops` 永远只读统一查询接口，不按来源消费原始 payload
+
 ## 4. 主机归一策略
 
 采用双标识并存：

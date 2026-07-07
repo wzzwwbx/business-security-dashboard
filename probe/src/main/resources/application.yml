@@ -15,6 +15,13 @@ probe:
   spool-dir: ./data/spool
   spool-max-size-mb: 200
   process-top-n: 10
+  # 可在测试/仿真时覆盖为 fixture 路径
+  proc-root: /proc
+  hostname-file: /proc/sys/kernel/hostname
+  os-release-file: /etc/os-release
+  machine-id-file: /etc/machine-id
+  dbus-machine-id-file: /var/lib/dbus/machine-id
+  disk-root: /
   whitelist-processes:
     - java
     - nginx

@@ -1,0 +1,51 @@
+{
+  "sourceType": "EXTERNAL_API",
+  "sourceSystem": "cmdb-sync",
+  "requestId": "req-ext-flex-001",
+  "externalAssetId": "asset-east-02",
+  "schemaVersion": "v2",
+  "payloadType": "host-health",
+  "observedAt": "2026-07-07T10:00:00Z",
+  "host": {
+    "displayName": "北京业务主机 02"
+  },
+  "labels": {
+    "env": "prod",
+    "domain": "business"
+  },
+  "attributes": {
+    "primaryIp": "10.55.19.22",
+    "osName": "Linux",
+    "kernelVersion": "6.6.0",
+    "arch": "aarch64",
+    "cpuCores": 16,
+    "memoryTotalBytes": 34359738368,
+    "machineFingerprint": "cmdb-machine-02"
+  },
+  "metrics": {
+    "cpuUsagePct": 88.4,
+    "memUsedBytes": 29527900160,
+    "memAvailableBytes": 4831838208,
+    "swapUsedBytes": 1073741824,
+    "diskUsedBytes": 751619276800,
+    "diskTotalBytes": 858993459200,
+    "diskUsagePct": 87.5,
+    "tcpEstablishedCount": 412,
+    "processCount": 289,
+    "load1": 3.65,
+    "load5": 2.88,
+    "load15": 2.53
+  },
+  "processes": [
+    {
+      "commandLine": "java -jar core-service.jar",
+      "cpuUsagePct": 36.8,
+      "memoryRssBytes": 1879048192,
+      "whitelisted": true
+    }
+  ],
+  "extensions": {
+    "observedAt": "2026-07-07T10:00:00Z",
+    "upstreamEventId": "cmdb-evt-20260707-0001"
+  }
+}

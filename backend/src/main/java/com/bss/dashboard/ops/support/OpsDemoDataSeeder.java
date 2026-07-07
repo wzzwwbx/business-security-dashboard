@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @Profile("mysql")
@@ -48,6 +49,8 @@ public class OpsDemoDataSeeder implements ApplicationRunner {
                 "linux-arm-probe",
                 "seed-probe-001",
                 null,
+                null,
+                null,
                 now,
                 new OpsHostPayload("host-arm-edge-01", "arm-edge-01", "华东 ARM 边缘节点 01", "10.23.8.11", "Linux", "6.1.0-arm64", "aarch64", 8, 17179869184L, "machine-seed-001"),
                 new OpsSnapshotPayload(43.2, 1.76, 1.42, 1.31, 9345845248L, 7834025984L, 0L, 268435456000L, 536870912000L, 50.0, 187, 156),
@@ -60,7 +63,11 @@ public class OpsDemoDataSeeder implements ApplicationRunner {
                         new OpsProcessPayload(892, "nginx", "nginx: master process", 4.1, 125829120L, "S", true),
                         new OpsProcessPayload(2311, "redis-server", "redis-server *:6379", 9.7, 268435456L, "S", true),
                         new OpsProcessPayload(1192, "node", "node export-worker.js", 14.2, 318767104L, "R", false)
-                )
+                ),
+                Map.of("env", "demo"),
+                Map.of(),
+                Map.of(),
+                Map.of()
         );
         ingestService.ingestProbe("probe-seed-agent", now, sign(now, probeRequest), probeRequest);
 
@@ -69,6 +76,8 @@ public class OpsDemoDataSeeder implements ApplicationRunner {
                 "cmdb-sync",
                 "seed-ext-001",
                 "asset-east-02",
+                "v1",
+                "host-snapshot",
                 OffsetDateTime.now().minusMinutes(2).toString(),
                 new OpsHostPayload("host-bj-app-02", "bj-app-02", "北京业务主机 02", "10.55.19.22", "Linux", "5.15.0-generic", "aarch64", 16, 34359738368L, null),
                 new OpsSnapshotPayload(88.4, 3.65, 2.88, 2.53, 29527900160L, 4831838208L, 1073741824L, 751619276800L, 858993459200L, 87.5, 412, 289),
@@ -77,7 +86,11 @@ public class OpsDemoDataSeeder implements ApplicationRunner {
                         new OpsProcessPayload(4021, "java", "java -jar core-service.jar", 36.8, 1879048192L, "R", true),
                         new OpsProcessPayload(4022, "java", "java -jar batch-job.jar", 22.7, 1207959552L, "S", true),
                         new OpsProcessPayload(521, "mysqld", "mysqld", 10.1, 2147483648L, "S", false)
-                )
+                ),
+                Map.of("domain", "business"),
+                Map.of(),
+                Map.of(),
+                Map.of()
         );
         ingestService.ingestExternal("external-dev-token", externalRequest);
 
@@ -86,11 +99,17 @@ public class OpsDemoDataSeeder implements ApplicationRunner {
                 "demo-import",
                 "seed-manual-001",
                 "asset-demo-03",
+                "v1",
+                "host-snapshot",
                 OffsetDateTime.now().minusMinutes(6).toString(),
                 new OpsHostPayload("host-demo-03", "demo-ops-03", "演示导入主机 03", "10.66.0.18", "Linux", "5.10.0", "aarch64", 4, 8589934592L, null),
                 new OpsSnapshotPayload(23.8, 0.66, 0.52, 0.48, 3221225472L, 4294967296L, 0L, 128849018880L, 268435456000L, 48.0, 62, 74),
                 List.of(new OpsNetworkInterfacePayload("eth0", 221200L, 198120L, 620L, 580L)),
-                List.of(new OpsProcessPayload(721, "python", "python collector.py", 6.4, 134217728L, "S", true))
+                List.of(new OpsProcessPayload(721, "python", "python collector.py", 6.4, 134217728L, "S", true)),
+                Map.of("domain", "demo"),
+                Map.of(),
+                Map.of(),
+                Map.of()
         );
         ingestService.ingestManual("manual-dev-token", manualRequest);
     }

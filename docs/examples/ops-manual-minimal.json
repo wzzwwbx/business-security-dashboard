@@ -1,0 +1,21 @@
+{
+  "sourceType": "MANUAL_IMPORT",
+  "sourceSystem": "demo-import",
+  "requestId": "req-manual-001",
+  "schemaVersion": "v1",
+  "payloadType": "host-snapshot",
+  "attributes": {
+    "hostname": "demo-ops-03",
+    "primaryIp": "10.66.0.18",
+    "osName": "Linux",
+    "arch": "aarch64"
+  },
+  "metrics": {
+    "cpuUsagePct": 23.8,
+    "memUsedBytes": 3221225472,
+    "memAvailableBytes": 4294967296,
+    "diskUsedBytes": 128849018880,
+    "diskTotalBytes": 268435456000,
+    "tcpEstablishedCount": 62
+  }
+}

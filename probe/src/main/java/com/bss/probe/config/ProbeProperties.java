@@ -16,6 +16,12 @@ public class ProbeProperties {
     private long spoolMaxSizeMb = 200;
     private long requestTimeoutMs = 10000;
     private int processTopN = 10;
+    private String procRoot = "/proc";
+    private String hostnameFile = "/proc/sys/kernel/hostname";
+    private String osReleaseFile = "/etc/os-release";
+    private String machineIdFile = "/etc/machine-id";
+    private String dbusMachineIdFile = "/var/lib/dbus/machine-id";
+    private String diskRoot = "/";
     private List<String> whitelistProcesses = new ArrayList<>();
     private final Schedule schedule = new Schedule();
 
@@ -81,6 +87,54 @@ public class ProbeProperties {
 
     public void setProcessTopN(int processTopN) {
         this.processTopN = processTopN;
+    }
+
+    public String getProcRoot() {
+        return procRoot;
+    }
+
+    public void setProcRoot(String procRoot) {
+        this.procRoot = procRoot;
+    }
+
+    public String getHostnameFile() {
+        return hostnameFile;
+    }
+
+    public void setHostnameFile(String hostnameFile) {
+        this.hostnameFile = hostnameFile;
+    }
+
+    public String getOsReleaseFile() {
+        return osReleaseFile;
+    }
+
+    public void setOsReleaseFile(String osReleaseFile) {
+        this.osReleaseFile = osReleaseFile;
+    }
+
+    public String getMachineIdFile() {
+        return machineIdFile;
+    }
+
+    public void setMachineIdFile(String machineIdFile) {
+        this.machineIdFile = machineIdFile;
+    }
+
+    public String getDbusMachineIdFile() {
+        return dbusMachineIdFile;
+    }
+
+    public void setDbusMachineIdFile(String dbusMachineIdFile) {
+        this.dbusMachineIdFile = dbusMachineIdFile;
+    }
+
+    public String getDiskRoot() {
+        return diskRoot;
+    }
+
+    public void setDiskRoot(String diskRoot) {
+        this.diskRoot = diskRoot;
     }
 
     public List<String> getWhitelistProcesses() {

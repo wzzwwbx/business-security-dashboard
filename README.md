@@ -238,6 +238,8 @@ java -jar target/business-security-probe-0.1.0.jar
 - 前端生产构建通过：`npm --prefix frontend run build`
 - `backend/src/main/resources/mock/situations.json` 已完成 JSON 结构校验
 - backend 已通过容器 Maven 执行测试：`docker run --rm -v "$PWD/backend":/workspace -w /workspace maven:3.9.9-eclipse-temurin-17 mvn -B test`
+- backend 灵活接入归一化已完成定向自测：external payload 可仅传 `attributes/metrics/extensions` 仍可统一归一为 host/snapshot/process
+- probe 采集链路已完成本地伪 `/proc` 自测：验证 CPU delta、TCP 连接数、网卡速率、TopN + 白名单进程筛选均正常
 - 主题态势页前端已接通交互：过滤、回退提示、焦点详情
 - `/ops` 页面仍保持真实 `/api/ops/**` 联调路径，不受本轮主题态势改造影响
 
@@ -253,3 +255,22 @@ java -jar target/business-security-probe-0.1.0.jar
 - API：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/api-spec.md`
 - 部署：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/deployment.md`
 - Probe：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/probe/README.md`
+
+
+## 灵活接入补充说明
+
+为适配“其他系统接口尚未明确”的现实情况，`/api/ops/ingest/external` 与 `/api/ops/ingest/manual` 已升级为 **标准字段 + 扩展字段兼容模型**：
+
+- 标准字段：`sourceType`、`sourceSystem`、`requestId`、`externalAssetId`、`schemaVersion`、`payloadType`、`observedAt`
+- 扩展字段：`labels`、`attributes`、`metrics`、`extensions`
+- 归一策略：
+  - 主机基础信息优先取 `host.*`，缺失时回退 `attributes/extensions`
+  - 指标优先取 `snapshot.*`，缺失时回退 `metrics`
+  - `externalAssetId` 缺失时可从 `attributes.assetId/externalAssetId` 提取
+  - `observedAt` 缺失时可从 `attributes/extensions` 提取，仍缺失则回退当前时间
+  - `hostCode` 缺失时自动生成稳定值，避免 external/manual 接入方必须先实现内部主机编码算法
+
+示例文件：
+
+- `/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/examples/ops-external-flexible.json`
+- `/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/examples/ops-manual-minimal.json`

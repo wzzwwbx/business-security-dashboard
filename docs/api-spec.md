@@ -104,6 +104,42 @@ hex(hmac_sha256(sharedSecret, X-Timestamp + "\n" + rawJsonBody))
 
 - 用于联调 / 演示 / 测试数据注入
 
+
+
+### external / manual 灵活接入约定
+
+`/api/ops/ingest/external` 与 `/api/ops/ingest/manual` 支持两类字段同时存在：
+
+1. **标准领域字段**
+   - `host`
+   - `snapshot`
+   - `networkInterfaces`
+   - `processes`
+
+2. **扩展 envelope 字段**
+   - `schemaVersion`
+   - `payloadType`
+   - `labels`
+   - `attributes`
+   - `metrics`
+   - `extensions`
+
+归一化规则：
+
+- `host.*` 缺失时，后端会从 `attributes/extensions` 自动回填 `hostname / primaryIp / osName / kernelVersion / arch / cpuCores / memoryTotalBytes / machineFingerprint`
+- `snapshot.*` 缺失时，后端会从 `metrics` 自动回填 `cpuUsagePct / memUsedBytes / memAvailableBytes / swapUsedBytes / diskUsedBytes / diskTotalBytes / diskUsagePct / tcpEstablishedCount / processCount / load1 / load5 / load15`
+- `processes[*].pid` 缺失时回填 `-1`
+- `processes[*].processName` 缺失时从 `commandLine` 首 token 推断
+- `processes[*].state` 缺失时回填 `UNKNOWN`
+- `hostCode` 缺失时：
+  - 若存在 `externalAssetId`，使用 `sha256(sourceSystem + "|" + externalAssetId)` 生成稳定值
+  - 否则使用 `sourceSystem + hostname + primaryIp + arch + machineFingerprint` 组合生成稳定值
+
+示例：
+
+- flexible external：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/examples/ops-external-flexible.json`
+- minimal manual：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/examples/ops-manual-minimal.json`
+
 ## 3. 运维查询接口 `/api/ops/**`
 
 ### 时间字段约定
