@@ -172,10 +172,11 @@ X-Ingest-Token: manual-dev-token
 已完成验证：
 
 - `frontend` 执行 `npm --prefix frontend run build` 成功
+- backend 已通过容器 Maven 测试：`docker run --rm -v "$PWD/backend":/workspace -w /workspace maven:3.9.9-eclipse-temurin-17 mvn -B test`
 - `backend/src/main/resources/mock/situations.json` 已完成结构校验
 - 本地前端 dev server 可启动并用于主题态势页面验证
 
 补充说明：
 
-- 当前宿主机若缺少 `mvn`，建议使用容器 Maven 或具备 Maven 的环境执行 backend / probe 单测
+- 当前宿主机若缺少 `mvn`，建议继续使用容器 Maven 或具备 Maven 的环境执行 backend / probe 单测
 - 若本地桌面沙箱直接请求 `127.0.0.1:8080` 失败，而前端代理联调正常，通常是沙箱网络限制，不代表 backend 异常

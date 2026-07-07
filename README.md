@@ -237,13 +237,14 @@ java -jar target/business-security-probe-0.1.0.jar
 
 - 前端生产构建通过：`npm --prefix frontend run build`
 - `backend/src/main/resources/mock/situations.json` 已完成 JSON 结构校验
+- backend 已通过容器 Maven 执行测试：`docker run --rm -v "$PWD/backend":/workspace -w /workspace maven:3.9.9-eclipse-temurin-17 mvn -B test`
 - 主题态势页前端已接通交互：过滤、回退提示、焦点详情
 - `/ops` 页面仍保持真实 `/api/ops/**` 联调路径，不受本轮主题态势改造影响
 
 ### 当前环境限制说明
 
 - 当前桌面环境可直接完成前端构建与本地 dev server 启动验证
-- 当前宿主机缺少 `mvn` 命令，因此未在本机直接执行 `backend` 新增 situation 模块的 Maven 编译；已补充 `SituationDataLoaderTest`，建议在具备 Maven 或容器 Maven 的环境中执行 `mvn test` 进行最终校验
+- 当前宿主机虽然缺少本地 `mvn` 命令，但已通过容器 Maven 完成 backend 测试校验；后续在目标环境仍建议保留常规 Maven / CI 流水线验证
 - 在当前前端实现中，`/overview`、`/security`、`/business`、`/terminal` 默认优先请求 `/api/situation/**`；若接口不可达，会自动回退到本地经验数据并展示 warning banner
 
 ## 文档
