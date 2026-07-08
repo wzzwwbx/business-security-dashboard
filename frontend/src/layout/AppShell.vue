@@ -3,37 +3,50 @@
     <aside class="sidebar glass-card">
       <div class="brand-block">
         <div class="brand-mark">BS</div>
-        <div>
+        <div class="brand-copy">
           <div class="brand-title">业务安全态势系统</div>
           <div class="brand-subtitle">Business Security Situation</div>
         </div>
       </div>
 
-      <div v-if="menuNotice" class="sidebar-notice" :class="menuNotice.tone">
-        <strong>{{ menuNotice.title }}</strong>
-        <p>{{ menuNotice.description }}</p>
+      <div class="sidebar-notice" :class="modeTone">
+        <strong>{{ auth.modeLabel.value }}</strong>
+        <p>{{ auth.sessionMessage.value || noticeDescription }}</p>
       </div>
 
       <nav class="nav-list" aria-label="主导航">
         <RouterLink
-          v-for="item in menu"
+          v-for="item in visibleNavItems"
           :key="item.code"
           class="nav-item"
           :to="item.route"
-          :aria-label="item.name"
-          :title="item.name"
+          :title="item.description"
           active-class="active"
         >
           <span class="nav-icon" aria-hidden="true">
-            <BaseIcon :name="iconMap[item.code] ?? 'overview'" />
+            <BaseIcon :name="item.icon" />
           </span>
-          <span class="nav-text">{{ item.name }}</span>
-          <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
+          <span class="nav-text">{{ item.label }}</span>
         </RouterLink>
       </nav>
 
+      <div class="account-card">
+        <div class="account-avatar">
+          <BaseIcon name="user" />
+        </div>
+        <div class="account-main">
+          <strong>{{ auth.currentUser.value?.displayName ?? '演示访客' }}</strong>
+          <span>{{ auth.currentUser.value?.roleNames?.join(' / ') || '前端预览模式' }}</span>
+        </div>
+      </div>
+
+      <button v-if="auth.availability.value === 'enabled' && auth.currentUser.value" class="logout-button" type="button" @click="handleLogout">
+        <span class="nav-icon"><BaseIcon name="logout" /></span>
+        <span>退出登录</span>
+      </button>
+
       <div class="sidebar-footer">
-        <span class="status-dot" :class="footerTone"></span>
+        <span class="status-dot" :class="modeTone"></span>
         <span>{{ footerLabel }}</span>
         <span class="footer-time">{{ now }}</span>
       </div>
@@ -47,115 +60,63 @@
 
 <script setup lang="ts">
 import BaseIcon from '@/components/common/BaseIcon.vue';
-import { DashboardApiError, fetchMenu, fetchRuntime, getDashboardDataSource } from '@/api/dashboard';
-import { getMockMenu } from '@/mocks/dashboard';
-import type { DashboardMenuItem, DashboardRuntimeInfo, DashboardStatusTone } from '@/types/dashboard';
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
-import { RouterLink } from 'vue-router';
+import { MAIN_NAV_ITEMS } from '@/constants/navigation';
+import { useAuthSession } from '@/composables/useAuthSession';
+import { computed, onBeforeUnmount, onMounted, shallowRef } from 'vue';
+import { RouterLink, useRouter } from 'vue-router';
 
-interface SidebarNotice {
-  title: string;
-  description: string;
-  tone: DashboardStatusTone;
-}
-
-const menu = ref<DashboardMenuItem[]>([]);
-const runtimeInfo = shallowRef<DashboardRuntimeInfo | null>(null);
+const auth = useAuthSession();
+const router = useRouter();
 const now = shallowRef('');
-const menuNotice = shallowRef<SidebarNotice | null>(null);
 let timer: number | undefined;
 
-const iconMap: Record<string, 'overview' | 'terminal' | 'business' | 'security' | 'ops'> = {
-  overview: 'overview',
-  terminal: 'terminal',
-  business: 'business',
-  security: 'security',
-  ops: 'ops'
-};
+const visibleNavItems = computed(() => MAIN_NAV_ITEMS
+  .map((item) => ({
+    ...item,
+    route: item.code === 'system' ? auth.resolveFirstSystemRoute() ?? item.route : item.route
+  }))
+  .filter((item) => item.code === 'system' ? Boolean(auth.resolveFirstSystemRoute()) : auth.canAccessPage(item.code)));
 
-const footerTone = computed<DashboardStatusTone>(() => {
-  if (menuNotice.value?.tone) {
-    return menuNotice.value.tone;
+const modeTone = computed(() => {
+  if (auth.availability.value === 'enabled') {
+    return 'info';
   }
 
-  return getDashboardDataSource() === 'integration' ? 'info' : 'success';
+  if (auth.availability.value === 'demo') {
+    return 'success';
+  }
+
+  return 'warning';
 });
 
-const footerLabel = computed(() => {
-  if (runtimeInfo.value) {
-    return runtimeInfo.value.dataSourceMode === 'mysql' ? 'MySQL 联调模式' : '后端 Mock 联调模式';
-  }
+const noticeDescription = computed(() => auth.availability.value === 'enabled'
+  ? '导航按页面权限实时裁剪，系统管理页再按动作权限细分页签。'
+  : '当后端 IAM 不可用时，系统自动回退到 demo 数据，便于前端继续演示。');
 
-  if (menuNotice.value) {
-    return menuNotice.value.title;
-  }
+const footerLabel = computed(() => auth.currentUser.value?.username
+  ? `${auth.currentUser.value.username} 已连接`
+  : auth.modeLabel.value);
 
-  return getDashboardDataSource() === 'integration' ? '接口联调模式' : '演示数据模式';
-});
-
-const refreshClock = () => {
+function refreshClock() {
   now.value = new Intl.DateTimeFormat('zh-CN', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit'
   }).format(new Date());
-};
+}
 
-const buildRuntimeNotice = (runtime: DashboardRuntimeInfo): SidebarNotice => {
-  const isMysql = runtime.dataSourceMode === 'mysql';
+async function handleLogout() {
+  await auth.logout();
+  await router.replace('/login');
+}
 
-  return {
-    title: isMysql ? '后端 MySQL 已接入' : '后端 Mock 已接入',
-    description: `${runtime.applicationName} · profile=${runtime.activeProfile} · Java ${runtime.javaVersion}${
-      isMysql ? ' · 已启用数据库初始化/灌数链路' : ' · 当前后端仍以演示数据返回接口'
-    }`,
-    tone: isMysql ? 'success' : 'info'
-  };
-};
-
-const loadMenu = async () => {
-  try {
-    if (getDashboardDataSource() === 'integration') {
-      const [menuData, runtime] = await Promise.all([fetchMenu(), fetchRuntime()]);
-      menu.value = menuData;
-      runtimeInfo.value = runtime;
-      menuNotice.value = runtime ? buildRuntimeNotice(runtime) : {
-        title: '后端接口已接入',
-        description: '当前导航来自 Spring Boot API，可继续联调页面与数据库能力。',
-        tone: 'info'
-      };
-      return;
-    }
-
-    menu.value = await fetchMenu();
-    runtimeInfo.value = null;
-    menuNotice.value = {
-      title: '本地演示模式',
-      description: '当前导航与页面均来自前端 mock 数据，适合视觉预览与原型演示。',
-      tone: 'success'
-    };
-  } catch (error) {
-    runtimeInfo.value = null;
-    menu.value = await getMockMenu();
-    menuNotice.value = {
-      title: '联调未建立',
-      description:
-        error instanceof DashboardApiError
-          ? `${error.message}，当前仅保留本地导航壳用于继续排查页面。`
-          : '导航接口暂不可用，当前仅保留本地导航壳用于继续排查页面。',
-      tone: 'warning'
-    };
-  }
-};
-
-onMounted(async () => {
-  await loadMenu();
+onMounted(() => {
   refreshClock();
   timer = window.setInterval(refreshClock, 1000);
 });
 
 onBeforeUnmount(() => {
-  if (timer) {
+  if (timer !== undefined) {
     window.clearInterval(timer);
   }
 });
@@ -164,10 +125,10 @@ onBeforeUnmount(() => {
 <style scoped>
 .sidebar {
   position: sticky;
-  top: var(--space-6);
+  top: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--space-7);
   height: calc(100vh - (var(--space-6) * 2));
   margin: var(--space-6);
   padding: var(--space-8) var(--space-6);
@@ -178,11 +139,9 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: var(--space-5);
-  min-width: 0;
 }
 
 .brand-mark {
-  flex: 0 0 auto;
   width: 48px;
   height: 48px;
   border-radius: var(--radius-lg);
@@ -191,6 +150,10 @@ onBeforeUnmount(() => {
   font-weight: var(--font-weight-black);
   letter-spacing: 1px;
   background: var(--sys-color-brand-gradient);
+}
+
+.brand-copy {
+  min-width: 0;
 }
 
 .brand-title {
@@ -205,23 +168,12 @@ onBeforeUnmount(() => {
   font-size: var(--font-size-12);
 }
 
-.sidebar-notice {
+.sidebar-notice,
+.account-card {
   padding: var(--space-4) var(--space-5);
   border-radius: var(--radius-lg);
   border: 1px solid var(--sys-color-border-secondary);
   background: var(--sys-color-surface-muted);
-}
-
-.sidebar-notice strong {
-  display: block;
-  font-size: var(--font-size-14);
-}
-
-.sidebar-notice p {
-  margin: var(--space-2) 0 0;
-  color: var(--sys-color-text-secondary);
-  font-size: var(--font-size-12);
-  line-height: var(--line-height-base);
 }
 
 .sidebar-notice.success {
@@ -236,8 +188,11 @@ onBeforeUnmount(() => {
   border-color: var(--sys-color-status-warning-border);
 }
 
-.sidebar-notice.danger {
-  border-color: var(--sys-color-status-danger-border);
+.sidebar-notice p {
+  margin: var(--space-2) 0 0;
+  color: var(--sys-color-text-secondary);
+  font-size: var(--font-size-12);
+  line-height: var(--line-height-base);
 }
 
 .nav-list {
@@ -246,7 +201,8 @@ onBeforeUnmount(() => {
   gap: var(--space-3);
 }
 
-.nav-item {
+.nav-item,
+.logout-button {
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -255,11 +211,13 @@ onBeforeUnmount(() => {
   border: 1px solid transparent;
   border-radius: var(--radius-lg);
   color: var(--sys-color-text-secondary);
+  background: transparent;
   transition: all var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .nav-item:hover,
-.nav-item.active {
+.nav-item.active,
+.logout-button:hover {
   color: var(--sys-color-text-primary);
   border-color: var(--sys-color-border-accent);
   background: linear-gradient(90deg, var(--sys-color-brand-primary-soft), var(--sys-color-brand-primary-weak));
@@ -280,16 +238,40 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-.nav-badge {
-  min-width: 24px;
-  height: 24px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--sys-color-status-danger-soft);
-  color: var(--sys-color-status-danger-text);
+.account-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.account-avatar {
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
+  border-radius: 50%;
+  color: var(--sys-color-brand-secondary);
+  background: var(--sys-color-brand-secondary-tint);
+}
+
+.account-main {
+  min-width: 0;
+}
+
+.account-main strong,
+.account-main span {
+  display: block;
+}
+
+.account-main span {
+  margin-top: var(--space-2);
+  color: var(--sys-color-text-secondary);
   font-size: var(--font-size-12);
+}
+
+.logout-button {
+  width: 100%;
+  cursor: pointer;
 }
 
 .sidebar-footer {
@@ -318,19 +300,16 @@ onBeforeUnmount(() => {
   .brand-title,
   .brand-subtitle,
   .nav-text,
-  .sidebar-footer span:not(.status-dot),
-  .nav-badge,
-  .sidebar-notice {
+  .sidebar-notice,
+  .account-main,
+  .logout-button span:last-child,
+  .sidebar-footer {
     display: none;
   }
 
-  .nav-item {
+  .logout-button {
     justify-content: center;
-    padding-inline: var(--space-3);
-  }
-
-  .brand-block {
-    justify-content: center;
+    width: auto;
   }
 }
 
@@ -338,60 +317,27 @@ onBeforeUnmount(() => {
   .sidebar {
     position: static;
     height: auto;
-    margin: var(--space-4) var(--space-4) 0;
-    padding: var(--space-6);
-    gap: var(--space-6);
-  }
-
-  .brand-title,
-  .brand-subtitle,
-  .nav-text,
-  .sidebar-footer span,
-  .nav-badge,
-  .sidebar-notice {
-    display: initial;
-  }
-
-  .sidebar-notice {
-    display: block;
-  }
-
-  .brand-block {
-    justify-content: flex-start;
+    margin: var(--space-4);
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
   }
 
   .nav-list {
-    flex-direction: row;
-    flex-wrap: wrap;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .nav-item {
-    flex: 1 1 calc(50% - 10px);
-    justify-content: flex-start;
-    padding-inline: var(--space-5);
-  }
-
-  .sidebar-footer {
-    padding-inline: 0;
+  .nav-item,
+  .logout-button {
+    justify-content: center;
   }
 }
 
 @media (max-width: 640px) {
-  .sidebar {
-    margin: var(--space-3) var(--space-3) 0;
-    padding: var(--space-5);
-  }
-
-  .brand-title {
-    font-size: var(--font-size-16);
-  }
-
-  .nav-item {
-    flex-basis: 100%;
-  }
-
-  .footer-time {
-    display: none;
+  .nav-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>

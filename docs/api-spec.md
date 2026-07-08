@@ -215,7 +215,54 @@ hex(hmac_sha256(sharedSecret, X-Timestamp + "\n" + rawJsonBody))
 - 已归一主机数量
 - 最近同步时间
 
-## 4. 主题态势接口 `/api/situation/**`
+## 4. 等保三员 IAM 接口 `/api/iam/**`
+
+### 4.1 初始化与认证
+
+- `GET /api/iam/bootstrap/status`：查询是否已初始化三员账户
+- `POST /api/iam/bootstrap/init`：首次初始化 `sysadmin / secadmin / auditadmin`
+- `POST /api/iam/auth/login`：用户名密码登录，建立 HttpOnly Session
+- `POST /api/iam/auth/logout`：注销当前会话
+- `GET /api/iam/auth/me`：获取当前登录用户、页面权限、动作权限
+- `POST /api/iam/auth/change-password`：修改当前登录用户密码
+
+### 4.2 账户与角色
+
+- `GET /api/iam/users`：查询账户列表，需 `account:view`
+- `POST /api/iam/users`：创建账户，需 `account:create`
+- `PATCH /api/iam/users/{userId}`：更新显示名/状态等，需 `account:update`
+- `POST /api/iam/users/{userId}/disable`：发起禁用申请，需 `account:disable + approval:submit`
+- `POST /api/iam/users/{userId}/enable`：发起启用申请，需 `account:enable + approval:submit`
+- `POST /api/iam/users/{userId}/reset-password`：发起口令重置申请，需 `account:reset-password + approval:submit`
+- `PUT /api/iam/users/{userId}/roles`：发起角色绑定申请，需 `account:bind-role + approval:submit`
+- `GET /api/iam/roles`：查询角色目录，需 `role:view`
+- `GET /api/iam/permissions`：查询权限目录，需 `role:view`
+
+### 4.3 审批与审计
+
+- `GET /api/iam/approvals`：查询审批工单，需 `approval:view`
+- `POST /api/iam/approvals/{ticketId}/approve`：审批通过，需 `approval:review`
+- `POST /api/iam/approvals/{ticketId}/reject`：审批拒绝，需 `approval:review`
+- `GET /api/iam/audit/logins?limit=50`：查询登录审计，需 `audit:view`
+- `GET /api/iam/audit/operations?limit=50`：查询操作审计，需 `audit:view`
+
+### 4.4 认证说明
+
+- 后端在 `mysql` profile 下启用 IAM 接口
+- 认证方式为 **Spring Security Session**，前端需使用 `withCredentials=true` 且优先走同源 `/api` 代理
+- 未登录访问受保护接口时，后端统一返回：
+
+```json
+{
+  "code": 401,
+  "message": "请先登录后再访问系统资源",
+  "details": { "error": "Unauthorized" },
+  "traceId": "...",
+  "timestamp": "2026-07-08T02:24:16Z"
+}
+```
+
+## 5. 主题态势接口 `/api/situation/**`
 
 ### `GET /api/situation/{pageCode}`
 
@@ -302,7 +349,7 @@ hex(hmac_sha256(sharedSecret, X-Timestamp + "\n" + rawJsonBody))
 }
 ```
 
-## 5. 前端数据策略说明
+## 6. 前端数据策略说明
 
 综合 / 安全 / 业务 / 终端四类页面采用统一策略：
 

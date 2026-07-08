@@ -184,3 +184,164 @@ CREATE TABLE IF NOT EXISTS ops_ingest_payload (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_ops_ingest_payload_created_at (created_at)
 );
+
+CREATE TABLE IF NOT EXISTS iam_bootstrap_state (
+    id BIGINT PRIMARY KEY,
+    initialized TINYINT NOT NULL DEFAULT 0,
+    initialized_at TIMESTAMP NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS iam_session_policy (
+    id BIGINT PRIMARY KEY,
+    max_failed_attempts INT NOT NULL,
+    lock_minutes INT NOT NULL,
+    session_timeout_minutes INT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS iam_user (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(64) NOT NULL UNIQUE,
+    display_name VARCHAR(64) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    built_in TINYINT NOT NULL DEFAULT 0,
+    force_password_change TINYINT NOT NULL DEFAULT 1,
+    failed_login_attempts INT NOT NULL DEFAULT 0,
+    locked_until TIMESTAMP NULL,
+    last_login_at TIMESTAMP NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_iam_user_status (status),
+    INDEX idx_iam_user_last_login (last_login_at)
+);
+
+CREATE TABLE IF NOT EXISTS iam_role (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    role_code VARCHAR(64) NOT NULL UNIQUE,
+    role_name VARCHAR(64) NOT NULL,
+    role_type VARCHAR(32) NOT NULL,
+    description VARCHAR(255) NULL,
+    enabled TINYINT NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_iam_role_type (role_type)
+);
+
+CREATE TABLE IF NOT EXISTS iam_permission (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    permission_code VARCHAR(128) NOT NULL UNIQUE,
+    resource_type VARCHAR(64) NOT NULL,
+    action_code VARCHAR(64) NOT NULL,
+    description VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_iam_permission_resource (resource_type, action_code)
+);
+
+CREATE TABLE IF NOT EXISTS iam_role_permission (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    role_id BIGINT NOT NULL,
+    permission_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_iam_role_permission (role_id, permission_id),
+    INDEX idx_iam_role_permission_permission (permission_id)
+);
+
+CREATE TABLE IF NOT EXISTS iam_user_role (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_iam_user_role (user_id, role_id),
+    INDEX idx_iam_user_role_role (role_id)
+);
+
+CREATE TABLE IF NOT EXISTS iam_user_scope (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    scope_type VARCHAR(64) NOT NULL,
+    scope_code VARCHAR(128) NOT NULL,
+    enabled TINYINT NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_iam_user_scope (user_id, scope_type, scope_code)
+);
+
+CREATE TABLE IF NOT EXISTS iam_password_credential (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    hash_algorithm VARCHAR(32) NOT NULL,
+    changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS iam_password_history (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_iam_password_history_user (user_id, created_at)
+);
+
+CREATE TABLE IF NOT EXISTS iam_login_audit (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NULL,
+    username VARCHAR(64) NOT NULL,
+    login_success TINYINT NOT NULL,
+    session_id VARCHAR(128) NULL,
+    client_ip VARCHAR(64) NULL,
+    user_agent VARCHAR(255) NULL,
+    failure_reason VARCHAR(255) NULL,
+    logged_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_iam_login_audit_time (logged_at),
+    INDEX idx_iam_login_audit_user (user_id, logged_at)
+);
+
+CREATE TABLE IF NOT EXISTS iam_operation_audit (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    operator_user_id BIGINT NULL,
+    operator_username VARCHAR(64) NOT NULL,
+    operation_type VARCHAR(64) NOT NULL,
+    target_type VARCHAR(64) NOT NULL,
+    target_id VARCHAR(128) NULL,
+    target_label VARCHAR(255) NULL,
+    result_status VARCHAR(32) NOT NULL,
+    trace_id VARCHAR(128) NOT NULL,
+    detail_json JSON NULL,
+    operated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_iam_operation_audit_time (operated_at),
+    INDEX idx_iam_operation_audit_operator (operator_user_id, operated_at)
+);
+
+CREATE TABLE IF NOT EXISTS iam_approval_ticket (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    ticket_type VARCHAR(64) NOT NULL,
+    target_type VARCHAR(64) NOT NULL,
+    target_id VARCHAR(128) NOT NULL,
+    target_label VARCHAR(255) NULL,
+    requester_user_id BIGINT NOT NULL,
+    reviewer_user_id BIGINT NULL,
+    status VARCHAR(32) NOT NULL,
+    summary VARCHAR(255) NOT NULL,
+    reason VARCHAR(255) NOT NULL,
+    review_comment VARCHAR(255) NULL,
+    submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reviewed_at TIMESTAMP NULL,
+    executed_at TIMESTAMP NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_iam_approval_ticket_status (status, submitted_at),
+    INDEX idx_iam_approval_ticket_requester (requester_user_id, submitted_at)
+);
+
+CREATE TABLE IF NOT EXISTS iam_approval_payload (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    ticket_id BIGINT NOT NULL UNIQUE,
+    payload_json JSON NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

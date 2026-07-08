@@ -3,6 +3,7 @@ package com.bss.dashboard.ops.controller;
 import com.bss.dashboard.api.ApiResponse;
 import com.bss.dashboard.ops.dto.*;
 import com.bss.dashboard.ops.service.OpsQueryService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ import java.util.List;
 @RestController
 @Profile("mysql")
 @RequestMapping("/api/ops")
+@PreAuthorize("hasAuthority('page:ops:view')")
 public class OpsQueryController {
 
     private final OpsQueryService queryService;

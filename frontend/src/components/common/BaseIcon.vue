@@ -22,7 +22,7 @@
 import { computed } from 'vue';
 
 const props = defineProps<{
-  name: 'overview' | 'terminal' | 'business' | 'security' | 'ops' | 'empty' | 'refresh';
+  name: 'overview' | 'terminal' | 'business' | 'security' | 'ops' | 'system' | 'user' | 'logout' | 'empty' | 'refresh';
 }>();
 
 const pathMap: Record<string, string[]> = {
@@ -58,6 +58,23 @@ const pathMap: Record<string, string[]> = {
     'M4.8 16.8l2.1-2.1',
     'M17.1 9.1l2.1-2.1',
     'M12 8.5a3.5 3.5 0 1 0 0 7a3.5 3.5 0 0 0 0-7z'
+  ],
+  system: [
+    'M4 7h16',
+    'M4 12h16',
+    'M4 17h16',
+    'M7 4v16',
+    'M12 4v16',
+    'M17 4v16'
+  ],
+  user: [
+    'M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8z',
+    'M5 20a7 7 0 0 1 14 0'
+  ],
+  logout: [
+    'M10 7V5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2v-2',
+    'M15 12H4',
+    'M7.5 8.5L4 12l3.5 3.5'
   ],
   empty: [
     'M5 5h14v14H5z',

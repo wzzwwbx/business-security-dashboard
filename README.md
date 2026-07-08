@@ -167,6 +167,31 @@
 详见：
 - `/Users/bingham/Documents/Project/业务安全态势系统_项目资料/probe/README.md`
 
+### 8. IAM 等保三员治理
+
+系统已补齐符合等级保护三员分立要求的 IAM 基础能力，形成 **系统管理员 / 安全管理员 / 审计管理员** 的职责边界：
+
+- 系统管理员：账户创建、启停用申请、口令重置申请、基础资料维护
+- 安全管理员：角色绑定审批、高危账户操作审批、策略与来源接入授权
+- 审计管理员：登录审计、操作审计、审批留痕核查
+
+当前已工程化落地：
+
+- 后端 `Spring Security + HttpOnly Session` 本地认证
+- `/api/iam/**` 账户、角色、审批、审计接口
+- 初始化接口：首次启动可一键创建 `sysadmin / secadmin / auditadmin`
+- 前端登录页、初始化页、403 页、系统管理页
+- 导航与页面按 `page permission + action permission` 实时裁剪
+- 审计日志记录登录与关键操作，审批流记录审批结果与意见
+
+对应工程模块：
+
+- `backend/src/main/java/com/bss/dashboard/iam/**`
+- `frontend/src/views/LoginPageView.vue`
+- `frontend/src/views/BootstrapPageView.vue`
+- `frontend/src/views/SystemPageView.vue`
+- `frontend/src/components/system/*`
+
 ## 运行方式
 
 ### 前端
@@ -178,6 +203,9 @@ cd /Users/bingham/Documents/Project/业务安全态势系统_项目资料/fronte
 npm install
 npm run dev:integration
 ```
+
+> 开发联调时请保持前端通过 **Vite proxy 同源访问 `/api`**。
+> 不要把 dev 环境改成优先直连 `http://127.0.0.1:8080`，否则浏览器 `JSESSIONID` 会因为跨源而导致 IAM 登录态不稳定。
 
 #### 本地 Mock 模式
 
@@ -242,6 +270,8 @@ java -jar target/business-security-probe-0.1.0.jar
 - probe 采集链路已完成本地伪 `/proc` 自测：验证 CPU delta、TCP 连接数、网卡速率、TopN + 白名单进程筛选均正常
 - 主题态势页前端已接通交互：过滤、回退提示、焦点详情
 - `/ops` 页面仍保持真实 `/api/ops/**` 联调路径，不受本轮主题态势改造影响
+- IAM 初始化 / 登录 / 会话鉴权 / 三员账户列表 / 角色与权限查询 / 审批列表 已完成 curl 真链路验证
+- 浏览器已完成登录验证：`/login -> /overview -> /system/accounts` 可按权限正常展示
 
 ### 当前环境限制说明
 

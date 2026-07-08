@@ -47,6 +47,12 @@ npm run dev:integration
 
 Vite 会将 `/api` 代理到 `http://localhost:8080`。
 
+### 3.1 IAM 联调注意事项
+
+- 开发态必须优先走 **同源 `/api` 代理**，不要把前端改成优先直连 `127.0.0.1:8080`
+- 原因：本项目的 IAM 认证基于 `HttpOnly Session (JSESSIONID)`，若页面运行在 `localhost:5173/5176` 而接口改成 `127.0.0.1:8080`，浏览器会出现跨源 Cookie 问题，导致“登录成功但后续接口未登录”
+- 若需要覆盖代理行为，请显式设置 `VITE_USE_PROXY=true`，保持 `frontend/src/api/http.ts` 继续优先走同源 `/api`
+
 如果只验证前端展示与回退机制，可运行：
 
 ```bash
@@ -62,6 +68,9 @@ npm run dev:mock
 - `http://localhost:5173/business`
 - `http://localhost:5173/terminal`
 - `http://localhost:5173/ops`
+- `http://localhost:5173/login`
+- `http://localhost:5173/bootstrap`
+- `http://localhost:5173/system/accounts`
 
 综合 / 安全 / 业务 / 终端页面的联调策略：
 
@@ -79,6 +88,8 @@ npm run dev:mock
 2. 切换 filter chips 后，板块是否按标签过滤
 3. backend 关闭时，是否展示 `Mock 回退` 与 warning banner
 4. backend 开启时，是否展示 `接口联调`
+5. 初始化完成后，是否可走通 `/login -> /overview -> /system/accounts`
+6. 使用不同三员账号登录时，导航与系统页标签是否按权限裁剪
 
 ## 5. Probe 部署
 
