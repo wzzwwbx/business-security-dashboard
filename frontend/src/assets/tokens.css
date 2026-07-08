@@ -169,6 +169,13 @@
   --layout-page-padding-mobile: 16px;
   --layout-grid-gap: 18px;
   --layout-card-gap: 16px;
+  --layout-screen-width: 1920px;
+  --layout-screen-height: 1080px;
+  --layout-page-max-width-desktop: 1760px;
+  --layout-hero-height: 118px;
+  --layout-kpi-row-height: 112px;
+  --layout-scene-height: 580px;
+  --layout-support-panel-height: 278px;
 
   /* Icon */
   --icon-size-sm: 16px;

@@ -121,7 +121,7 @@ export function sourceTypeLabel(sourceType: string | null | undefined) {
     case 'MANUAL_IMPORT':
       return '手工注入';
     default:
-      return sourceType || '未知来源';
+      return sourceType ? '终端来源' : '未知来源';
   }
 }
 
@@ -151,10 +151,9 @@ export function sourceSystemLabel(value: string | null | undefined) {
     case 'security-ops-manual':
       return '手工注入台';
     default:
-      return value || '未命名来源';
+      return value ? '终端来源' : '未命名来源';
   }
 }
-
 
 export function ownershipStatusLabel(value: string | null | undefined) {
   switch (value) {

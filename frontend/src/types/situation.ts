@@ -1,3 +1,5 @@
+import type { MiniTrendItem, VisualAssetNode, VisualLink } from '@/types/visualization';
+
 export type SituationTone = 'success' | 'warning' | 'danger' | 'info';
 export type SituationPageCode = 'overview' | 'security' | 'business' | 'terminal';
 export type SituationDataMode = 'mock' | 'planned';
@@ -134,6 +136,28 @@ export interface SituationTimelineSection extends SituationSectionBase {
   items: SituationTimelineItem[];
 }
 
+export interface SituationSceneSection extends SituationSectionBase {
+  kind: 'scene' | 'relationMap';
+  nodes: VisualAssetNode[];
+  links: VisualLink[];
+  legend?: string[];
+}
+
+export interface SituationAssetClusterSection extends SituationSectionBase {
+  kind: 'assetCluster';
+  nodes: VisualAssetNode[];
+}
+
+export interface SituationMiniTrendSection extends SituationSectionBase {
+  kind: 'miniTrendGroup';
+  items: MiniTrendItem[];
+}
+
+export interface SituationDrilldownSummarySection extends SituationSectionBase {
+  kind: 'drilldownSummary';
+  items: SituationCardItem[];
+}
+
 export type SituationSection =
   | SituationMatrixSection
   | SituationChartSection
@@ -141,7 +165,11 @@ export type SituationSection =
   | SituationSourcesSection
   | SituationCardsSection
   | SituationTableSection
-  | SituationTimelineSection;
+  | SituationTimelineSection
+  | SituationSceneSection
+  | SituationAssetClusterSection
+  | SituationMiniTrendSection
+  | SituationDrilldownSummarySection;
 
 export interface SituationPage {
   code: SituationPageCode;

@@ -38,7 +38,7 @@ export function useOpsOverview() {
       const [overviewData, sourceData, hostData] = await Promise.all([
         fetchOpsOverview(),
         fetchOpsSources(),
-        fetchOpsHosts({ page: 1, size: 20 })
+        fetchOpsHosts({ page: 1, size: 200 })
       ]);
       overview.value = overviewData;
       sources.value = sourceData;

@@ -46,7 +46,7 @@ export function useTerminalOverview() {
           riskLevel: riskLevel.value || undefined,
           ownershipStatus: ownershipStatus.value || undefined,
           page: 1,
-          size: 20
+          size: 200
         })
       ]);
       overview.value = overviewData;

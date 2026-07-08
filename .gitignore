@@ -12,3 +12,5 @@ backend/target/
 # probe
 probe/target/
 probe/data/
+# local previews
+tmp-screens/

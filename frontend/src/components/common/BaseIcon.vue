@@ -21,11 +21,32 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+export type BaseIconName =
+  | 'overview'
+  | 'terminal'
+  | 'business'
+  | 'security'
+  | 'ops'
+  | 'system'
+  | 'user'
+  | 'logout'
+  | 'empty'
+  | 'refresh'
+  | 'server'
+  | 'database'
+  | 'gateway'
+  | 'source'
+  | 'mobile'
+  | 'cluster'
+  | 'alert'
+  | 'policy'
+  | 'close';
+
 const props = defineProps<{
-  name: 'overview' | 'terminal' | 'business' | 'security' | 'ops' | 'system' | 'user' | 'logout' | 'empty' | 'refresh';
+  name: BaseIconName;
 }>();
 
-const pathMap: Record<string, string[]> = {
+const pathMap: Record<BaseIconName, string[]> = {
   overview: [
     'M3 13.5L12 4l9 9.5',
     'M5 12.5V20h14v-7.5',
@@ -84,6 +105,58 @@ const pathMap: Record<string, string[]> = {
   refresh: [
     'M20 11a8 8 0 1 0 2 5.3',
     'M20 4v5h-5'
+  ],
+  server: [
+    'M5 5.5h14v5H5z',
+    'M5 13.5h14v5H5z',
+    'M8 8h.01',
+    'M8 16h.01',
+    'M12 8h4',
+    'M12 16h4'
+  ],
+  database: [
+    'M6 6.5c0-1.9 2.7-3.5 6-3.5s6 1.6 6 3.5-2.7 3.5-6 3.5-6-1.6-6-3.5z',
+    'M6 6.5v5c0 1.9 2.7 3.5 6 3.5s6-1.6 6-3.5v-5',
+    'M6 11.5v5c0 1.9 2.7 3.5 6 3.5s6-1.6 6-3.5v-5'
+  ],
+  gateway: [
+    'M4 12h10',
+    'M11 8l4 4-4 4',
+    'M5 5h6v14H5z',
+    'M17 6h2v12h-2'
+  ],
+  source: [
+    'M6 8a3 3 0 1 1 0-6a3 3 0 0 1 0 6z',
+    'M18 14a3 3 0 1 1 0-6a3 3 0 0 1 0 6z',
+    'M8.5 5.5h4',
+    'M12.5 5.5l3 5',
+    'M6 14v4',
+    'M6 18h12'
+  ],
+  mobile: [
+    'M8 4.5h8a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2z',
+    'M11 7h2',
+    'M11 17h2'
+  ],
+  cluster: [
+    'M7 7h5v5H7z',
+    'M12 12h5v5h-5z',
+    'M12 7h5v5h-5z',
+    'M7 12h5v5H7z'
+  ],
+  alert: [
+    'M12 4l8 14H4L12 4z',
+    'M12 9v4',
+    'M12 16h.01'
+  ],
+  policy: [
+    'M12 3l7 3v6c0 4-2.8 6.8-7 9-4.2-2.2-7-5-7-9V6l7-3z',
+    'M9 12h6',
+    'M9 15h4'
+  ],
+  close: [
+    'M6 6l12 12',
+    'M18 6L6 18'
   ]
 };
 

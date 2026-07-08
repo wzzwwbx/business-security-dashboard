@@ -2,10 +2,10 @@
   <div class="app-grid">
     <aside class="sidebar glass-card">
       <div class="brand-block">
-        <div class="brand-mark">BS</div>
+        <div class="brand-mark">态势</div>
         <div class="brand-copy">
           <div class="brand-title">业务安全态势系统</div>
-          <div class="brand-subtitle">Business Security Situation</div>
+          <div class="brand-subtitle">综合研判与联动处置</div>
         </div>
       </div>
 
@@ -91,7 +91,7 @@ const modeTone = computed(() => {
 
 const noticeDescription = computed(() => auth.availability.value === 'enabled'
   ? '导航按页面权限实时裁剪，系统管理页再按动作权限细分页签。'
-  : '当后端 IAM 不可用时，系统自动回退到 demo 数据，便于前端继续演示。');
+  : '当后端账号能力暂不可用时，系统自动回退到演示数据，便于前端继续联调。');
 
 const footerLabel = computed(() => auth.currentUser.value?.username
   ? `${auth.currentUser.value.username} 已连接`

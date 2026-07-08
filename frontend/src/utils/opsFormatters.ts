@@ -106,3 +106,69 @@ export function statusLabel(status: string) {
       return status;
   }
 }
+
+export function sourceSystemLabel(value: string | null | undefined) {
+  switch (value) {
+    case 'ops-probe-arm':
+    case 'linux-arm-probe':
+      return '主机探针';
+    case 'ops-external-gateway':
+      return '外部接入网关';
+    case 'ops-manual-console':
+      return '手工注入台';
+    default:
+      return value ? '接入来源' : '未命名来源';
+  }
+}
+
+export function bindingStatusLabel(value: string | null | undefined) {
+  switch ((value || '').toUpperCase()) {
+    case 'BOUND':
+    case 'ACTIVE':
+      return '已绑定';
+    case 'PENDING':
+      return '待确认';
+    case 'DISABLED':
+      return '停用';
+    case 'UNBOUND':
+      return '未绑定';
+    default:
+      return value || '未知';
+  }
+}
+
+export function processStateLabel(value: string | null | undefined) {
+  switch ((value || '').toUpperCase()) {
+    case 'R':
+    case 'RUNNING':
+      return '运行中';
+    case 'S':
+    case 'SLEEPING':
+      return '休眠';
+    case 'D':
+      return '等待';
+    case 'T':
+    case 'STOPPED':
+      return '暂停';
+    case 'Z':
+    case 'ZOMBIE':
+      return '僵尸';
+    case 'I':
+      return '空闲';
+    default:
+      return value || '未知';
+  }
+}
+
+export function archLabel(value: string | null | undefined) {
+  switch ((value || '').toLowerCase()) {
+    case 'aarch64':
+    case 'arm64':
+      return 'ARM64';
+    case 'x86_64':
+    case 'amd64':
+      return 'x86 64位';
+    default:
+      return value || '未知';
+  }
+}

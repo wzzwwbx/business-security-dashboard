@@ -1,5 +1,5 @@
 <template>
-  <section class="situation-kpi-grid">
+  <section class="situation-kpi-grid screen-kpi-row">
     <button
       v-for="kpi in items"
       :key="kpi.label"
@@ -17,7 +17,7 @@
         <span v-if="kpi.unit" class="kpi-unit">{{ kpi.unit }}</span>
       </div>
       <div class="kpi-bottom">
-        <span>{{ kpi.description }}</span>
+        <span class="kpi-description">{{ kpi.description }}</span>
         <span v-if="kpi.trend" class="kpi-trend">{{ kpi.trend }}</span>
       </div>
     </button>
@@ -39,13 +39,13 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  selectInsight: [insight: SituationInsight];
+  'select-insight': [insight: SituationInsight];
 }>();
 
 const handleSelect = (kpi: SituationKpi) => {
-  emit('selectInsight', {
+  emit('select-insight', {
     id: `kpi-${kpi.label}`,
-    label: 'KPI 指标',
+    label: '关键指标',
     title: kpi.label,
     description: kpi.description,
     tone: kpi.tone,
@@ -57,15 +57,12 @@ const handleSelect = (kpi: SituationKpi) => {
 
 <style scoped>
 .situation-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: var(--layout-grid-gap);
-  margin-bottom: var(--space-7);
+  margin: 0;
 }
 
 .kpi-card {
-  padding: var(--space-7);
-  min-height: 168px;
+  min-height: 0;
+  padding: 14px;
   border-color: var(--sys-color-border-secondary);
   text-align: left;
   cursor: pointer;
@@ -87,29 +84,29 @@ const handleSelect = (kpi: SituationKpi) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: 8px;
 }
 
 .kpi-label,
-.kpi-bottom {
+.kpi-description {
   color: var(--sys-color-text-secondary);
-  font-size: var(--font-size-13);
+  font-size: var(--font-size-12);
 }
 
 .kpi-value-row {
   display: flex;
   align-items: baseline;
-  gap: var(--space-2);
-  margin: var(--space-6) 0 var(--space-5);
+  gap: 6px;
+  margin: 10px 0 8px;
 }
 
 .kpi-value {
-  font-size: clamp(28px, 2.3vw, 34px);
+  font-size: clamp(24px, 1.9vw, 30px);
   line-height: var(--line-height-tight);
 }
 
 .kpi-tone {
-  padding: 5px var(--space-3);
+  padding: 4px 8px;
   border-radius: var(--radius-pill);
   font-size: var(--font-size-12);
   font-weight: var(--font-weight-semibold);
@@ -121,6 +118,7 @@ const handleSelect = (kpi: SituationKpi) => {
 
 .kpi-trend {
   color: var(--sys-color-brand-secondary);
+  font-size: var(--font-size-12);
 }
 
 .kpi-card.success .kpi-tone {
@@ -141,28 +139,5 @@ const handleSelect = (kpi: SituationKpi) => {
 .kpi-card.info .kpi-tone {
   background: var(--sys-color-status-info-bg);
   color: var(--sys-color-status-info-text);
-}
-
-@media (max-width: 1440px) {
-  .situation-kpi-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 820px) {
-  .situation-kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .situation-kpi-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .kpi-card {
-    min-height: 0;
-    padding: var(--space-6);
-  }
 }
 </style>

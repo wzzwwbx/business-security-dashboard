@@ -38,7 +38,7 @@ export function getSituationSourceLabel(source: SituationResolvedSource, degrade
     return '接口联调';
   }
 
-  return degraded ? 'Mock 回退' : '本地 Mock';
+  return degraded ? '演示回退' : '本地演示';
 }
 
 function isApiEnvelope<T>(value: unknown): value is ApiEnvelope<T> {
