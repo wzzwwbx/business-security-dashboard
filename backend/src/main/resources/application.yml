@@ -31,6 +31,18 @@ ops:
   manual:
     ingest-token: ${OPS_MANUAL_INGEST_TOKEN:manual-dev-token}
 
+terminal:
+  sampling-interval-seconds: 300
+  stale-after-periods: 2
+  offline-after-periods: 5
+  snapshot-retention-days: 30
+  event-retention-days: 30
+  payload-retention-days: 3
+  external:
+    ingest-token: ${TERMINAL_EXTERNAL_INGEST_TOKEN:terminal-external-dev-token}
+  manual:
+    ingest-token: ${TERMINAL_MANUAL_INGEST_TOKEN:terminal-manual-dev-token}
+
 
 iam:
   login:

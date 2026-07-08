@@ -153,6 +153,13 @@
 - `ops_ingest_event`
 - `ops_ingest_payload`
 
+同时已为终端域预留人员主数据表：
+
+- `person_profile`
+- `person_phone`
+
+约束说明：终端侧上报的手机号不再直接散落在设备记录中，而是先关联到人员主数据，再由终端域完成人员归一。
+
 ### 7. Java Probe 独立模块
 
 `probe/` 模块当前已具备：
@@ -285,6 +292,7 @@ java -jar target/business-security-probe-0.1.0.jar
 - API：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/api-spec.md`
 - 部署：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/deployment.md`
 - Probe：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/probe/README.md`
+- 终端建模：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/terminal-data-model.md`
 
 
 ## 灵活接入补充说明

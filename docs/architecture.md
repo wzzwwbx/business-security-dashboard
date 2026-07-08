@@ -62,6 +62,22 @@ flowchart LR
 - 不让四个页面各自维护零散 DTO
 - 用统一 `SituationPageDto + SituationSectionDto` 表达多类页面布局与内容
 
+### 2.3 终端域人员主数据约束
+
+在终端态势场景中，零信任客户端会上报 `手机号` 等移动设备身份字段。为避免把手机号直接当作人员主键，系统先固定以下建模原则：
+
+- `person_profile`：统一维护人员主数据
+- `person_phone`：维护手机号与人员映射关系
+- 终端侧 `phoneNumber` 仅作为人员归一线索，不直接替代人员主记录
+
+这样做的目的：
+
+- 支持一人多终端 / 一人多号码扩展
+- 支持未来接入 HR、AD、CMDB、零信任平台的人员主数据
+- 让终端态势能够按人员、部门、岗位做聚合，而不是只按设备散点展示
+
+详见：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/terminal-data-model.md`
+
 ## 3. 运维域接入策略
 
 探针不是唯一入口，只是第一种 `source adapter`。

@@ -39,6 +39,8 @@ services:
       OPS_PROBE_SHARED_SECRET: dev-probe-secret
       OPS_EXTERNAL_INGEST_TOKEN: external-dev-token
       OPS_MANUAL_INGEST_TOKEN: manual-dev-token
+      TERMINAL_EXTERNAL_INGEST_TOKEN: terminal-external-dev-token
+      TERMINAL_MANUAL_INGEST_TOKEN: terminal-manual-dev-token
     ports:
       - "8080:8080"
 

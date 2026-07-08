@@ -345,3 +345,193 @@ CREATE TABLE IF NOT EXISTS iam_approval_payload (
     payload_json JSON NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS person_profile (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    person_code VARCHAR(64) NOT NULL UNIQUE,
+    external_person_id VARCHAR(128) NULL,
+    employee_no VARCHAR(64) NULL,
+    full_name VARCHAR(64) NOT NULL,
+    display_name VARCHAR(64) NULL,
+    gender VARCHAR(16) NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+    department_code VARCHAR(64) NULL,
+    department_name VARCHAR(128) NULL,
+    organization_path VARCHAR(255) NULL,
+    job_title VARCHAR(128) NULL,
+    email VARCHAR(128) NULL,
+    source_system VARCHAR(128) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_person_profile_employee_no (employee_no),
+    INDEX idx_person_profile_status (status),
+    INDEX idx_person_profile_department (department_code)
+);
+
+CREATE TABLE IF NOT EXISTS person_phone (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    person_id BIGINT NOT NULL,
+    phone_number VARCHAR(32) NOT NULL,
+    phone_number_masked VARCHAR(32) NULL,
+    phone_number_hash VARCHAR(128) NULL,
+    phone_type VARCHAR(32) NOT NULL DEFAULT 'MOBILE',
+    country_code VARCHAR(16) NULL,
+    is_primary TINYINT NOT NULL DEFAULT 1,
+    verified TINYINT NOT NULL DEFAULT 0,
+    status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+    source_system VARCHAR(128) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_person_phone_number (phone_number),
+    INDEX idx_person_phone_person (person_id, status),
+    INDEX idx_person_phone_hash (phone_number_hash)
+);
+
+CREATE TABLE IF NOT EXISTS terminal_device (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    device_code VARCHAR(64) NOT NULL UNIQUE,
+    device_name VARCHAR(128) NULL,
+    display_name VARCHAR(128) NULL,
+    person_id BIGINT NULL,
+    person_name_snapshot VARCHAR(64) NULL,
+    employee_no_snapshot VARCHAR(64) NULL,
+    department_name_snapshot VARCHAR(128) NULL,
+    phone_number_last_reported VARCHAR(32) NULL,
+    phone_number_masked_last_reported VARCHAR(32) NULL,
+    primary_ip VARCHAR(64) NULL,
+    os_version VARCHAR(128) NULL,
+    imei VARCHAR(64) NULL,
+    meid VARCHAR(64) NULL,
+    plmn VARCHAR(32) NULL,
+    password_module_status VARCHAR(32) NULL,
+    password_module_version VARCHAR(64) NULL,
+    password_suite_status VARCHAR(32) NULL,
+    risk_level VARCHAR(32) NOT NULL DEFAULT 'LOW',
+    status VARCHAR(32) NOT NULL DEFAULT 'ONLINE',
+    last_observed_at TIMESTAMP NULL,
+    last_source_type VARCHAR(32) NULL,
+    last_source_system VARCHAR(128) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_terminal_device_person (person_id),
+    INDEX idx_terminal_device_status (status, last_observed_at),
+    INDEX idx_terminal_device_imei (imei),
+    INDEX idx_terminal_device_meid (meid)
+);
+
+CREATE TABLE IF NOT EXISTS terminal_device_binding (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    device_id BIGINT NOT NULL,
+    source_system VARCHAR(128) NOT NULL,
+    external_device_id VARCHAR(128) NOT NULL,
+    external_device_name VARCHAR(128) NULL,
+    binding_status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_terminal_binding (source_system, external_device_id),
+    INDEX idx_terminal_binding_device (device_id, binding_status)
+);
+
+CREATE TABLE IF NOT EXISTS terminal_device_snapshot (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    device_id BIGINT NOT NULL,
+    source_type VARCHAR(32) NOT NULL,
+    source_system VARCHAR(128) NOT NULL,
+    observed_at TIMESTAMP NOT NULL,
+    primary_ip VARCHAR(64) NULL,
+    os_version VARCHAR(128) NULL,
+    plmn VARCHAR(32) NULL,
+    traffic_used_bytes BIGINT NULL,
+    password_module_status VARCHAR(32) NULL,
+    password_module_version VARCHAR(64) NULL,
+    password_suite_status VARCHAR(32) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_terminal_device_snapshot_device (device_id, observed_at),
+    INDEX idx_terminal_device_snapshot_source (source_type, source_system, observed_at)
+);
+
+CREATE TABLE IF NOT EXISTS terminal_security_snapshot (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    device_id BIGINT NOT NULL,
+    device_snapshot_id BIGINT NULL,
+    observed_at TIMESTAMP NOT NULL,
+    wrong_password_count INT NOT NULL DEFAULT 0,
+    fingerprint_changed TINYINT NOT NULL DEFAULT 0,
+    config_modified TINYINT NOT NULL DEFAULT 0,
+    risk_level VARCHAR(32) NOT NULL DEFAULT 'LOW',
+    risk_score INT NULL,
+    summary VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_terminal_security_snapshot_device (device_id, observed_at),
+    INDEX idx_terminal_security_snapshot_level (risk_level, observed_at)
+);
+
+CREATE TABLE IF NOT EXISTS terminal_event (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    device_id BIGINT NOT NULL,
+    source_type VARCHAR(32) NOT NULL,
+    source_system VARCHAR(128) NOT NULL,
+    observed_at TIMESTAMP NOT NULL,
+    event_type VARCHAR(64) NOT NULL,
+    severity VARCHAR(32) NOT NULL,
+    title VARCHAR(128) NOT NULL,
+    detail VARCHAR(255) NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'OPEN',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_terminal_event_device (device_id, observed_at),
+    INDEX idx_terminal_event_severity (severity, observed_at)
+);
+
+CREATE TABLE IF NOT EXISTS terminal_software_change (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    device_id BIGINT NOT NULL,
+    source_type VARCHAR(32) NOT NULL,
+    source_system VARCHAR(128) NOT NULL,
+    observed_at TIMESTAMP NOT NULL,
+    change_type VARCHAR(32) NOT NULL,
+    software_name VARCHAR(128) NOT NULL,
+    software_version VARCHAR(64) NULL,
+    detail VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_terminal_software_change_device (device_id, observed_at),
+    INDEX idx_terminal_software_change_name (software_name)
+);
+
+CREATE TABLE IF NOT EXISTS terminal_peripheral_event (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    device_id BIGINT NOT NULL,
+    source_type VARCHAR(32) NOT NULL,
+    source_system VARCHAR(128) NOT NULL,
+    observed_at TIMESTAMP NOT NULL,
+    peripheral_type VARCHAR(64) NOT NULL,
+    peripheral_name VARCHAR(128) NULL,
+    action_type VARCHAR(32) NOT NULL,
+    detail VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_terminal_peripheral_event_device (device_id, observed_at),
+    INDEX idx_terminal_peripheral_event_type (peripheral_type, observed_at)
+);
+
+CREATE TABLE IF NOT EXISTS terminal_ingest_event (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    source_type VARCHAR(32) NOT NULL,
+    source_system VARCHAR(128) NOT NULL,
+    request_id VARCHAR(128) NOT NULL,
+    observed_at TIMESTAMP NOT NULL,
+    ingest_status VARCHAR(32) NOT NULL,
+    error_message VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_terminal_ingest_event_source (source_type, source_system, observed_at),
+    UNIQUE KEY uk_terminal_ingest_request (source_system, request_id)
+);
+
+CREATE TABLE IF NOT EXISTS terminal_ingest_payload (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    source_type VARCHAR(32) NOT NULL,
+    source_system VARCHAR(128) NOT NULL,
+    request_id VARCHAR(128) NOT NULL,
+    payload_json JSON NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_terminal_ingest_payload_source (source_type, source_system, created_at)
+);
+

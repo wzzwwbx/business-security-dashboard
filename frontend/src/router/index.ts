@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthSession } from '@/composables/useAuthSession';
 import OpsPageView from '@/views/OpsPageView.vue';
 import SituationPageView from '@/views/SituationPageView.vue';
+import TerminalPageView from '@/views/TerminalPageView.vue';
 import BootstrapPageView from '@/views/BootstrapPageView.vue';
 import ForbiddenPageView from '@/views/ForbiddenPageView.vue';
 import LoginPageView from '@/views/LoginPageView.vue';
@@ -50,7 +51,7 @@ const router = createRouter({
     {
       path: '/terminal',
       name: 'terminal',
-      component: SituationPageView,
+      component: TerminalPageView,
       meta: { pageCode: 'terminal' }
     },
     {

@@ -349,10 +349,55 @@ hex(hmac_sha256(sharedSecret, X-Timestamp + "\n" + rawJsonBody))
 }
 ```
 
-## 6. 前端数据策略说明
+## 6. 终端域真实接口与人员归一约定
+
+终端域已落地独立接口 `/api/terminal/**`，并围绕零信任客户端上报能力形成“人员主数据优先”的归一模型。
+
+### 6.1 查询接口
+
+- `GET /api/terminal/overview`：终端总览，包含在线、离线、高风险、待认领终端等指标
+- `GET /api/terminal/sources`：来源概览
+- `GET /api/terminal/devices`：终端列表，支持 `keyword`、`status`、`riskLevel`、`ownershipStatus` 过滤
+- `GET /api/terminal/devices/{deviceId}`：终端详情
+- `GET /api/terminal/devices/{deviceId}/timeseries?range=6h|24h|7d`：流量、口令错误、风险分趋势
+- `GET /api/terminal/devices/{deviceId}/events?limit=20`：最新事件聚合流
+- `GET /api/terminal/devices/{deviceId}/software-changes?limit=10`：最近软件安装、更新、卸载记录
+- `GET /api/terminal/devices/{deviceId}/peripherals?limit=10`：最近外设接入记录
+
+### 6.2 入站接口
+
+- `POST /api/terminal/ingest/external`：外部系统终端数据接入
+- `POST /api/terminal/ingest/manual`：手工注入演示 / 联调数据
+
+### 6.3 终端归一规则
+
+- 上报中的 `phoneNumber` 默认不是人员主键
+- 后端优先通过 `person_profile` / `person_phone` 解析终端关联人员
+- 前端默认展示脱敏手机号，完整手机号需受权限控制
+- 终端归属状态统一为：
+  - `BOUND`：已关联人员
+  - `PENDING_CLAIM`：已上报手机号但未匹配到人员档案
+  - `ANONYMOUS`：未提供足够身份线索
+
+当前主数据表：
+
+- `person_profile`
+- `person_phone`
+
+入站 DTO 兼容以下身份字段：
+
+- `personCode`
+- `employeeNo`
+- `externalPersonId`
+- `phoneNumber`
+- `imei`
+- `meid`
+
+## 7. 前端数据策略说明
 
 综合 / 安全 / 业务 / 终端四类页面采用统一策略：
 
-1. 默认按 integration 模式请求 `/api/situation/**`
-2. 若后端未启动、代理不可达或返回结构异常，则自动回退到前端 mock
-3. UI 通过来源 pill 与 warning banner 明确告知当前数据来源
+1. 综合 / 安全 / 业务页面默认按 integration 模式请求 `/api/situation/**`
+2. 终端页面默认请求真实终端域接口 `/api/terminal/**`
+3. 若后端未启动、代理不可达或返回结构异常，则自动回退到前端 mock
+4. UI 通过来源标签与提示信息明确告知当前数据来源
