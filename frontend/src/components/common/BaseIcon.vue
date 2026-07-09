@@ -40,7 +40,8 @@ export type BaseIconName =
   | 'cluster'
   | 'alert'
   | 'policy'
-  | 'close';
+  | 'close'
+  | 'menu';
 
 const props = defineProps<{
   name: BaseIconName;
@@ -157,6 +158,11 @@ const pathMap: Record<BaseIconName, string[]> = {
   close: [
     'M6 6l12 12',
     'M18 6L6 18'
+  ],
+  menu: [
+    'M4 7h16',
+    'M4 12h16',
+    'M4 17h16'
   ]
 };
 

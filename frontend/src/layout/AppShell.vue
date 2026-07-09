@@ -1,6 +1,8 @@
 <template>
-  <div class="app-grid">
-    <aside class="sidebar glass-card">
+  <div class="app-grid" :class="appGridClasses">
+    <div v-if="isMobile && mobileNavOpen" class="sidebar-backdrop" @click="closeMobileNav"></div>
+
+    <aside class="sidebar glass-card" :aria-hidden="isMobile ? String(!mobileNavOpen) : 'false'">
       <div class="brand-block">
         <div class="brand-mark">态势</div>
         <div class="brand-copy">
@@ -53,6 +55,16 @@
     </aside>
 
     <main class="content-shell">
+      <button
+        class="content-nav-toggle glass-card"
+        type="button"
+        :aria-expanded="String(isMobile ? mobileNavOpen : !sidebarCollapsed)"
+        :aria-label="toggleLabel"
+        @click="toggleNavigation"
+      >
+        <span class="nav-icon"><BaseIcon :name="toggleIcon" /></span>
+        <span>{{ toggleLabel }}</span>
+      </button>
       <slot />
     </main>
   </div>
@@ -62,12 +74,18 @@
 import BaseIcon from '@/components/common/BaseIcon.vue';
 import { MAIN_NAV_ITEMS } from '@/constants/navigation';
 import { useAuthSession } from '@/composables/useAuthSession';
-import { computed, onBeforeUnmount, onMounted, shallowRef } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { computed, onBeforeUnmount, onMounted, shallowRef, watch } from 'vue';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
+
+const DESKTOP_SIDEBAR_STORAGE_KEY = 'business-security-dashboard.sidebar-collapsed';
 
 const auth = useAuthSession();
+const route = useRoute();
 const router = useRouter();
 const now = shallowRef('');
+const isMobile = shallowRef(false);
+const sidebarCollapsed = shallowRef(true);
+const mobileNavOpen = shallowRef(false);
 let timer: number | undefined;
 
 const visibleNavItems = computed(() => MAIN_NAV_ITEMS
@@ -97,6 +115,70 @@ const footerLabel = computed(() => auth.currentUser.value?.username
   ? `${auth.currentUser.value.username} 已连接`
   : auth.modeLabel.value);
 
+const appGridClasses = computed(() => ({
+  'sidebar-collapsed': !isMobile.value && sidebarCollapsed.value,
+  'sidebar-mobile': isMobile.value,
+  'sidebar-mobile-open': isMobile.value && mobileNavOpen.value
+}));
+
+const toggleLabel = computed(() => {
+  if (isMobile.value) {
+    return mobileNavOpen.value ? '收起导航' : '展开导航';
+  }
+
+  return sidebarCollapsed.value ? '展开导航' : '收起导航';
+});
+
+const toggleIcon = computed(() => mobileNavOpen.value ? 'close' : 'menu');
+
+function readDesktopSidebarPreference() {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+
+  const stored = window.localStorage.getItem(DESKTOP_SIDEBAR_STORAGE_KEY);
+  if (stored === null) {
+    return true;
+  }
+
+  return stored === '1';
+}
+
+function persistDesktopSidebarPreference() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.setItem(DESKTOP_SIDEBAR_STORAGE_KEY, sidebarCollapsed.value ? '1' : '0');
+}
+
+function syncViewportState() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const mobile = window.innerWidth <= 960;
+  isMobile.value = mobile;
+
+  if (!mobile) {
+    mobileNavOpen.value = false;
+  }
+}
+
+function toggleNavigation() {
+  if (isMobile.value) {
+    mobileNavOpen.value = !mobileNavOpen.value;
+    return;
+  }
+
+  sidebarCollapsed.value = !sidebarCollapsed.value;
+  persistDesktopSidebarPreference();
+}
+
+function closeMobileNav() {
+  mobileNavOpen.value = false;
+}
+
 function refreshClock() {
   now.value = new Intl.DateTimeFormat('zh-CN', {
     hour: '2-digit',
@@ -110,22 +192,44 @@ async function handleLogout() {
   await router.replace('/login');
 }
 
+watch(() => route.fullPath, () => {
+  if (isMobile.value) {
+    mobileNavOpen.value = false;
+  }
+});
+
 onMounted(() => {
+  sidebarCollapsed.value = readDesktopSidebarPreference();
+  syncViewportState();
   refreshClock();
   timer = window.setInterval(refreshClock, 1000);
+  window.addEventListener('resize', syncViewportState, { passive: true });
 });
 
 onBeforeUnmount(() => {
   if (timer !== undefined) {
     window.clearInterval(timer);
   }
+
+  window.removeEventListener('resize', syncViewportState);
 });
 </script>
 
 <style scoped>
+.app-grid {
+  position: relative;
+  grid-template-columns: var(--layout-sidebar-width) minmax(0, 1fr);
+  transition: grid-template-columns var(--motion-duration-base) var(--motion-ease-standard);
+}
+
+.app-grid.sidebar-collapsed {
+  grid-template-columns: var(--layout-sidebar-width-collapsed) minmax(0, 1fr);
+}
+
 .sidebar {
   position: sticky;
   top: 0;
+  z-index: var(--z-sticky);
   display: flex;
   flex-direction: column;
   gap: var(--space-7);
@@ -133,6 +237,43 @@ onBeforeUnmount(() => {
   margin: var(--space-6);
   padding: var(--space-8) var(--space-6);
   overflow: auto;
+  transition:
+    transform var(--motion-duration-base) var(--motion-ease-standard),
+    opacity var(--motion-duration-base) var(--motion-ease-standard),
+    padding var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.content-shell {
+  position: relative;
+}
+
+.content-nav-toggle {
+  position: fixed;
+  top: 18px;
+  left: calc(var(--layout-sidebar-width) + 28px);
+  z-index: calc(var(--z-overlay) + 1);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 42px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--sys-color-border-accent);
+  color: var(--sys-color-text-primary);
+  background: rgba(9, 21, 39, 0.82);
+  cursor: pointer;
+  transition:
+    left var(--motion-duration-base) var(--motion-ease-standard),
+    background var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.content-nav-toggle:hover {
+  background: rgba(14, 30, 55, 0.94);
+  border-color: var(--sys-color-brand-secondary);
+}
+
+.app-grid.sidebar-collapsed .content-nav-toggle {
+  left: calc(var(--layout-sidebar-width-collapsed) + 28px);
 }
 
 .brand-block {
@@ -289,55 +430,88 @@ onBeforeUnmount(() => {
   color: var(--sys-color-text-tertiary);
 }
 
+.app-grid.sidebar-collapsed .sidebar {
+  align-items: center;
+  padding-inline: var(--space-3);
+}
+
+.app-grid.sidebar-collapsed .brand-copy,
+.app-grid.sidebar-collapsed .sidebar-notice,
+.app-grid.sidebar-collapsed .account-main,
+.app-grid.sidebar-collapsed .nav-text,
+.app-grid.sidebar-collapsed .logout-button span:last-child,
+.app-grid.sidebar-collapsed .sidebar-footer {
+  display: none;
+}
+
+.app-grid.sidebar-collapsed .brand-block,
+.app-grid.sidebar-collapsed .account-card {
+  justify-content: center;
+}
+
+.app-grid.sidebar-collapsed .nav-list {
+  width: 100%;
+}
+
+.app-grid.sidebar-collapsed .nav-item,
+.app-grid.sidebar-collapsed .logout-button {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: rgba(2, 8, 20, 0.58);
+  backdrop-filter: blur(4px);
+}
+
 @media (max-width: 1280px) {
-  .sidebar {
-    align-items: center;
-    gap: var(--space-7);
-    margin: var(--space-5);
-    padding: var(--space-7) var(--space-3);
-  }
-
-  .brand-title,
-  .brand-subtitle,
-  .nav-text,
-  .sidebar-notice,
-  .account-main,
-  .logout-button span:last-child,
-  .sidebar-footer {
-    display: none;
-  }
-
-  .logout-button {
-    justify-content: center;
-    width: auto;
+  .content-nav-toggle {
+    padding-inline: var(--space-3);
   }
 }
 
 @media (max-width: 960px) {
+  .app-grid,
+  .app-grid.sidebar-collapsed,
+  .app-grid.sidebar-mobile,
+  .app-grid.sidebar-mobile-open {
+    grid-template-columns: 1fr;
+  }
+
   .sidebar {
-    position: static;
+    position: fixed;
+    top: var(--space-4);
+    left: var(--space-4);
+    bottom: var(--space-4);
+    width: min(320px, calc(100vw - (var(--space-4) * 2)));
     height: auto;
-    margin: var(--space-4);
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    margin: 0;
+    transform: translateX(calc(-100% - var(--space-6)));
+    opacity: 0;
+    pointer-events: none;
+    overflow: auto;
+    z-index: calc(var(--z-overlay) + 1);
   }
 
-  .nav-list {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .app-grid.sidebar-mobile-open .sidebar {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
   }
 
-  .nav-item,
-  .logout-button {
-    justify-content: center;
+  .content-nav-toggle,
+  .app-grid.sidebar-collapsed .content-nav-toggle {
+    top: var(--space-4);
+    left: var(--space-4);
   }
 }
 
 @media (max-width: 640px) {
-  .nav-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .content-nav-toggle span:last-child {
+    display: none;
   }
 }
 </style>
