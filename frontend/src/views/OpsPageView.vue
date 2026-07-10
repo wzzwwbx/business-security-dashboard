@@ -65,9 +65,9 @@ const groupOptions = computed<VisualFilterOption[]>(() => {
     { key: 'all', label: '全部主机', count: items.length },
     { key: 'online', label: '在线', count: items.filter((item) => item.status === 'ONLINE').length },
     { key: 'attention', label: '重点关注', count: items.filter((item) => item.status !== 'ONLINE' || item.openAlertCount > 0 || item.cpuUsagePct >= 75 || item.memoryUsagePct >= 80).length },
-    { key: 'probe', label: '探针来源', count: items.filter((item) => item.sourceType === 'PROBE').length },
-    { key: 'external', label: '外部来源', count: items.filter((item) => item.sourceType === 'EXTERNAL_API').length },
-    { key: 'manual', label: '手工注入', count: items.filter((item) => item.sourceType === 'MANUAL_IMPORT').length }
+    { key: 'probe', label: '主机采集', count: items.filter((item) => item.sourceType === 'PROBE').length },
+    { key: 'external', label: '业务接入', count: items.filter((item) => item.sourceType === 'EXTERNAL_API').length },
+    { key: 'manual', label: '人工补录', count: items.filter((item) => item.sourceType === 'MANUAL_IMPORT').length }
   ];
 });
 
@@ -214,7 +214,7 @@ function closeDrawer() {
           <header class="side-panel-header">
             <div>
               <h3>来源接入</h3>
-              <p>探针、外部系统与演示注入统一接入后，在同一资源域中汇聚展示。</p>
+              <p>各类主机数据统一接入后，在同一资源域中汇聚展示。</p>
             </div>
             <span class="tag">来源 {{ sources.length }} 个</span>
           </header>
@@ -410,13 +410,13 @@ function closeDrawer() {
 .screen-hero-skeleton,
 .screen-toolbar-skeleton,
 .screen-skeleton-card {
-  padding: 14px;
+  padding: 12px;
 }
 
 .hero-card {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
 .hero-eyebrow {
@@ -426,12 +426,12 @@ function closeDrawer() {
 }
 
 .hero-card h1 {
-  margin: 8px 0 0;
-  font-size: clamp(26px, 2.2vw, 32px);
+  margin: 6px 0 0;
+  font-size: clamp(24px, 2vw, 30px);
 }
 
 .hero-card p {
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   color: var(--sys-color-text-secondary);
 }
 
@@ -439,7 +439,7 @@ function closeDrawer() {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 10px;
+  gap: 8px;
 }
 
 .hero-status {
@@ -455,8 +455,8 @@ function closeDrawer() {
 }
 
 .hero-tag {
-  min-width: 100px;
-  padding: 10px 12px;
+  min-width: 88px;
+  padding: 8px 10px;
   border-radius: 14px;
   border: 1px solid var(--sys-color-border-secondary);
   background: rgba(12, 26, 45, 0.7);
@@ -478,7 +478,7 @@ function closeDrawer() {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .side-panel-header h3 {
@@ -505,7 +505,7 @@ function closeDrawer() {
 .side-list,
 .drawer-related-list {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .side-list-item,
@@ -513,7 +513,7 @@ function closeDrawer() {
 .drawer-intro-card,
 .drawer-related-item,
 .selected-summary {
-  padding: 12px;
+  padding: 10px;
   border-radius: 14px;
   border: 1px solid var(--sys-color-border-secondary);
   background: rgba(10, 20, 36, 0.72);
@@ -542,7 +542,7 @@ function closeDrawer() {
 
 .center-scene {
   flex: 0 0 42%;
-  min-height: 260px;
+  min-height: 220px;
 }
 
 .center-assets {
@@ -560,7 +560,7 @@ function closeDrawer() {
 }
 
 .selected-summary.empty {
-  min-height: 132px;
+  min-height: 112px;
   align-content: center;
 }
 
@@ -604,7 +604,7 @@ function closeDrawer() {
   display: none;
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 1480px) {
   .hero-card {
     flex-direction: column;
   }

@@ -41,7 +41,9 @@ export type BaseIconName =
   | 'alert'
   | 'policy'
   | 'close'
-  | 'menu';
+  | 'menu'
+  | 'chevron-left'
+  | 'chevron-right';
 
 const props = defineProps<{
   name: BaseIconName;
@@ -163,6 +165,12 @@ const pathMap: Record<BaseIconName, string[]> = {
     'M4 7h16',
     'M4 12h16',
     'M4 17h16'
+  ],
+  'chevron-left': [
+    'M14.5 6.5L9 12l5.5 5.5'
+  ],
+  'chevron-right': [
+    'M9.5 6.5L15 12l-5.5 5.5'
   ]
 };
 

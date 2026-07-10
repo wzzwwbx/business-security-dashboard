@@ -147,11 +147,14 @@ function closeDrawer() {
   </BaseEmpty>
 
   <div v-else class="screen-page terminal-page">
+    <section v-if="errorMessage" class="inline-notice warning">
+      <strong>部分数据暂未更新</strong>
+      <p>{{ errorMessage }}</p>
+    </section>
+
     <section class="hero-card glass-card">
       <div>
-        <div class="hero-eyebrow">终端资产舱</div>
         <h1>终端态势</h1>
-        <p>以资产图标、人员关联和异常事件为主，不再用长列表作为首屏入口。</p>
       </div>
       <div class="hero-side">
         <div class="hero-status">{{ refreshing ? '正在刷新' : '实时态势' }}</div>
@@ -183,7 +186,7 @@ function closeDrawer() {
           <header class="side-panel-header">
             <div>
               <h3>来源接入</h3>
-              <p>面向零信任、多源接口与演示注入统一接入。</p>
+              <p>统一汇聚各类终端数据来源。</p>
             </div>
             <span class="tag">来源 {{ sources.length }} 个</span>
           </header>
@@ -475,6 +478,24 @@ function closeDrawer() {
 .drawer-related-list {
   display: grid;
   gap: 10px;
+}
+
+.inline-notice {
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--sys-color-border-secondary);
+  background: rgba(10, 20, 36, 0.72);
+}
+
+.inline-notice.warning {
+  border-color: var(--sys-color-status-warning-border);
+  background: var(--sys-color-status-warning-bg);
+}
+
+.inline-notice p {
+  margin: 6px 0 0;
+  color: var(--sys-color-text-secondary);
+  font-size: var(--font-size-12);
 }
 
 .screen-hero-skeleton,

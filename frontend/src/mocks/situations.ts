@@ -83,7 +83,7 @@ function buildOverviewSections(): SituationSection[] {
     sceneNode('overview-business', '业务域', 'service', 'success', 72, 28, '核心业务链路与服务质量', '成功率', '99.3%'),
     sceneNode('overview-terminal', '终端域', 'terminal', 'warning', 26, 74, '终端资产、人员关联、异常事件', '高风险', '6 台'),
     sceneNode('overview-ops', '运维域', 'server', 'success', 72, 74, '主机、来源、资源告警', '在线主机', '168 台'),
-    sceneNode('overview-source', '来源接入', 'source', 'info', 12, 50, '零信任、探针、日志中心、人工注入', '已接入', '11 个'),
+    sceneNode('overview-source', '来源接入', 'source', 'info', 12, 50, '策略中心、采集端、日志中心、人工导入', '已接入', '11 个'),
     sceneNode('overview-workflow', '处置闭环', 'alert', 'success', 88, 50, '研判、协同、处置、复盘', '闭环耗时', '24 分钟')
   ];
 
@@ -97,18 +97,18 @@ function buildOverviewSections(): SituationSection[] {
   ];
 
   return [
-    sectionScene('overview-scene', '综合态势中枢图', '从中枢视角联动安全、业务、终端与运维四大主题。', nodes, links, ['主视觉', '综合指挥']),
+    sectionScene('overview-scene', '综合态势中枢图', '集中展示安全、业务、终端与运维四个主题的联动情况。', nodes, links, ['主视觉', '综合指挥']),
     {
       kind: 'miniTrendGroup',
       code: 'overview-mini-trends',
       title: '关键态势走势',
-      description: '首屏仅保留关键对比，完整明细通过下钻查看。',
+      description: '首屏集中展示当前最关键的整体状态。',
       tags: ['趋势', '首屏摘要'],
       colSpan: 4,
       items: [
         trend('health', '综合健康度', '82 分', 82, 'success', '较昨日 +3 分'),
         trend('alerts', '待处置告警', '28 条', 56, 'warning', '高危 4 条'),
-        trend('sources', '来源就绪度', '91%', 91, 'success', '新增 1 个接口'),
+        trend('sources', '数据覆盖率', '91%', 91, 'success', '4 个主题数据已接入展示'),
         trend('closure', '联动闭环率', '87%', 87, 'success', '平均 24 分钟')
       ]
     },
@@ -116,21 +116,21 @@ function buildOverviewSections(): SituationSection[] {
       kind: 'sources',
       code: 'overview-sources',
       title: '来源接入概览',
-      description: '多源并行接入，支持探针、接口与人工演示注入。',
+      description: '展示当前已纳入综合态势的主要数据来源。',
       tags: ['来源', '左侧'],
       colSpan: 4,
       items: [
-        source('零信任网关', '健康', '28 秒', '终端 / 账号', '支撑终端与账号联动', 'success'),
-        source('运维探针', '健康', '58 秒', '主机 / 进程', '当前已覆盖多台主机', 'success'),
-        source('业务链路平台', '规划中', '待明确', '服务 / 依赖', '接口契约待定', 'info'),
-        source('人工注入台', '可用', '即时', '演示 / 联调', '用于多源联调验证', 'warning')
+        source('策略网关', '健康', '28 秒', '终端 / 账号', '可支撑终端与账号风险联动研判。', 'success'),
+        source('运维探针', '健康', '58 秒', '主机 / 进程', '当前可持续上报主机与进程状态。', 'success'),
+        source('业务链路平台', '待接入', '接入准备中', '服务 / 依赖', '接入后可补充业务链路运行情况。', 'info'),
+        source('人工校核数据', '可用', '即时', '事件 / 处置', '用于补充值班研判和人工核实信息。', 'warning')
       ]
     },
     {
       kind: 'drilldownSummary',
       code: 'overview-focus',
       title: '重点联动事项',
-      description: '将长文案压缩为短项，首屏只展示最值得看的动作。',
+      description: '当前最需要优先联动处理的事项。',
       tags: ['闭环', '右侧'],
       colSpan: 4,
       items: [
@@ -143,27 +143,27 @@ function buildOverviewSections(): SituationSection[] {
       kind: 'matrix',
       code: 'overview-matrix',
       title: '主题健康矩阵',
-      description: '按主题域观察当前健康度、变化趋势与责任归属。',
+      description: '按主题域查看当前状态、风险和责任归属。',
       tags: ['矩阵', '治理'],
       colSpan: 6,
       items: [
-        matrix('安全域', '安全保密组', '74', '高危告警待处置', '高危 4 条', '零信任 / 审计', '重点关注高危风险与策略闭环。', 'warning'),
+        matrix('安全域', '安全保密组', '74', '高危告警待处置', '高危 4 条', '策略 / 审计', '重点关注高危风险与策略闭环。', 'warning'),
         matrix('业务域', '业务运行组', '88', '服务稳定', '成功率 99.3%', '业务链路 / 网关', '核心服务稳定，峰值时延需要持续跟踪。', 'success'),
         matrix('终端域', '终端保障组', '79', '人员关联待补', '待认领 9 台', '终端管理 / 网关', '需尽快补齐人员手机号与终端归属。', 'warning'),
-        matrix('运维域', '平台运维组', '84', '来源健康', '延迟主机 5 台', 'Probe / External', '多源接入正常，少量主机未按时刷新。', 'success')
+        matrix('运维域', '平台运维组', '84', '来源健康', '延迟主机 5 台', '采集 / 外部', '多源接入正常，少量主机未按时刷新。', 'success')
       ]
     },
     {
       kind: 'signals',
       code: 'overview-signals',
       title: '最新联动信号',
-      description: '突出跨域事件而不是长流水。',
+      description: '突出当前最需要关注的联动信号。',
       tags: ['信号', '右侧'],
       colSpan: 6,
       items: [
         signal('安全关注', '深夜异常导出与终端风险叠加', '来自终端域和安全域的风险信号在综合中枢完成聚合。', '建议联动三员审批核查', 'danger'),
         signal('业务关注', '签批链路出现短时积压', '业务域提示网关到数据库的时延在高峰期抬升。', '建议查看业务拓扑依赖', 'warning'),
-        signal('建设建议', '外部系统接口仍可继续扩充', '当前前端已支持多源占位，后续可平滑接入业务与资产平台。', '前端可先行迭代', 'info')
+        signal('运维关注', '延迟主机仍需持续跟踪', '少量主机存在延迟上报现象，需继续观察是否恢复正常。', '建议通知平台运维组复核', 'info')
       ]
     }
   ];
@@ -327,12 +327,12 @@ const PAGES: Record<SituationPageCode, SituationPage> = {
   overview: {
     code: 'overview',
     name: '综合态势',
-    title: '综合态势指挥舱',
-    subtitle: '统一联动四域态势与处置闭环',
+    title: '综合态势-验证',
+    subtitle: '统一联动态势与处置闭环',
     location: '综合态势中心',
     lastUpdated: '2026-07-08 19:18',
     dataMode: 'mock',
-    summary: '首屏聚焦综合健康度、联动闭环率和四域主视觉，不再用长表格堆叠页面。',
+    summary: '首屏集中展示整体状态、重点风险和跨主题联动情况。',
     heroTags: [
       { label: '综合健康度', value: '82 分', tone: 'success' },
       { label: '待处置告警', value: '28 条', tone: 'warning' },
@@ -341,7 +341,7 @@ const PAGES: Record<SituationPageCode, SituationPage> = {
     ],
     actions: [
       { label: '重点', detail: '优先核查跨域复合风险和高峰时段业务链路。', tone: 'warning' },
-      { label: '建设', detail: '后端接口未定部分先用多源占位，前端结构已可持续扩展。', tone: 'info' }
+      { label: '处置', detail: '重点跟踪终端、账号、业务链路之间的联动风险。', tone: 'info' }
     ],
     kpis: [
       kpi('综合健康度', '82', '四域综合评分', 'success', '分', '+3'),
@@ -352,7 +352,7 @@ const PAGES: Record<SituationPageCode, SituationPage> = {
       kpi('业务成功率', '99.3', '核心业务链路成功率', 'success', '%', '+0.2')
     ],
     highlights: [
-      highlight('跨域复合风险', '终端、账号、导出行为形成一条清晰风险链。', '高危', '建议从综合中枢直接下钻', 'danger'),
+      highlight('复合风险', '终端、账号、导出行为形成一条清晰风险链。', '高危', '建议从综合中枢直接下钻', 'danger'),
       highlight('资源态势稳定', '运维域在线主机数量和来源健康度整体稳定。', '168 台在线', '少量主机延迟上报', 'success')
     ],
     sections: buildOverviewSections()
@@ -360,7 +360,7 @@ const PAGES: Record<SituationPageCode, SituationPage> = {
   security: {
     code: 'security',
     name: '安全态势',
-    title: '安全风险链路舱',
+    title: '安全态势',
     subtitle: '攻击面、风险链路与处置闭环',
     location: '安全保密中心',
     lastUpdated: '2026-07-08 19:18',
@@ -392,7 +392,7 @@ const PAGES: Record<SituationPageCode, SituationPage> = {
   business: {
     code: 'business',
     name: '业务态势',
-    title: '业务链路驾驶舱',
+    title: '业务态势',
     subtitle: '服务依赖、链路健康与恢复建议',
     location: '业务运行中心',
     lastUpdated: '2026-07-08 19:18',
@@ -424,12 +424,12 @@ const PAGES: Record<SituationPageCode, SituationPage> = {
   terminal: {
     code: 'terminal',
     name: '终端态势',
-    title: '终端资产态势',
+    title: '终端态势',
     subtitle: '终端、人员、异常事件一体呈现',
     location: '终端保障中心',
     lastUpdated: '2026-07-08 19:18',
     dataMode: 'mock',
-    summary: '终端态势已切换到独立页面，这里保留与主题页结构兼容的占位数据。',
+    summary: '终端态势已切换到独立页面，这里保留与主题页结构兼容的数据。',
     heroTags: [
       { label: '在线终端', value: '131 台', tone: 'success' },
       { label: '高风险终端', value: '6 台', tone: 'warning' },
@@ -451,8 +451,8 @@ const PAGES: Record<SituationPageCode, SituationPage> = {
         kind: 'drilldownSummary',
         code: 'terminal-guide',
         title: '使用说明',
-        description: '当前主题数据仅作为兼容占位。',
-        tags: ['占位'],
+        description: '当前主题数据仅用于兼容展示。',
+        tags: ['兼容'],
         colSpan: 12,
         items: [card('请查看终端态势页', '终端态势已具备资产图标化、聚类和详情抽屉。', '已迁移', '通过左侧导航进入终端态势页面。', 'info')]
       }

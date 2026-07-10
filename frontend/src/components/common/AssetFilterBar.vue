@@ -93,6 +93,12 @@ const emit = defineEmits<{
 
 @media (max-width: 1280px) {
   .filter-bar {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 1480px) {
+  .filter-bar {
     flex-direction: column;
     align-items: stretch;
   }

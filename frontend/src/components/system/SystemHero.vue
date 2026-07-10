@@ -24,11 +24,11 @@ const modeTone = computed(() => {
 
 const modeLabel = computed(() => {
   if (props.availability === 'enabled') {
-    return 'MySQL IAM 联调';
+    return '账户治理已启用';
   }
 
   if (props.availability === 'demo') {
-    return '前端演示回退';
+    return '当前为预览数据';
   }
 
   return '初始化中';
@@ -38,7 +38,7 @@ const modeLabel = computed(() => {
 <template>
   <section class="hero glass-card">
     <div class="hero-copy">
-      <div class="eyebrow">SYSTEM / 等保三员分立</div>
+      <div class="eyebrow">账户与权限治理</div>
       <h1>系统账户与权限治理</h1>
       <p>
         面向系统管理员、安全管理员、审计管理员实现职责分离、关键操作审批与审计留痕，支持账户初始化、权限查看、审批流与日志核查。

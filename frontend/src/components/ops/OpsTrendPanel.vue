@@ -30,7 +30,7 @@ const chartOption = computed(() => {
       { type: 'value', name: 'KB/s' }
     ],
     series: [
-      { type: 'line', name: 'CPU', smooth: true, data: points.map((point) => point.cpuUsagePct) },
+      { type: 'line', name: '处理器', smooth: true, data: points.map((point) => point.cpuUsagePct) },
       { type: 'line', name: '内存', smooth: true, data: points.map((point) => point.memoryUsagePct) },
       {
         type: 'bar',
@@ -50,7 +50,7 @@ const chartOption = computed(() => {
 </script>
 
 <template>
-  <PanelCard title="资源趋势" :tags="['CPU/内存/网络', '最新可信快照']" :min-height="360">
+  <PanelCard title="资源趋势" :tags="['处理器/内存/网络', '最新可信快照']" :min-height="360">
     <template #extra>
       <div class="range-group">
         <BaseButton

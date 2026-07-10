@@ -25,19 +25,42 @@ const props = defineProps<{
 }>();
 
 const panelStyle = computed(() => ({
-  minHeight: `${props.minHeight ?? 280}px`
+  minHeight: `${props.minHeight ?? 240}px`
 }));
 </script>
 
 <style scoped>
 .panel-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--space-7) var(--space-7) var(--space-5);
+  padding: var(--space-6) var(--space-6) var(--space-5);
+  clip-path: polygon(0 14px, 14px 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at right top, rgba(45, 226, 230, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(6, 22, 40, 0.96), rgba(5, 16, 30, 0.94));
+  border: 1px solid rgba(74, 205, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(117, 221, 255, 0.04), 0 18px 40px rgba(0, 0, 0, 0.18);
+}
+
+.panel-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(89, 216, 255, 0.08), transparent 18%),
+    linear-gradient(rgba(117, 221, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(117, 221, 255, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 26px 26px, 26px 26px;
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .panel-header {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -49,6 +72,8 @@ const panelStyle = computed(() => ({
   margin: 0;
   font-size: var(--font-size-18);
   line-height: 1.4;
+  color: #7cf2ff;
+  letter-spacing: 0.04em;
 }
 
 .tag-group {
@@ -59,13 +84,15 @@ const panelStyle = computed(() => ({
 }
 
 .panel-body {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-height: 0;
 }
 
 @media (max-width: 640px) {
   .panel-card {
-    padding: var(--space-6) var(--space-5) var(--space-5);
+    padding: var(--space-5) var(--space-4) var(--space-4);
   }
 
   .panel-header {

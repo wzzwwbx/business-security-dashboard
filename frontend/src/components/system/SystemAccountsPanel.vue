@@ -4,6 +4,8 @@ import BaseEmpty from '@/components/common/BaseEmpty.vue';
 import type { IamAvailability, IamRoleDto, IamUserDto } from '@/types/iam';
 import { computed, reactive, shallowRef, watch } from 'vue';
 
+const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{4,32}$/;
+
 const props = defineProps<{
   users: IamUserDto[];
   roles: IamRoleDto[];
@@ -32,6 +34,7 @@ const createForm = reactive({
   password: '',
   roleCodes: [] as string[]
 });
+const createError = shallowRef('');
 
 const selectedUserId = shallowRef<number | null>(null);
 const editDisplayName = shallowRef('');
@@ -65,6 +68,10 @@ watch(selectedUser, (user) => {
   resetForm.reason = '';
 }, { immediate: true });
 
+watch(() => [createForm.username, createForm.displayName, createForm.password, createForm.roleCodes.length], () => {
+  createError.value = '';
+});
+
 const isDemo = computed(() => props.availability === 'demo');
 
 function toggleRoleSelection(roleCode: string, checked: boolean) {
@@ -86,7 +93,31 @@ function toggleCreateRole(roleCode: string, checked: boolean) {
 }
 
 function submitCreate() {
-  emit('create', { ...createForm, roleCodes: [...createForm.roleCodes] });
+  const username = createForm.username.trim();
+  const displayName = createForm.displayName.trim();
+
+  if (!USERNAME_PATTERN.test(username)) {
+    createError.value = '登录名需为 4-32 位，仅支持字母、数字、点、下划线和短横线。';
+    return;
+  }
+
+  if (displayName.length < 2 || displayName.length > 64) {
+    createError.value = '显示名称长度需为 2-64 个字符。';
+    return;
+  }
+
+  if (createForm.password.length < 8 || createForm.password.length > 64) {
+    createError.value = '初始密码长度需为 8-64 位。';
+    return;
+  }
+
+  if (!createForm.roleCodes.length) {
+    createError.value = '请至少选择一个初始角色。';
+    return;
+  }
+
+  createError.value = '';
+  emit('create', { username, displayName, password: createForm.password, roleCodes: [...createForm.roleCodes] });
   createForm.username = '';
   createForm.displayName = '';
   createForm.password = '';
@@ -137,23 +168,26 @@ function submitBindRoles() {
           <h2>创建账号</h2>
           <p>系统管理员负责账户建立，安全管理员与审计管理员拥有独立岗位账号。</p>
         </div>
-        <span class="tag">{{ isDemo ? '可预览写操作' : '真实接口' }}</span>
+        <span class="tag">{{ isDemo ? '本地处理' : '实时处理' }}</span>
       </div>
 
       <BaseEmpty v-if="!canCreate && !canUpdate" title="当前账号仅具备查看权限" description="如需创建或调整账户，请使用具备系统管理员权限的账户登录。" />
 
       <form v-else class="form-grid" @submit.prevent="submitCreate">
+        <div v-if="createError" class="inline-error full-row">{{ createError }}</div>
         <label>
           <span>登录名</span>
-          <input v-model.trim="createForm.username" required placeholder="例如：ops.duty" />
+          <input v-model.trim="createForm.username" required minlength="4" maxlength="32" pattern="[a-zA-Z0-9_.-]{4,32}" placeholder="例如：ops.duty" />
+          <small>4-32 位，仅支持字母、数字、点、下划线和短横线</small>
         </label>
         <label>
           <span>显示名称</span>
-          <input v-model.trim="createForm.displayName" required placeholder="例如：运维值班员" />
+          <input v-model.trim="createForm.displayName" required minlength="2" maxlength="64" placeholder="例如：运维值班员" />
+          <small>2-64 个字符</small>
         </label>
         <label class="full-row">
           <span>初始密码</span>
-          <input v-model="createForm.password" required type="password" minlength="8" placeholder="至少 8 位" />
+          <input v-model="createForm.password" required type="password" minlength="8" maxlength="64" placeholder="8-64 位" />
         </label>
         <fieldset class="full-row role-fieldset">
           <legend>初始角色</legend>
@@ -356,6 +390,11 @@ legend {
   color: var(--sys-color-text-secondary);
 }
 
+label small {
+  color: var(--sys-color-text-secondary);
+  font-size: var(--font-size-12);
+}
+
 input,
 textarea {
   width: 100%;
@@ -368,6 +407,15 @@ textarea {
 
 textarea {
   resize: vertical;
+}
+
+.inline-error {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--sys-color-status-danger-border);
+  border-radius: var(--radius-lg);
+  background: var(--sys-color-status-danger-bg);
+  color: var(--sys-color-status-danger-text);
+  font-size: var(--font-size-13);
 }
 
 .role-fieldset {

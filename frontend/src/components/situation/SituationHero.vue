@@ -6,22 +6,14 @@
           <BaseIcon :name="iconName" />
         </span>
         <div>
-          <div class="hero-eyebrow">{{ page.subtitle }}</div>
-          <div class="hero-title-row">
-            <h1 class="hero-title">{{ page.title }}</h1>
-            <span class="tag">{{ page.location }}</span>
-          </div>
-          <p class="hero-summary">{{ page.summary }}</p>
+          <h1 class="hero-title">{{ page.title }}</h1>
         </div>
       </div>
 
-      <div class="hero-meta">
-        <div class="hero-time">更新时间：{{ page.lastUpdated }}</div>
-        <div class="hero-tags" aria-label="页面态势标签">
-          <div v-for="tag in page.heroTags.slice(0, 4)" :key="`${tag.label}-${tag.value}`" class="hero-tag" :class="tag.tone ?? 'info'">
-            <span>{{ tag.label }}</span>
-            <strong>{{ tag.value }}</strong>
-          </div>
+      <div v-if="page.heroTags.length" class="hero-tags" aria-label="页面态势标签">
+        <div v-for="tag in page.heroTags.slice(0, 4)" :key="`${tag.label}-${tag.value}`" class="hero-tag" :class="tag.tone ?? 'info'">
+          <span>{{ tag.label }}</span>
+          <strong>{{ tag.value }}</strong>
         </div>
       </div>
     </div>
@@ -43,7 +35,8 @@ const iconName = computed(() => props.page.code === 'overview' ? 'overview' : pr
 <style scoped>
 .situation-hero {
   min-height: var(--layout-hero-height);
-  padding: 16px 18px;
+  padding: 12px 16px;
+  clip-path: polygon(0 18px, 18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px));
 }
 
 .hero-main {
@@ -51,89 +44,62 @@ const iconName = computed(() => props.page.code === 'overview' ? 'overview' : pr
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 12px;
 }
 
 .hero-leading {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .hero-icon {
-  width: 52px;
-  height: 52px;
+  width: 42px;
+  height: 42px;
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  font-size: 22px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(30, 136, 255, 0.22), rgba(45, 226, 230, 0.12));
-  color: var(--sys-color-brand-secondary);
-}
-
-.hero-eyebrow {
-  color: var(--sys-color-text-secondary);
-  font-size: var(--font-size-12);
-  letter-spacing: 0.08em;
-}
-
-.hero-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 6px;
-  flex-wrap: wrap;
+  font-size: 18px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 198, 82, 0.24), rgba(45, 226, 230, 0.12));
+  color: #ffd96a;
+  box-shadow: inset 0 0 20px rgba(255, 217, 106, 0.08), 0 0 18px rgba(49, 219, 255, 0.12);
 }
 
 .hero-title {
   margin: 0;
-  font-size: clamp(24px, 2vw, 30px);
-}
-
-.hero-summary {
-  margin: 6px 0 0;
-  color: var(--sys-color-text-secondary);
-  font-size: var(--font-size-13);
-}
-
-.hero-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-}
-
-.hero-time {
-  color: var(--sys-color-text-secondary);
-  font-size: var(--font-size-12);
+  font-size: clamp(22px, 2vw, 30px);
+  color: #4df4ff;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 18px rgba(77, 244, 255, 0.18);
 }
 
 .hero-tags {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
 .hero-tag {
-  min-width: 108px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--sys-color-border-secondary);
-  background: rgba(12, 26, 45, 0.72);
+  min-width: 92px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(80, 228, 255, 0.26);
+  background: linear-gradient(180deg, rgba(9, 37, 60, 0.88), rgba(6, 22, 40, 0.84));
   display: grid;
   gap: 4px;
 }
 
 .hero-tag span {
-  color: var(--sys-color-text-secondary);
+  color: #7ddff5;
   font-size: var(--font-size-12);
 }
 
 .hero-tag strong {
-  font-size: var(--font-size-14);
+  font-size: var(--font-size-15);
+  color: #effcff;
 }
 
 .hero-tag.success {
@@ -148,14 +114,13 @@ const iconName = computed(() => props.page.code === 'overview' ? 'overview' : pr
   border-color: var(--sys-color-status-danger-border);
 }
 
+.hero-tag.info {
+  border-color: var(--sys-color-status-info-border);
+}
+
 @media (max-width: 1280px) {
   .hero-main {
     flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .hero-meta {
-    width: 100%;
     align-items: flex-start;
   }
 

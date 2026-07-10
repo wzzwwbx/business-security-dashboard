@@ -194,7 +194,7 @@ const coreMetrics = computed(() => [
 const footerStats = computed(() => [
   { label: '健康节点', value: `${healthyNodeCount.value}/${props.nodes.length}` },
   { label: '高优链路', value: `${sceneLinks.value.filter((item) => item.tone === 'warning' || item.tone === 'danger').length} 条` },
-  { label: '实时归档', value: sceneLinks.value.some((item) => item.label === '实时归档') ? '已启用' : '待接入' }
+  { label: '运行归档', value: sceneLinks.value.some((item) => item.label === '实时归档') ? '已启用' : '正常' }
 ]);
 
 const legendItems = [

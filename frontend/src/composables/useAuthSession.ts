@@ -30,7 +30,7 @@ const authoritySet = computed(() => {
 const pageCodeSet = computed(() => new Set(currentUser.value?.pageCodes ?? []));
 const isAuthenticated = computed(() => availability.value === 'demo' || currentUser.value !== null);
 const requiresBootstrap = computed(() => availability.value === 'enabled' && bootstrapStatus.value !== null && !bootstrapStatus.value.initialized);
-const modeLabel = computed(() => (availability.value === 'enabled' ? 'IAM 联调模式' : availability.value === 'demo' ? '演示模式' : '初始化中'));
+const modeLabel = computed(() => (availability.value === 'enabled' ? '账户治理已启用' : availability.value === 'demo' ? '当前为预览数据' : '初始化中'));
 
 function applyDemoFallback(message: string) {
   availability.value = 'demo';
@@ -73,9 +73,9 @@ async function hydrateSession(force = false) {
       }
     } catch (error) {
       if (isIamEndpointUnavailable(error)) {
-        applyDemoFallback('当前后端未启用 MySQL IAM 接口，已自动切换为前端演示模式。');
+        applyDemoFallback('当前账户服务暂不可用，系统已切换到预览数据。');
       } else {
-        const message = error instanceof Error ? error.message : 'IAM 会话初始化失败，已切换到演示模式。';
+        const message = error instanceof Error ? error.message : '账户服务初始化失败，系统已切换到预览数据。';
         applyDemoFallback(message);
       }
     } finally {
@@ -162,7 +162,7 @@ async function login(payload: LoginRequest) {
 
 async function logout() {
   if (availability.value !== 'enabled') {
-    sessionMessage.value = '演示模式无需退出登录。';
+    sessionMessage.value = '当前页面为预览数据。';
     return;
   }
 

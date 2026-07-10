@@ -38,20 +38,38 @@ export function useTerminalDetail(selectedDeviceId: Readonly<{ value: number | n
     loading.value = true;
     try {
       errorMessage.value = '';
-      const [detailData, timeseriesData, eventData, softwareData, peripheralData] = await Promise.all([
+      const [detailResult, timeseriesResult, eventResult, softwareResult, peripheralResult] = await Promise.allSettled([
         fetchTerminalDeviceDetail(deviceId),
         fetchTerminalTimeseries(deviceId, range.value),
         fetchTerminalDeviceEvents(deviceId, 20),
         fetchTerminalSoftwareChanges(deviceId, 10),
         fetchTerminalPeripheralEvents(deviceId, 10)
       ]);
-      detail.value = detailData;
-      timeseries.value = timeseriesData;
-      events.value = eventData;
-      softwareChanges.value = softwareData;
-      peripheralEvents.value = peripheralData;
-    } catch (error) {
-      errorMessage.value = error instanceof Error ? error.message : '终端详情加载失败';
+
+      const messages: string[] = [];
+
+      if (detailResult.status === 'fulfilled') {
+        detail.value = detailResult.value;
+      } else {
+        detail.value = null;
+        messages.push(detailResult.reason instanceof Error ? detailResult.reason.message : '终端详情加载失败');
+      }
+
+      if (timeseriesResult.status === 'fulfilled') {
+        timeseries.value = timeseriesResult.value;
+      } else {
+        timeseries.value = null;
+      }
+
+      events.value = eventResult.status === 'fulfilled' ? eventResult.value : [];
+      softwareChanges.value = softwareResult.status === 'fulfilled' ? softwareResult.value : [];
+      peripheralEvents.value = peripheralResult.status === 'fulfilled' ? peripheralResult.value : [];
+
+      if (messages.length > 0) {
+        errorMessage.value = messages[0];
+      } else if (timeseriesResult.status === 'rejected' || eventResult.status === 'rejected' || softwareResult.status === 'rejected' || peripheralResult.status === 'rejected') {
+        errorMessage.value = '部分终端补充数据加载失败。';
+      }
     } finally {
       loading.value = false;
     }

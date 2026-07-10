@@ -3,12 +3,23 @@
     <div v-if="isMobile && mobileNavOpen" class="sidebar-backdrop" @click="closeMobileNav"></div>
 
     <aside class="sidebar glass-card" :aria-hidden="isMobile ? String(!mobileNavOpen) : 'false'">
-      <div class="brand-block">
-        <div class="brand-mark">态势</div>
-        <div class="brand-copy">
-          <div class="brand-title">业务安全态势系统</div>
-          <div class="brand-subtitle">综合研判与联动处置</div>
+      <div class="sidebar-header">
+        <div class="brand-block">
+          <div class="brand-mark">态势</div>
+          <div class="brand-copy">
+            <div class="brand-title">业务安全态势系统</div>
+            <div class="brand-subtitle">综合研判与联动处置</div>
+          </div>
         </div>
+        <button
+          class="sidebar-toggle"
+          type="button"
+          :aria-expanded="String(isMobile ? mobileNavOpen : !sidebarCollapsed)"
+          :aria-label="toggleLabel"
+          @click="toggleNavigation"
+        >
+          <BaseIcon :name="sidebarToggleIcon" />
+        </button>
       </div>
 
       <div class="sidebar-notice" :class="modeTone">
@@ -37,8 +48,8 @@
           <BaseIcon name="user" />
         </div>
         <div class="account-main">
-          <strong>{{ auth.currentUser.value?.displayName ?? '演示访客' }}</strong>
-          <span>{{ auth.currentUser.value?.roleNames?.join(' / ') || '前端预览模式' }}</span>
+          <strong>{{ auth.currentUser.value?.displayName ?? '当前用户' }}</strong>
+          <span>{{ auth.currentUser.value?.roleNames?.join(' / ') || '未登录' }}</span>
         </div>
       </div>
 
@@ -56,6 +67,7 @@
 
     <main class="content-shell">
       <button
+        v-if="isMobile"
         class="content-nav-toggle glass-card"
         type="button"
         :aria-expanded="String(isMobile ? mobileNavOpen : !sidebarCollapsed)"
@@ -108,8 +120,8 @@ const modeTone = computed(() => {
 });
 
 const noticeDescription = computed(() => auth.availability.value === 'enabled'
-  ? '导航按页面权限实时裁剪，系统管理页再按动作权限细分页签。'
-  : '当后端账号能力暂不可用时，系统自动回退到演示数据，便于前端继续联调。');
+  ? '导航会按当前账号可用功能自动显示。'
+  : '当前展示为预览数据。');
 
 const footerLabel = computed(() => auth.currentUser.value?.username
   ? `${auth.currentUser.value.username} 已连接`
@@ -127,6 +139,14 @@ const toggleLabel = computed(() => {
   }
 
   return sidebarCollapsed.value ? '展开导航' : '收起导航';
+});
+
+const sidebarToggleIcon = computed(() => {
+  if (isMobile.value) {
+    return mobileNavOpen.value ? 'close' : 'menu';
+  }
+
+  return sidebarCollapsed.value ? 'chevron-right' : 'chevron-left';
 });
 
 const toggleIcon = computed(() => mobileNavOpen.value ? 'close' : 'menu');
@@ -237,6 +257,11 @@ onBeforeUnmount(() => {
   margin: var(--space-6);
   padding: var(--space-8) var(--space-6);
   overflow: auto;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(4, 17, 31, 0.98), rgba(4, 16, 27, 0.96)),
+    linear-gradient(180deg, rgba(0, 217, 255, 0.08), transparent 22%);
+  border: 1px solid rgba(76, 223, 255, 0.2);
   transition:
     transform var(--motion-duration-base) var(--motion-ease-standard),
     opacity var(--motion-duration-base) var(--motion-ease-standard),
@@ -250,19 +275,20 @@ onBeforeUnmount(() => {
 .content-nav-toggle {
   position: fixed;
   top: 18px;
-  left: calc(var(--layout-sidebar-width) + 28px);
+  left: var(--space-4);
   z-index: calc(var(--z-overlay) + 1);
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: 42px;
-  padding: 0 var(--space-4);
+  min-height: 40px;
+  padding: 0 var(--space-3);
   border: 1px solid var(--sys-color-border-accent);
+  border-radius: var(--radius-pill);
   color: var(--sys-color-text-primary);
-  background: rgba(9, 21, 39, 0.82);
+  background: rgba(9, 21, 39, 0.88);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition:
-    left var(--motion-duration-base) var(--motion-ease-standard),
     background var(--motion-duration-fast) var(--motion-ease-standard),
     border-color var(--motion-duration-fast) var(--motion-ease-standard);
 }
@@ -272,25 +298,56 @@ onBeforeUnmount(() => {
   border-color: var(--sys-color-brand-secondary);
 }
 
-.app-grid.sidebar-collapsed .content-nav-toggle {
-  left: calc(var(--layout-sidebar-width-collapsed) + 28px);
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
 }
 
 .brand-block {
   display: flex;
   align-items: center;
   gap: var(--space-5);
+  min-width: 0;
+}
+
+.sidebar-toggle {
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--sys-color-border-secondary);
+  border-radius: var(--radius-md);
+  color: var(--sys-color-text-secondary);
+  background: rgba(18, 40, 66, 0.42);
+  cursor: pointer;
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.sidebar-toggle:hover {
+  color: var(--sys-color-text-primary);
+  background: rgba(18, 40, 66, 0.72);
+  border-color: var(--sys-color-border-accent);
+  transform: translateY(-1px);
 }
 
 .brand-mark {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-lg);
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
   font-weight: var(--font-weight-black);
   letter-spacing: 1px;
-  background: var(--sys-color-brand-gradient);
+  color: #ffe082;
+  background: linear-gradient(135deg, rgba(255, 214, 92, 0.28), rgba(27, 220, 255, 0.14));
+  box-shadow: inset 0 0 20px rgba(255, 224, 130, 0.08), 0 0 20px rgba(32, 197, 255, 0.12);
 }
 
 .brand-copy {
@@ -298,23 +355,25 @@ onBeforeUnmount(() => {
 }
 
 .brand-title {
-  font-size: var(--font-size-18);
+  font-size: 20px;
   font-weight: var(--font-weight-bold);
   line-height: 1.3;
+  color: #f2fbff;
 }
 
 .brand-subtitle {
   margin-top: var(--space-1);
-  color: var(--sys-color-text-secondary);
+  color: #62dcff;
   font-size: var(--font-size-12);
+  letter-spacing: 0.08em;
 }
 
 .sidebar-notice,
 .account-card {
   padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--sys-color-border-secondary);
-  background: var(--sys-color-surface-muted);
+  border-radius: 14px;
+  border: 1px solid rgba(65, 214, 255, 0.18);
+  background: linear-gradient(180deg, rgba(7, 39, 61, 0.92), rgba(5, 26, 43, 0.88));
 }
 
 .sidebar-notice.success {
@@ -347,21 +406,27 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  min-height: 48px;
-  padding: var(--space-4) var(--space-5);
-  border: 1px solid transparent;
-  border-radius: var(--radius-lg);
+  min-height: 46px;
+  padding: var(--space-4);
+  border: 1px solid rgba(66, 220, 255, 0.08);
+  border-radius: 14px;
   color: var(--sys-color-text-secondary);
-  background: transparent;
-  transition: all var(--motion-duration-fast) var(--motion-ease-standard);
+  background: rgba(8, 26, 43, 0.34);
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .nav-item:hover,
 .nav-item.active,
 .logout-button:hover {
   color: var(--sys-color-text-primary);
-  border-color: var(--sys-color-border-accent);
-  background: linear-gradient(90deg, var(--sys-color-brand-primary-soft), var(--sys-color-brand-primary-weak));
+  border-color: rgba(76, 223, 255, 0.42);
+  background: linear-gradient(90deg, rgba(18, 144, 255, 0.26), rgba(45, 226, 230, 0.12));
+  transform: translateX(2px);
+  box-shadow: inset 0 0 18px rgba(22, 196, 255, 0.14);
 }
 
 .nav-icon {
@@ -391,8 +456,8 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  color: var(--sys-color-brand-secondary);
-  background: var(--sys-color-brand-secondary-tint);
+  color: #73e8ff;
+  background: rgba(19, 157, 224, 0.2);
 }
 
 .account-main {
@@ -433,6 +498,13 @@ onBeforeUnmount(() => {
 .app-grid.sidebar-collapsed .sidebar {
   align-items: center;
   padding-inline: var(--space-3);
+}
+
+.app-grid.sidebar-collapsed .sidebar-header {
+  width: 100%;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-3);
 }
 
 .app-grid.sidebar-collapsed .brand-copy,
@@ -506,6 +578,11 @@ onBeforeUnmount(() => {
   .app-grid.sidebar-collapsed .content-nav-toggle {
     top: var(--space-4);
     left: var(--space-4);
+  }
+
+  .sidebar-toggle {
+    width: 40px;
+    height: 40px;
   }
 }
 

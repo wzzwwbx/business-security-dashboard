@@ -37,8 +37,8 @@
       />
       <BaseEmpty
         v-else
-        title="暂未识别的组件类型"
-        :description="`组件 ${widget.type} 尚未接入渲染器，请补充对应 Widget 实现。`"
+        title="当前内容暂未展示"
+        description="该区域数据暂不可用，请稍后刷新查看。"
       />
     </div>
   </PanelCard>

@@ -269,6 +269,31 @@ function closeDrawer() {
 </template>
 
 <style scoped>
+.screen-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.screen-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--layout-card-gap);
+}
+
+.screen-workbench {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.9fr) minmax(0, 1.45fr) minmax(250px, 0.9fr);
+  gap: var(--layout-card-gap);
+  align-items: start;
+}
+
+.screen-support-column,
+.screen-center-column {
+  display: grid;
+  gap: var(--space-3);
+}
+
 .skeleton-hero,
 .skeleton-toolbar,
 .skeleton-kpi-card,
@@ -294,7 +319,7 @@ function closeDrawer() {
 
 .highlight-card {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   border: 1px solid var(--sys-color-border-secondary);
   background: rgba(10, 20, 35, 0.72);
   text-align: left;
@@ -330,7 +355,7 @@ function closeDrawer() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
 .filter-empty-state p {
@@ -404,6 +429,14 @@ function closeDrawer() {
 }
 
 @media (max-width: 1280px) {
+  .screen-kpi-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .screen-workbench {
+    grid-template-columns: 1fr;
+  }
+
   .filter-empty-state {
     flex-direction: column;
     align-items: flex-start;
@@ -411,6 +444,10 @@ function closeDrawer() {
 }
 
 @media (max-width: 640px) {
+  .screen-kpi-row {
+    grid-template-columns: 1fr;
+  }
+
   .drawer-fact-grid {
     grid-template-columns: 1fr;
   }

@@ -25,10 +25,10 @@ const metrics = computed<MetricCardModel[]>(() => {
       label: '未恢复告警',
       value: String(overview.openAlerts),
       status: overview.openAlerts > 0 ? 'danger' : 'info',
-      description: 'CPU / 内存 / 磁盘实时阈值告警'
+      description: '处理器 / 内存 / 磁盘实时阈值告警'
     },
     {
-      label: '平均 CPU',
+      label: '平均处理器占用',
       value: overview.averageCpuUsagePct.toFixed(1),
       unit: '%',
       status: overview.averageCpuUsagePct > 85 ? 'danger' : overview.averageCpuUsagePct > 65 ? 'warning' : 'success',
@@ -56,10 +56,10 @@ const metrics = computed<MetricCardModel[]>(() => {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--layout-grid-gap);
-  margin-bottom: var(--space-7);
+  margin-bottom: var(--space-5);
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 1480px) {
   .metrics-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

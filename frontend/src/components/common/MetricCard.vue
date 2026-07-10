@@ -34,11 +34,28 @@ defineProps<{
 
 <style scoped>
 .metric-card {
-  padding: var(--space-7);
+  position: relative;
+  padding: var(--space-6);
+  clip-path: polygon(0 12px, 12px 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at right top, rgba(45, 226, 230, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(6, 24, 43, 0.98), rgba(6, 18, 32, 0.94));
+  border: 1px solid rgba(74, 205, 255, 0.16);
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(120, 224, 255, 0.08), transparent 32%);
+  pointer-events: none;
 }
 
 .metric-top,
 .metric-footer {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -47,12 +64,14 @@ defineProps<{
 
 .metric-label,
 .metric-footer {
-  color: var(--sys-color-text-secondary);
+  color: #77dfff;
   font-size: var(--font-size-13);
 }
 
 .metric-value-row {
-  margin: var(--space-6) 0 var(--space-5);
+  position: relative;
+  z-index: 1;
+  margin: var(--space-5) 0 var(--space-4);
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
@@ -61,6 +80,8 @@ defineProps<{
 .metric-value {
   font-size: var(--font-size-32);
   line-height: var(--line-height-tight);
+  color: #effcff;
+  text-shadow: 0 0 16px rgba(73, 221, 255, 0.14);
 }
 
 .metric-unit {
@@ -95,12 +116,12 @@ defineProps<{
 }
 
 .metric-trend {
-  color: var(--sys-color-brand-secondary);
+  color: #4ef0ff;
 }
 
 @media (max-width: 640px) {
   .metric-card {
-    padding: var(--space-6);
+    padding: var(--space-5);
   }
 
   .metric-top,

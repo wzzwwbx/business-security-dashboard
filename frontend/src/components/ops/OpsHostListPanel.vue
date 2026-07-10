@@ -33,7 +33,7 @@ const emit = defineEmits<{
           <span class="badge" :class="statusTone(host.status)">{{ statusLabel(host.status) }}</span>
         </div>
         <div class="host-metrics">
-          <span>CPU {{ formatPercent(host.cpuUsagePct) }}</span>
+          <span>处理器 {{ formatPercent(host.cpuUsagePct) }}</span>
           <span>内存 {{ formatPercent(host.memoryUsagePct) }}</span>
           <span>Load {{ host.load1.toFixed(2) }}</span>
           <span>告警 {{ host.openAlertCount }}</span>
@@ -44,7 +44,7 @@ const emit = defineEmits<{
         </div>
       </button>
     </div>
-    <BaseEmpty v-else title="暂无主机" description="等待 Probe、外部接口或手工导入推送主机快照。" />
+    <BaseEmpty v-else title="暂无主机" description="当前未获取到主机清单，请稍后刷新查看。" />
   </PanelCard>
 </template>
 

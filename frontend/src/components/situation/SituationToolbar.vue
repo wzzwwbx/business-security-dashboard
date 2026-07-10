@@ -65,8 +65,8 @@ const sourceLabel = computed(() => getSituationSourceLabel(props.resolvedSource,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 12px 16px;
+  gap: 10px;
+  padding: 10px 12px;
 }
 
 .toolbar-left,
@@ -74,16 +74,16 @@ const sourceLabel = computed(() => getSituationSourceLabel(props.resolvedSource,
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .toolbar-copy {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .toolbar-copy strong {
-  font-size: var(--font-size-14);
+  font-size: var(--font-size-13);
 }
 
 .toolbar-copy span,
@@ -96,15 +96,15 @@ const sourceLabel = computed(() => getSituationSourceLabel(props.resolvedSource,
 .filter-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .filter-chip {
-  min-height: 34px;
-  padding: 0 12px;
+  min-height: 30px;
+  padding: 0 10px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   border-radius: 999px;
   border: 1px solid var(--sys-color-border-secondary);
   background: transparent;
@@ -125,7 +125,7 @@ const sourceLabel = computed(() => getSituationSourceLabel(props.resolvedSource,
 
 .toolbar-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 @media (max-width: 1280px) {

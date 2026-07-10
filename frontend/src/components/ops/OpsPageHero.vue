@@ -23,7 +23,7 @@ const freshness = computed(() => formatRelativeTime(props.overview?.generatedAt)
       <div class="hero-eyebrow">运维态势 · 多源接入</div>
       <h1>基础设施健康态势</h1>
       <p>
-        统一汇聚 Probe、外部系统与手工注入数据，面向 1–20 台 Linux ARM 服务器提供主机健康、资源趋势、重点进程与告警态势。
+        统一汇聚采集端、外部系统与手工导入数据，面向 1-20 台服务器提供主机健康、资源趋势、重点进程与告警态势。
       </p>
       <div class="hero-tags">
         <span class="tag">最近生成：{{ generatedAt }}</span>

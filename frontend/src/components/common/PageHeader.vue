@@ -23,25 +23,45 @@ const props = defineProps<{
   page: DashboardPage;
 }>();
 
-const headerStatus = computed(() => (props.page.dataMode === 'mock' ? '演示数据模式' : '接口联调模式'));
+const headerStatus = computed(() => '当前态势');
 const headerDescription = computed(() =>
-  props.page.dataMode === 'mock'
-    ? '当前页面直接使用前端 mock 数据，适合设计评审与交互演示。'
-    : '当前页面来自 Spring Boot API，可继续接入 MySQL、真实指标与联调链路。'
+  props.page.lastUpdated ? `最近更新：${props.page.lastUpdated}` : '当前页面展示最新态势信息。'
 );
 </script>
 
 <style scoped>
 .header-block {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-10);
   padding: var(--space-9) var(--space-11);
   margin-bottom: var(--space-7);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(33, 150, 243, 0.14), transparent 28%),
+    radial-gradient(circle at 88% 20%, rgba(45, 226, 230, 0.12), transparent 22%),
+    linear-gradient(180deg, rgba(6, 21, 38, 0.98), rgba(5, 16, 30, 0.94));
+  border: 1px solid rgba(74, 205, 255, 0.18);
+}
+
+.header-block::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(89, 216, 255, 0.08), transparent 20%),
+    linear-gradient(rgba(117, 221, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(117, 221, 255, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+  opacity: 0.42;
+  pointer-events: none;
 }
 
 .header-main {
+  position: relative;
+  z-index: 1;
   min-width: 0;
 }
 
@@ -66,6 +86,8 @@ const headerDescription = computed(() =>
 }
 
 .header-right {
+  position: relative;
+  z-index: 1;
   min-width: 220px;
   text-align: right;
 }

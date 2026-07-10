@@ -28,7 +28,7 @@ defineProps<{
         </div>
       </article>
     </div>
-    <BaseEmpty v-else title="暂无告警" description="当前主机未触发 CPU / 内存 / 磁盘阈值告警。" />
+    <BaseEmpty v-else title="暂无告警" description="当前主机未触发处理器 / 内存 / 磁盘阈值告警。" />
   </PanelCard>
 </template>
 

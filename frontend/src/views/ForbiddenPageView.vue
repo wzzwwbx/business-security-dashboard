@@ -14,7 +14,7 @@ async function backToSafePage() {
 <template>
   <main class="forbidden-page">
     <section class="forbidden-card glass-card">
-      <div class="eyebrow">403 / Forbidden</div>
+      <div class="eyebrow">访问受限</div>
       <h1>当前账户无权访问此页面</h1>
       <p>系统已根据三员职责分离和页面授权规则阻止访问。你可以返回首个有权限的页面，或切换具备对应权限的账户重新登录。</p>
       <div class="actions">

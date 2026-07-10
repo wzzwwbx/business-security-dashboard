@@ -2,10 +2,10 @@
   <section class="feed-card glass-card" aria-label="动态研判">
     <header class="feed-header">
       <div>
-        <div class="feed-eyebrow">今日数据动态</div>
-        <h2 class="feed-title">可直接汇报的研判摘要</h2>
+        <div class="feed-eyebrow">重点动态</div>
+        <h2 class="feed-title">当前重点态势</h2>
       </div>
-      <p class="feed-subtitle">自动从告警、流程、处置建议和状态组件中提炼重点信息。</p>
+      <p class="feed-subtitle">聚焦当前需要优先关注的风险变化、业务波动和处置进展。</p>
     </header>
 
     <div class="feed-list">

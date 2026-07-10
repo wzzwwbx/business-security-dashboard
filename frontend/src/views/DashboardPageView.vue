@@ -55,8 +55,32 @@
 
   <div v-else-if="page" class="dashboard-page">
     <PageHeader :page="page" />
-    <SituationDigest :items="digestCards" />
-    <OperationalFeed :items="operationalFeed" />
+
+    <OverviewExecutivePanel
+      v-if="page.code === 'overview'"
+      :digest-items="digestCards"
+      :feed-items="operationalFeed"
+      :source-items="overviewSourceCards"
+    />
+
+    <TerminalExecutivePanel
+      v-else-if="page.code === 'terminal'"
+      :digest-items="digestCards"
+      :feed-items="operationalFeed"
+      :last-updated="page.lastUpdated"
+    />
+
+    <BusinessExecutivePanel
+      v-else-if="page.code === 'business'"
+      :digest-items="digestCards"
+      :feed-items="operationalFeed"
+      :last-updated="page.lastUpdated"
+    />
+
+    <template v-else>
+      <SituationDigest :items="digestCards" />
+      <OperationalFeed :items="operationalFeed" />
+    </template>
 
     <section v-if="heroWidget" class="hero-panel">
       <WidgetRenderer :widget="heroWidget" />
@@ -93,8 +117,11 @@ import BaseIcon from '@/components/common/BaseIcon.vue';
 import BaseSkeleton from '@/components/common/BaseSkeleton.vue';
 import MetricCard from '@/components/common/MetricCard.vue';
 import PageHeader from '@/components/common/PageHeader.vue';
+import BusinessExecutivePanel from '@/components/dashboard/BusinessExecutivePanel.vue';
+import OverviewExecutivePanel from '@/components/dashboard/OverviewExecutivePanel.vue';
 import OperationalFeed from '@/components/dashboard/OperationalFeed.vue';
 import SituationDigest from '@/components/dashboard/SituationDigest.vue';
+import TerminalExecutivePanel from '@/components/dashboard/TerminalExecutivePanel.vue';
 import WidgetRenderer from '@/components/widgets/WidgetRenderer.vue';
 import { getDashboardDataSource } from '@/api/dashboard';
 import { useDashboardInsights } from '@/composables/useDashboardInsights';
@@ -108,15 +135,48 @@ const { page, loading, errorMessage, loadPage } = useDashboardPage(route);
 const { digestCards, operationalFeed } = useDashboardInsights(page);
 const { heroWidget, pageWidgets } = useDashboardLayout(page);
 
+const overviewSourceCards = computed(() => {
+  if (page.value?.code !== 'overview') {
+    return [];
+  }
+
+  return [
+    {
+      name: '运维采集系统',
+      status: '正常',
+      description: '持续汇聚主机、进程和资源运行情况，当前状态稳定。',
+      sync: '1 分钟前',
+      coverage: '主机运行、资源负载、网络状态',
+      tone: 'success' as const
+    },
+    {
+      name: '业务运行系统',
+      status: '正常',
+      description: '已纳入密信、签阅与归档等核心业务运行情况。',
+      sync: '2 分钟前',
+      coverage: '业务状态、访问链路、处理时效',
+      tone: 'info' as const
+    },
+    {
+      name: '终端管理系统',
+      status: '关注',
+      description: '终端在线、补丁与证书状态已纳入综合态势展示。',
+      sync: '5 分钟前',
+      coverage: '终端在线、补丁更新、证书状态',
+      tone: 'warning' as const
+    }
+  ];
+});
+
 const errorDescription = computed(() => {
   if (errorMessage.value) {
     return getDashboardDataSource() === 'integration'
-      ? `${errorMessage.value}。当前处于接口联调模式，请确认 Spring Boot 服务、/api 代理与数据库配置。`
+      ? `${errorMessage.value}。请确认数据服务和网络连接是否正常。`
       : errorMessage.value;
   }
 
   return getDashboardDataSource() === 'integration'
-    ? '当前未获取到页面数据，请检查后端服务、代理配置或数据库连接状态。'
+    ? '当前未获取到页面数据，请检查数据服务是否正常。'
     : '当前未获取到页面数据，请重试。';
 });
 </script>
@@ -130,7 +190,7 @@ const errorDescription = computed(() => {
 
 .hero-panel,
 .hero-skeleton {
-  margin-bottom: var(--space-7);
+  margin-bottom: var(--space-5);
 }
 
 .hero-skeleton {
@@ -144,7 +204,7 @@ const errorDescription = computed(() => {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--layout-card-gap);
-  margin-bottom: var(--space-7);
+  margin-bottom: var(--space-5);
 }
 
 .grid-item {

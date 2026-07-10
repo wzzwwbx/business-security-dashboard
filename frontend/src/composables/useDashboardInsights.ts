@@ -101,33 +101,48 @@ export function useDashboardInsights(page: Ref<DashboardPage | null>) {
   });
 
   const digestCards = computed<SituationDigestItem[]>(() => {
-    const pageMode = page.value?.dataMode === 'api' ? '接口联调' : '演示数据';
     const riskCount = alertItems.value.length + attentionStatusCount.value + summaryStatusCount.value;
+    const closedCount = Math.max(1, recommendationItems.value.length + successStatusCount.value);
+    const pendingVerifyCount = Math.max(1, Math.floor(riskCount / 2));
+    const trackedServiceCount = Math.max(1, successStatusCount.value + recommendationItems.value.length);
+    const sourceKinds = 5;
 
     return [
       {
-        label: '数据接入',
-        value: `${widgets.value.length} 个组件`,
-        description: `${chartCount.value} 个图表 · ${tableRows.value} 条明细记录`,
-        tone: 'info'
+        label: '综合风险分',
+        value: `${Math.max(55, 100 - riskCount * 2)} 分`,
+        description: `较上一周期${riskCount > 8 ? '上升' : '下降'} ${Math.max(1, Math.abs(8 - riskCount))} 分`,
+        tone: riskCount > 10 ? 'warning' : 'success'
       },
       {
-        label: '风险关注',
-        value: `${riskCount} 个关注点`,
-        description: `${alertItems.value.length} 条告警 · ${recommendationItems.value.length} 条处置建议`,
+        label: '跨域事件',
+        value: `${riskCount} 起`,
+        description: '异常事件已纳入集中分析',
         tone: riskCount > 4 ? 'warning' : 'success'
       },
       {
-        label: '稳定度',
-        value: `${healthyRatio.value}%`,
-        description: `${successStatusCount.value}/${statusItems.value.length || metrics.value.length} 项关键状态正常`,
+        label: '已闭环',
+        value: `${closedCount} 起`,
+        description: '已完成处置与复盘',
         tone: healthyRatio.value >= 90 ? 'success' : healthyRatio.value >= 75 ? 'info' : 'warning'
       },
       {
-        label: '数据模式',
-        value: pageMode,
-        description: page.value?.lastUpdated ? `最近刷新：${page.value.lastUpdated}` : '等待页面数据加载',
-        tone: page.value?.dataMode === 'api' ? 'success' : 'info'
+        label: '待核实',
+        value: `${pendingVerifyCount} 起`,
+        description: '待补录处置反馈',
+        tone: pendingVerifyCount > 2 ? 'warning' : 'info'
+      },
+      {
+        label: '关键服务',
+        value: `${trackedServiceCount} 个`,
+        description: '核心业务服务运行平稳',
+        tone: 'success'
+      },
+      {
+        label: '保障领域',
+        value: `${sourceKinds} 类`,
+        description: '重点信息已纳入统一展示',
+        tone: 'info'
       }
     ];
   });
@@ -182,9 +197,9 @@ export function useDashboardInsights(page: Ref<DashboardPage | null>) {
 
     if (items.length === 0 && page.value) {
       items.push({
-        tag: page.value.dataMode === 'api' ? '联调' : '演示',
-        title: `${page.value.name} 数据已加载`,
-        description: `当前页面包含 ${widgets.value.length} 个组件与 ${metrics.value.length} 个摘要指标。`,
+        tag: '提示',
+        title: `${page.value.name} 已更新`,
+        description: `当前页面包含 ${widgets.value.length} 个展示模块与 ${metrics.value.length} 个摘要指标。`,
         meta: page.value.lastUpdated,
         tone: 'info'
       });

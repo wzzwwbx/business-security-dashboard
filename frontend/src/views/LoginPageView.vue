@@ -28,13 +28,12 @@ async function submit() {
 <template>
   <main class="auth-page">
     <section class="auth-card glass-card">
-      <div class="eyebrow">IAM / 登录</div>
+      <div class="eyebrow">账户登录</div>
       <h1>业务安全态势系统</h1>
-      <p class="subtitle">启用 HttpOnly Session 的本地账户认证，支持三员分立和页面权限控制。</p>
 
       <div v-if="isDemo" class="notice success">
-        <strong>当前处于演示模式</strong>
-        <p>{{ auth.sessionMessage.value || '后端未开启 MySQL IAM，系统自动使用前端演示账号。' }}</p>
+        <strong>当前展示为预览数据</strong>
+        <p>{{ auth.sessionMessage.value || '当前账户服务暂不可用。' }}</p>
       </div>
 
       <div v-if="errorMessage" class="notice danger">
@@ -45,7 +44,7 @@ async function submit() {
       <form class="auth-form" @submit.prevent="submit">
         <label>
           <span>用户名</span>
-          <input v-model.trim="form.username" autocomplete="username" required placeholder="sysadmin" />
+          <input v-model.trim="form.username" autocomplete="username" required placeholder="请输入用户名" />
         </label>
         <label>
           <span>密码</span>
@@ -83,14 +82,8 @@ async function submit() {
 }
 
 h1 {
-  margin: var(--space-3) 0 var(--space-3);
+  margin: var(--space-3) 0 var(--space-7);
   font-size: clamp(30px, 4vw, 40px);
-}
-
-.subtitle {
-  margin: 0 0 var(--space-7);
-  color: var(--sys-color-text-secondary);
-  line-height: var(--line-height-relaxed);
 }
 
 .auth-form {

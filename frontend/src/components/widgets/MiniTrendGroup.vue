@@ -46,7 +46,7 @@ function toneLabel(tone?: VisualTone) {
 }
 
 .mini-trend-card {
-  padding: 14px;
+  padding: 12px;
   border-radius: 16px;
   border: 1px solid var(--sys-color-border-secondary);
   background: rgba(11, 25, 43, 0.68);
@@ -71,7 +71,7 @@ function toneLabel(tone?: VisualTone) {
 
 .mini-trend-progress {
   height: 6px;
-  margin: 12px 0 10px;
+  margin: 10px 0 8px;
   border-radius: 999px;
   background: var(--sys-color-progress-track);
   overflow: hidden;
@@ -94,6 +94,12 @@ function toneLabel(tone?: VisualTone) {
 
 .mini-trend-card.danger .mini-trend-fill {
   background: var(--sys-color-status-danger);
+}
+
+@media (max-width: 1480px) {
+  .mini-trend-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {

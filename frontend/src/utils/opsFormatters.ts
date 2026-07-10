@@ -89,9 +89,9 @@ export function statusLabel(status: string) {
     case 'PROBE':
       return '探针';
     case 'EXTERNAL_API':
-      return '外部接口';
+      return '业务接入';
     case 'MANUAL_IMPORT':
-      return '手工导入';
+      return '补录数据';
     case 'OPEN':
       return '未恢复';
     case 'RESOLVED':
@@ -111,13 +111,13 @@ export function sourceSystemLabel(value: string | null | undefined) {
   switch (value) {
     case 'ops-probe-arm':
     case 'linux-arm-probe':
-      return '主机探针';
+      return '主机采集';
     case 'ops-external-gateway':
-      return '外部接入网关';
+      return '业务接入网关';
     case 'ops-manual-console':
-      return '手工注入台';
+      return '人工补录台';
     default:
-      return value ? '接入来源' : '未命名来源';
+      return value ? '数据来源' : '未命名来源';
   }
 }
 
@@ -127,7 +127,7 @@ export function bindingStatusLabel(value: string | null | undefined) {
     case 'ACTIVE':
       return '已绑定';
     case 'PENDING':
-      return '待确认';
+      return '待核实';
     case 'DISABLED':
       return '停用';
     case 'UNBOUND':

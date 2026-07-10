@@ -1,4 +1,5 @@
 import { fetchSituationPage, getSituationDataSource } from '@/api/situations';
+import { SITUATION_PAGE_META } from '@/config/situationPageMeta';
 import type {
   SituationFilterChip,
   SituationInsight,
@@ -37,6 +38,18 @@ function matchesFilter(section: SituationSection, activeFilter: string) {
   return (section.tags ?? []).includes(activeFilter);
 }
 
+function normalizePageCopy(page: SituationPage): SituationPage {
+  const meta = SITUATION_PAGE_META[page.code];
+
+  return {
+    ...page,
+    name: meta.name,
+    title: meta.title,
+    subtitle: meta.subtitle,
+    location: meta.location
+  };
+}
+
 export function useSituationPage(pageCode: Ref<SituationPageCode>) {
   const page = shallowRef<SituationPage | null>(null);
   const loading = shallowRef(true);
@@ -53,7 +66,7 @@ export function useSituationPage(pageCode: Ref<SituationPageCode>) {
 
     try {
       const result = await fetchSituationPage(pageCode.value);
-      page.value = result.page;
+      page.value = normalizePageCopy(result.page);
       resolvedSource.value = result.source;
       warningMessage.value = result.warningMessage ?? '';
       selectedInsight.value = null;

@@ -22,12 +22,12 @@ defineProps<{
 
       <dl class="detail-grid">
         <div>
-          <dt>Host Code</dt>
+          <dt>主机编号</dt>
           <dd>{{ detail.hostCode }}</dd>
         </div>
         <div>
           <dt>架构 / 核心</dt>
-          <dd>{{ detail.arch }} / {{ detail.cpuCores }} cores</dd>
+          <dd>{{ detail.arch }} / {{ detail.cpuCores }} 核</dd>
         </div>
         <div>
           <dt>总内存</dt>
@@ -49,7 +49,7 @@ defineProps<{
 
       <div class="snapshot-grid">
         <div class="snapshot-item">
-          <span>CPU</span>
+          <span>处理器</span>
           <strong>{{ formatPercent(detail.latestSnapshot.cpuUsagePct) }}</strong>
         </div>
         <div class="snapshot-item">
@@ -61,7 +61,7 @@ defineProps<{
           <strong>{{ formatPercent(detail.latestSnapshot.diskUsagePct) }}</strong>
         </div>
         <div class="snapshot-item">
-          <span>Load 1 / 5 / 15</span>
+          <span>负载 1 / 5 / 15 分钟</span>
           <strong>{{ detail.latestSnapshot.load1.toFixed(2) }} / {{ detail.latestSnapshot.load5.toFixed(2) }} / {{ detail.latestSnapshot.load15.toFixed(2) }}</strong>
         </div>
       </div>

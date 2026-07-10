@@ -10,15 +10,15 @@ defineProps<{
 </script>
 
 <template>
-  <PanelCard title="TopN 进程与白名单服务" :tags="['Top 10 + 白名单', 'Linux ARM']" :min-height="360">
+  <PanelCard title="重点进程与白名单服务" :tags="['重点进程', '白名单']" :min-height="360">
     <div v-if="processes.length" class="table-wrap">
       <table>
         <thead>
           <tr>
             <th>进程</th>
             <th>PID</th>
-            <th>CPU</th>
-            <th>RSS</th>
+            <th>处理器</th>
+            <th>内存占用</th>
             <th>状态</th>
             <th>类别</th>
             <th>更新时间</th>
@@ -35,14 +35,14 @@ defineProps<{
             <td>{{ formatBytes(process.memoryRssBytes) }}</td>
             <td>{{ process.state }}</td>
             <td>
-              <span class="tag">{{ process.whitelisted ? '白名单' : 'TopN' }}</span>
+              <span class="tag">{{ process.whitelisted ? '白名单' : '重点进程' }}</span>
             </td>
             <td>{{ formatRelativeTime(process.observedAt) }}</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <BaseEmpty v-else title="暂无进程快照" description="等待主机上报 TopN 进程与白名单服务数据。" />
+    <BaseEmpty v-else title="暂无进程快照" description="等待主机上报重点进程与白名单服务数据。" />
   </PanelCard>
 </template>
 

@@ -2,6 +2,26 @@ import { fetchTerminalDevices, fetchTerminalOverview, fetchTerminalSources } fro
 import type { TerminalDeviceSummaryDto, TerminalOverviewDto, TerminalSourceDto } from '@/types/terminal';
 import { onBeforeUnmount, onMounted, readonly, ref, shallowRef } from 'vue';
 
+function normalizeTerminalLoadError(scope: string) {
+  return `${scope}暂时无法获取，请稍后刷新重试。`;
+}
+
+function emptyOverview(): TerminalOverviewDto {
+  return {
+    generatedAt: '',
+    onlineDevices: 0,
+    staleDevices: 0,
+    offlineDevices: 0,
+    highRiskDevices: 0,
+    abnormalPasswordModuleDevices: 0,
+    fingerprintChangedDevices: 0,
+    pendingClaimDevices: 0,
+    peripheralAlertCount: 0,
+    softwareChangeDevices: 0,
+    sourceCount: 0
+  };
+}
+
 export function useTerminalOverview() {
   const overview = shallowRef<TerminalOverviewDto | null>(null);
   const sources = ref<TerminalSourceDto[]>([]);
@@ -37,7 +57,7 @@ export function useTerminalOverview() {
 
     try {
       errorMessage.value = '';
-      const [overviewData, sourceData, deviceData] = await Promise.all([
+      const [overviewResult, sourceResult, deviceResult] = await Promise.allSettled([
         fetchTerminalOverview(),
         fetchTerminalSources(),
         fetchTerminalDevices({
@@ -49,12 +69,37 @@ export function useTerminalOverview() {
           size: 200
         })
       ]);
-      overview.value = overviewData;
-      sources.value = sourceData;
-      devices.value = deviceData.items;
-      syncSelectedDevice(deviceData.items);
-    } catch (error) {
-      errorMessage.value = error instanceof Error ? error.message : '终端总览加载失败';
+
+      const messages: string[] = [];
+
+      if (overviewResult.status === 'fulfilled') {
+        overview.value = overviewResult.value;
+      } else {
+        overview.value = emptyOverview();
+        messages.push(normalizeTerminalLoadError('终端总览'));
+      }
+
+      if (sourceResult.status === 'fulfilled') {
+        sources.value = sourceResult.value;
+      } else {
+        sources.value = [];
+        messages.push(normalizeTerminalLoadError('终端来源'));
+      }
+
+      if (deviceResult.status === 'fulfilled') {
+        devices.value = deviceResult.value.items;
+        syncSelectedDevice(deviceResult.value.items);
+      } else {
+        devices.value = [];
+        syncSelectedDevice([]);
+        messages.push(normalizeTerminalLoadError('终端列表'));
+      }
+
+      if (messages.length === 3) {
+        errorMessage.value = '当前终端数据暂时无法获取，请稍后刷新重试。';
+      } else if (messages.length > 0) {
+        errorMessage.value = messages[0];
+      }
     } finally {
       loading.value = false;
       refreshing.value = false;

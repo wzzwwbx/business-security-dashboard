@@ -62,7 +62,7 @@ const handleSelect = (kpi: SituationKpi) => {
 
 .kpi-card {
   min-height: 0;
-  padding: 14px;
+  padding: 10px 12px;
   border-color: var(--sys-color-border-secondary);
   text-align: left;
   cursor: pointer;
@@ -84,7 +84,7 @@ const handleSelect = (kpi: SituationKpi) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
 
 .kpi-label,
@@ -97,16 +97,16 @@ const handleSelect = (kpi: SituationKpi) => {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  margin: 10px 0 8px;
+  margin: 8px 0 6px;
 }
 
 .kpi-value {
-  font-size: clamp(24px, 1.9vw, 30px);
+  font-size: clamp(20px, 1.6vw, 26px);
   line-height: var(--line-height-tight);
 }
 
 .kpi-tone {
-  padding: 4px 8px;
+  padding: 2px 6px;
   border-radius: var(--radius-pill);
   font-size: var(--font-size-12);
   font-weight: var(--font-weight-semibold);

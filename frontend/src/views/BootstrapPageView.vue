@@ -31,7 +31,7 @@ async function submit() {
 <template>
   <main class="bootstrap-page">
     <section class="bootstrap-card glass-card">
-      <div class="eyebrow">BOOTSTRAP / 三员初始化</div>
+      <div class="eyebrow">首次设置</div>
       <h1>首次启用系统账户治理</h1>
       <p class="subtitle">请一次性为系统管理员、安全管理员、审计管理员设置初始密码，后续再通过系统管理页面维护普通用户与角色权限。</p>
 
@@ -48,15 +48,15 @@ async function submit() {
       <form class="bootstrap-form" @submit.prevent="submit">
         <label>
           <span>系统管理员密码</span>
-          <input v-model="form.systemAdminPassword" type="password" minlength="8" required placeholder="sysadmin 初始密码" />
+          <input v-model="form.systemAdminPassword" type="password" minlength="8" required placeholder="请输入系统管理员初始密码" />
         </label>
         <label>
           <span>安全管理员密码</span>
-          <input v-model="form.securityAdminPassword" type="password" minlength="8" required placeholder="secadmin 初始密码" />
+          <input v-model="form.securityAdminPassword" type="password" minlength="8" required placeholder="请输入安全管理员初始密码" />
         </label>
         <label>
           <span>审计管理员密码</span>
-          <input v-model="form.auditAdminPassword" type="password" minlength="8" required placeholder="auditadmin 初始密码" />
+          <input v-model="form.auditAdminPassword" type="password" minlength="8" required placeholder="请输入审计管理员初始密码" />
         </label>
         <BaseButton :disabled="auth.actionInFlight.value" type="submit">完成初始化</BaseButton>
       </form>

@@ -26,7 +26,7 @@ defineProps<{
         <p>最近同步：{{ formatRelativeTime(source.lastSeenAt) }}</p>
       </article>
     </div>
-    <BaseEmpty v-else title="暂无来源" description="当前尚未接收到 Probe 或外部系统数据。" />
+    <BaseEmpty v-else title="暂无来源" description="当前尚未接收到采集端或外部系统数据。" />
   </PanelCard>
 </template>
 
