@@ -1,14 +1,10 @@
 import type {
-  SituationCardItem,
   SituationHighlight,
   SituationKpi,
-  SituationMatrixItem,
   SituationPage,
   SituationPageCode,
   SituationSection,
   SituationSignalItem,
-  SituationSourceItem,
-  SituationTimelineItem,
   SituationTone
 } from '@/types/situation';
 import type { MiniTrendItem, VisualAssetNode, VisualLink } from '@/types/visualization';
@@ -21,24 +17,8 @@ function highlight(title: string, description: string, metric: string, meta: str
   return { title, description, metric, meta, tone };
 }
 
-function matrix(name: string, owner: string, score: string, status: string, trend: string, source: string, description: string, tone: SituationTone): SituationMatrixItem {
-  return { name, owner, score, status, trend, source, description, tone };
-}
-
 function signal(label: string, title: string, description: string, meta: string, tone: SituationTone): SituationSignalItem {
   return { label, title, description, meta, tone };
-}
-
-function source(sourceName: string, status: string, latency: string, coverage: string, note: string, tone: SituationTone): SituationSourceItem {
-  return { source: sourceName, status, latency, coverage, note, tone };
-}
-
-function card(name: string, summary: string, metric: string, detail: string, tone: SituationTone): SituationCardItem {
-  return { name, summary, metric, detail, tone };
-}
-
-function timeline(time: string, title: string, description: string, actor: string, tone: SituationTone): SituationTimelineItem {
-  return { time, title, description, actor, tone };
 }
 
 function sceneNode(
@@ -68,23 +48,145 @@ function trend(key: string, label: string, value: string, percent: number, tone:
   return { key, label, value, percent, tone, trend: trendText };
 }
 
-function sectionScene(code: string, title: string, description: string, nodes: VisualAssetNode[], links: VisualLink[], tags: string[]) {
-  return { kind: 'scene' as const, code, title, description, tags, colSpan: 12, nodes, links, legend: ['主视觉', '联动', '下钻'] };
+function sectionScene(code: string, title: string, description: string, nodes: VisualAssetNode[], links: VisualLink[], tags: string[], minHeight = 520): SituationSection {
+  return { kind: 'scene', code, title, description, tags, colSpan: 12, minHeight, nodes, links, legend: ['中枢节点', '风险链路', '处置闭环'] };
 }
 
-function sectionRelation(code: string, title: string, description: string, nodes: VisualAssetNode[], links: VisualLink[], tags: string[]) {
-  return { kind: 'relationMap' as const, code, title, description, tags, colSpan: 12, nodes, links, legend: ['关系链路', '风险焦点', '闭环状态'] };
+function sectionRelation(code: string, title: string, description: string, nodes: VisualAssetNode[], links: VisualLink[], tags: string[], minHeight = 520): SituationSection {
+  return { kind: 'relationMap', code, title, description, tags, colSpan: 12, minHeight, nodes, links, legend: ['业务对象', '风险对象', '保障对象'] };
+}
+
+function chart(code: string, title: string, option: Record<string, unknown>, tags: string[], description?: string, minHeight = 340, footer?: string): SituationSection {
+  return { kind: 'chart', code, title, description, tags, colSpan: 6, minHeight, option, footer };
+}
+
+const chartGrid = { left: 36, right: 24, top: 42, bottom: 30 };
+const chartGridWide = { left: 92, right: 28, top: 32, bottom: 28 };
+const days = ['7/3', '7/4', '7/5', '7/6', '7/7', '7/8', '7/9'];
+
+function lineAreaOption(names: string[], series: Array<{ name: string; data: number[] }>) {
+  return {
+    tooltip: { trigger: 'axis' },
+    legend: { top: 0, right: 0 },
+    grid: chartGrid,
+    xAxis: { type: 'category', boundaryGap: false, data: names },
+    yAxis: { type: 'value' },
+    series: series.map((item, index) => ({
+      name: item.name,
+      type: 'line',
+      smooth: true,
+      symbolSize: 6,
+      areaStyle: { opacity: index === 0 ? 0.18 : 0.12 },
+      data: item.data
+    }))
+  };
+}
+
+function ringOption(centerLabel: string, data: Array<{ name: string; value: number }>) {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  return {
+    tooltip: { trigger: 'item' },
+    legend: { bottom: 0, left: 'center' },
+    title: {
+      text: String(total),
+      subtext: centerLabel,
+      left: 'center',
+      top: '39%',
+      textAlign: 'center',
+      textStyle: { fontSize: 28, fontWeight: 700 },
+      subtextStyle: { fontSize: 12 }
+    },
+    series: [{
+      type: 'pie',
+      radius: ['48%', '72%'],
+      center: ['50%', '45%'],
+      avoidLabelOverlap: true,
+      label: { formatter: '{b}\n{c}' },
+      data
+    }]
+  };
+}
+
+function horizontalBarOption(data: Array<{ name: string; value: number }>) {
+  return {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: chartGridWide,
+    xAxis: { type: 'value' },
+    yAxis: { type: 'category', data: data.map((item) => item.name) },
+    series: [{
+      type: 'bar',
+      barWidth: 14,
+      label: { show: true, position: 'right', formatter: '{c}' },
+      data: data.map((item) => item.value)
+    }]
+  };
+}
+
+function funnelOption(data: Array<{ name: string; value: number }>) {
+  return {
+    tooltip: { trigger: 'item' },
+    series: [{
+      type: 'funnel',
+      left: '12%',
+      top: 36,
+      bottom: 18,
+      width: '76%',
+      minSize: '34%',
+      maxSize: '92%',
+      sort: 'descending',
+      gap: 8,
+      label: { show: true, position: 'inside', formatter: '{b}\n{c}' },
+      data
+    }]
+  };
+}
+
+function stackedBarOption(categories: string[], series: Array<{ name: string; data: number[] }>) {
+  return {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { top: 0, right: 0 },
+    grid: chartGrid,
+    xAxis: { type: 'category', data: categories },
+    yAxis: { type: 'value' },
+    series: series.map((item) => ({
+      name: item.name,
+      type: 'bar',
+      stack: 'total',
+      barWidth: 24,
+      emphasis: { focus: 'series' },
+      data: item.data
+    }))
+  };
+}
+
+function radarOption(indicators: Array<{ name: string; max: number }>, value: number[], name: string) {
+  return {
+    tooltip: { trigger: 'item' },
+    radar: {
+      radius: '64%',
+      indicator: indicators,
+      splitNumber: 4
+    },
+    series: [{
+      type: 'radar',
+      data: [{
+        name,
+        value,
+        areaStyle: { opacity: 0.2 }
+      }]
+    }]
+  };
 }
 
 function buildOverviewSections(): SituationSection[] {
   const nodes = [
-    sceneNode('overview-center', '综合分析中枢', 'domain', 'success', 46, 50, '统一汇聚四域态势与联动处置', '联动闭环', '87%'),
-    sceneNode('overview-security', '安全域', 'policy', 'warning', 24, 26, '攻击面、告警、策略联动', '待处置', '12 条'),
-    sceneNode('overview-business', '业务域', 'service', 'success', 72, 28, '核心业务链路与服务质量', '成功率', '99.3%'),
-    sceneNode('overview-terminal', '终端域', 'terminal', 'warning', 26, 74, '终端资产、人员关联、异常事件', '高风险', '6 台'),
-    sceneNode('overview-ops', '运维域', 'server', 'success', 72, 74, '主机、来源、资源告警', '在线主机', '168 台'),
-    sceneNode('overview-source', '来源接入', 'source', 'info', 12, 50, '策略中心、采集端、日志中心、人工导入', '已接入', '11 个'),
-    sceneNode('overview-workflow', '处置闭环', 'alert', 'success', 88, 50, '研判、协同、处置、复盘', '闭环耗时', '24 分钟')
+    sceneNode('overview-center', '综合分析中枢', 'domain', 'success', 46, 50, '安全、业务、终端、运维四域统一研判', '闭环率', '87%'),
+    sceneNode('overview-security', '安全监管域', 'policy', 'warning', 22, 24, '风险事件、策略命中、账号行为', '高危', '4 起'),
+    sceneNode('overview-business', '业务运行域', 'service', 'success', 74, 24, '核心链路、服务依赖、业务量', '成功率', '99.3%'),
+    sceneNode('overview-terminal', '终端保障域', 'terminal', 'warning', 22, 76, '在线终端、人员归属、异常终端', '关注', '15 台'),
+    sceneNode('overview-ops', '运维保障域', 'server', 'success', 74, 76, '主机、进程、资源容量', '在线', '168 台'),
+    sceneNode('overview-source', '数据汇聚层', 'source', 'info', 10, 50, '安管、泄密、运维、人工核验', '来源', '11 类'),
+    sceneNode('overview-workflow', '处置指挥台', 'alert', 'success', 90, 50, '研判、派单、处置、复盘', '平均', '24 分钟')
   ];
 
   const links: VisualLink[] = [
@@ -97,227 +199,258 @@ function buildOverviewSections(): SituationSection[] {
   ];
 
   return [
-    sectionScene('overview-scene', '综合态势中枢图', '集中展示安全、业务、终端与运维四个主题的联动情况。', nodes, links, ['主视觉', '综合指挥']),
+    sectionScene('overview-scene', '综合态势联动图', '四域状态、风险链路与处置进展集中呈现。', nodes, links, ['主视觉', '中部']),
+    chart('overview-asset-ring', '内网实体台账概览', ringOption('内网实体总数', [
+      { name: '终端', value: 131 },
+      { name: '服务器', value: 168 },
+      { name: '账号', value: 286 },
+      { name: '组织', value: 42 },
+      { name: '安全设备', value: 24 }
+    ]), ['左侧', '图表', '资产'], '按实体类型展示当前纳管规模。'),
+    chart('overview-trend', '近七日告警处置趋势', lineAreaOption(days, [
+      { name: '告警数', data: [40, 48, 55, 60, 56, 50, 44] },
+      { name: '处置数', data: [12, 22, 33, 44, 44, 44, 42] }
+    ]), ['中部', '图表', '趋势'], '告警与处置变化趋势。', 360),
+    chart('overview-funnel', '异常告警处置情况', funnelOption([
+      { name: '异常事件', value: 76 },
+      { name: '研判中', value: 47 },
+      { name: '已处置', value: 29 }
+    ]), ['右侧', '图表', '处置'], '展示事件从发现到处置的流转规模。'),
+    chart('overview-resource', '接入资源概览', stackedBarOption(['安全监管', '泄密监管', '运维监管'], [
+      { name: '人员', data: [10, 6, 7] },
+      { name: '设备', data: [30, 15, 25] },
+      { name: '组织', data: [2, 1, 1] }
+    ]), ['左侧', '图表', '资源'], '人员、设备、组织接入分布。'),
+    chart('overview-behavior', '异常行为分类统计', horizontalBarOption([
+      { name: '用户行为异常', value: 396 },
+      { name: '边界行为异常', value: 353 },
+      { name: '网络应用异常', value: 316 },
+      { name: '运维管理员异常', value: 281 },
+      { name: '入侵攻击检测', value: 204 },
+      { name: '安全防护异常', value: 153 }
+    ]), ['中部', '图表', '分类'], '按异常行为类型展示月度分布。', 380),
+    {
+      kind: 'signals',
+      code: 'overview-events',
+      title: '实时事件流',
+      description: '当前重点事件滚动呈现。',
+      tags: ['右侧', '事件'],
+      colSpan: 4,
+      minHeight: 380,
+      items: [
+        signal('安全', '王芳连续输错证书口令', '账号口令异常触发高危研判。', '15:44:00', 'danger'),
+        signal('运维', '服务器资源使用率持续升高', '核心主机资源压力进入关注区间。', '15:43:52', 'warning'),
+        signal('业务', '签批链路高峰时延抬升', '业务链路响应时间短时波动。', '15:42:18', 'warning'),
+        signal('终端', '涉密终端长时间未使用', '终端保障组已纳入巡检清单。', '15:41:52', 'info')
+      ]
+    },
     {
       kind: 'miniTrendGroup',
       code: 'overview-mini-trends',
-      title: '关键态势走势',
-      description: '首屏集中展示当前最关键的整体状态。',
-      tags: ['趋势', '首屏摘要'],
+      title: '全局指标摘要',
+      description: '核心指标集中看板。',
+      tags: ['底部', '指标'],
       colSpan: 4,
+      minHeight: 250,
       items: [
-        trend('health', '综合健康度', '82 分', 82, 'success', '较昨日 +3 分'),
-        trend('alerts', '待处置告警', '28 条', 56, 'warning', '高危 4 条'),
-        trend('sources', '数据覆盖率', '91%', 91, 'success', '4 个主题数据已接入展示'),
-        trend('closure', '联动闭环率', '87%', 87, 'success', '平均 24 分钟')
-      ]
-    },
-    {
-      kind: 'sources',
-      code: 'overview-sources',
-      title: '来源接入概览',
-      description: '展示当前已纳入综合态势的主要数据来源。',
-      tags: ['来源', '左侧'],
-      colSpan: 4,
-      items: [
-        source('策略网关', '健康', '28 秒', '终端 / 账号', '可支撑终端与账号风险联动研判。', 'success'),
-        source('运维探针', '健康', '58 秒', '主机 / 进程', '当前可持续上报主机与进程状态。', 'success'),
-        source('业务链路平台', '待接入', '接入准备中', '服务 / 依赖', '接入后可补充业务链路运行情况。', 'info'),
-        source('人工校核数据', '可用', '即时', '事件 / 处置', '用于补充值班研判和人工核实信息。', 'warning')
-      ]
-    },
-    {
-      kind: 'drilldownSummary',
-      code: 'overview-focus',
-      title: '重点联动事项',
-      description: '当前最需要优先联动处理的事项。',
-      tags: ['闭环', '右侧'],
-      colSpan: 4,
-      items: [
-        card('终端与账号复合风险', '终端、账号、导出行为形成复合风险链。', '高危', '建议优先锁定终端并二次校验账号口令。', 'danger'),
-        card('签批服务高峰关注', '业务高峰时段服务时延有抬升趋势。', '420 毫秒', '建议下钻业务链路查看网关和数据库依赖。', 'warning'),
-        card('主机资源健康', '运维域当前整体稳定，少量主机处于延迟态。', '168 台在线', '可从运维态势查看来源、热点进程与告警。', 'success')
-      ]
-    },
-    {
-      kind: 'matrix',
-      code: 'overview-matrix',
-      title: '主题健康矩阵',
-      description: '按主题域查看当前状态、风险和责任归属。',
-      tags: ['矩阵', '治理'],
-      colSpan: 6,
-      items: [
-        matrix('安全域', '安全保密组', '74', '高危告警待处置', '高危 4 条', '策略 / 审计', '重点关注高危风险与策略闭环。', 'warning'),
-        matrix('业务域', '业务运行组', '88', '服务稳定', '成功率 99.3%', '业务链路 / 网关', '核心服务稳定，峰值时延需要持续跟踪。', 'success'),
-        matrix('终端域', '终端保障组', '79', '人员关联待补', '待认领 9 台', '终端管理 / 网关', '需尽快补齐人员手机号与终端归属。', 'warning'),
-        matrix('运维域', '平台运维组', '84', '来源健康', '延迟主机 5 台', '采集 / 外部', '多源接入正常，少量主机未按时刷新。', 'success')
-      ]
-    },
-    {
-      kind: 'signals',
-      code: 'overview-signals',
-      title: '最新联动信号',
-      description: '突出当前最需要关注的联动信号。',
-      tags: ['信号', '右侧'],
-      colSpan: 6,
-      items: [
-        signal('安全关注', '深夜异常导出与终端风险叠加', '来自终端域和安全域的风险信号在综合中枢完成聚合。', '建议联动三员审批核查', 'danger'),
-        signal('业务关注', '签批链路出现短时积压', '业务域提示网关到数据库的时延在高峰期抬升。', '建议查看业务拓扑依赖', 'warning'),
-        signal('运维关注', '延迟主机仍需持续跟踪', '少量主机存在延迟上报现象，需继续观察是否恢复正常。', '建议通知平台运维组复核', 'info')
+        trend('health', '综合安全指数', '86%', 86, 'success', '较昨日 +3%'),
+        trend('assets', '在线资产率', '71%', 71, 'warning', '总设备 38'),
+        trend('events', '今日异常事件', '41 次', 58, 'warning', '高危 6 起'),
+        trend('closure', '及时处置率', '75.9%', 76, 'success', '持续提升')
       ]
     }
   ];
 }
 
 function buildSecuritySections(): SituationSection[] {
-  const nodes = [
-    sceneNode('security-center', '安全策略中枢', 'policy', 'warning', 44, 48, '策略命中、告警研判、联动处置', '高危事件', '4 条'),
-    sceneNode('security-boundary', '边界防护', 'gateway', 'success', 18, 22, '边界访问控制与网关策略', '拦截率', '98.4%'),
-    sceneNode('security-account', '账号安全', 'person', 'warning', 18, 72, '账号口令、认证与权限异常', '异常账号', '6 个'),
-    sceneNode('security-terminal', '终端安全', 'terminal', 'warning', 70, 22, '终端状态与密码模块异常', '高风险终端', '6 台'),
-    sceneNode('security-data', '数据对象', 'database', 'danger', 70, 72, '敏感数据导出与访问异常', '异常导出', '2 次'),
-    sceneNode('security-response', '处置闭环', 'alert', 'success', 86, 48, '研判、加固、留痕与复盘', '闭环率', '85%')
-  ];
-
-  const links: VisualLink[] = [
-    { from: 'security-boundary', to: 'security-center', tone: 'success' },
-    { from: 'security-account', to: 'security-center', tone: 'warning' },
-    { from: 'security-center', to: 'security-terminal', tone: 'warning' },
-    { from: 'security-center', to: 'security-data', tone: 'danger' },
-    { from: 'security-center', to: 'security-response', tone: 'success' }
-  ];
-
   return [
-    sectionRelation('security-scene', '风险链路总览', '从边界、账号、终端、数据四类对象观察攻击面与处置路径。', nodes, links, ['主视觉', '风险链路']),
-    {
-      kind: 'miniTrendGroup',
-      code: 'security-mini-trends',
-      title: '安全关键指标',
-      description: '首屏保留关键数值与简要趋势。',
-      tags: ['趋势', '左侧'],
-      colSpan: 4,
-      items: [
-        trend('risk', '高危告警', '4 条', 58, 'danger', '较上一时段 +1'),
-        trend('policy', '策略命中', '96.8%', 97, 'success', '边界与终端策略持续生效'),
-        trend('terminal', '高风险终端', '6 台', 42, 'warning', '需联动终端保障组'),
-        trend('account', '异常账号', '6 个', 38, 'warning', '需审计复核')
-      ]
-    },
-    {
-      kind: 'drilldownSummary',
-      code: 'security-focus',
-      title: '研判建议',
-      description: '用短句呈现高价值动作建议。',
-      tags: ['右侧', '处置'],
-      colSpan: 4,
-      items: [
-        card('优先核查异常导出', '异常导出叠加高风险终端，需优先研判。', '优先级高', '建议核查导出对象与账号授权范围。', 'danger'),
-        card('账号二次核验', '异常账号存在跨区域登录与敏感访问。', '6 个账号', '建议触发二次核验并收紧临时权限。', 'warning'),
-        card('终端策略巡检', '部分终端密码模块处于异常或降级状态。', '9 台关注', '建议查看终端页的人员关联与策略命中详情。', 'warning')
-      ]
-    },
+    chart('security-firewall-trend', '防火墙告警趋势', lineAreaOption(days, [
+      { name: '拦截告警', data: [28, 35, 31, 42, 47, 49, 53] },
+      { name: '高危来源', data: [6, 7, 8, 10, 12, 11, 13] }
+    ]), ['左侧', '图表', '防火墙'], '边界防火墙拦截与告警走势。', 360),
+    chart('security-vuln-ring', '漏洞风险等级分布', ringOption('漏洞总数', [
+      { name: '高危', value: 8 },
+      { name: '中危', value: 18 },
+      { name: '低危', value: 27 },
+      { name: '已修复', value: 14 }
+    ]), ['左侧', '图表', '漏洞'], '按漏洞风险等级展示当前分布。'),
+    chart('security-ids-trend', '入侵检测趋势', lineAreaOption(days, [
+      { name: '入侵检测告警', data: [4, 6, 5, 7, 9, 8, 10] },
+      { name: '已阻断', data: [2, 3, 3, 4, 5, 5, 6] }
+    ]), ['左侧', '图表', '入侵检测'], '入侵检测与阻断趋势。', 360),
+    chart('security-risk-trend', '高危事件趋势', lineAreaOption(days, [
+      { name: '高危事件', data: [5, 6, 7, 8, 8, 7, 6] },
+      { name: '已处置', data: [2, 3, 4, 5, 6, 6, 6] }
+    ]), ['中部', '图表', '趋势'], '高危安全事件与处置变化。', 360),
+    chart('security-defense-radar', '防护能力雷达', radarOption([
+      { name: '拦截', max: 100 },
+      { name: '识别', max: 100 },
+      { name: '阻断', max: 100 },
+      { name: '修复', max: 100 },
+      { name: '复盘', max: 100 },
+      { name: '合规', max: 100 }
+    ], [92, 87, 90, 79, 84, 91], '安全防护'), ['中部', '图表', '雷达'], '安全防护各维度表现。', 360),
+    chart('security-funnel', '安全事件处置漏斗', funnelOption([
+      { name: '发现告警', value: 82 },
+      { name: '研判中', value: 46 },
+      { name: '已阻断', value: 28 },
+      { name: '已复盘', value: 17 }
+    ]), ['右侧', '图表', '处置'], '从发现到复盘的安全事件闭环。'),
+    chart('security-asset-bar', '受影响资产排行', horizontalBarOption([
+      { name: '边界网关', value: 26 },
+      { name: '办公终端', value: 21 },
+      { name: '核心服务器', value: 17 },
+      { name: '数据库节点', value: 12 },
+      { name: '管理账号', value: 9 }
+    ]), ['右侧', '图表', '资产'], '受影响资产数量排行。', 340),
     {
       kind: 'signals',
-      code: 'security-hot-events',
-      title: '高危事件流',
-      description: '围绕安全闭环展示最新关键信号。',
-      tags: ['事件', '右侧'],
+      code: 'security-events',
+      title: '安全事件流',
+      description: '防火墙、入侵检测、漏洞和处置状态滚动呈现。',
+      tags: ['右侧', '事件'],
       colSpan: 4,
+      minHeight: 360,
       items: [
-        signal('高危', '敏感数据深夜导出', '与账号异常登录和终端风险信号形成关联。', '建议立即复核审批链路', 'danger'),
-        signal('关注', '边界策略连续命中异常访问', '边界网关持续命中相似访问模式。', '建议联动账号黑名单', 'warning'),
-        signal('提示', '新增外部来源待接入', '可补充账号画像和策略中心数据。', '不阻塞前端展示', 'info')
-      ]
-    },
-    {
-      kind: 'timeline',
-      code: 'security-timeline',
-      title: '处置闭环时间线',
-      description: '帮助快速理解“发生了什么、如何处置、谁来确认”。',
-      tags: ['闭环', '底部'],
-      colSpan: 12,
-      items: [
-        timeline('19:12', '生成复合风险事件', '终端风险、账号异常与数据导出被统一聚合。', '安全研判引擎', 'danger'),
-        timeline('19:18', '下发账号复核任务', '安全管理员发起账号授权范围复核。', '安全管理员', 'warning'),
-        timeline('19:26', '终端侧执行隔离策略', '终端保障组对高风险终端执行临时访问收敛。', '终端保障组', 'warning'),
-        timeline('19:42', '审计管理员追加留痕', '补录风险研判过程与处置结论。', '审计管理员', 'success')
+        signal('防火墙', '异常外联连续命中', '边界策略已记录高频外联行为。', '19:12:08', 'warning'),
+        signal('入侵检测', '横向扫描特征持续出现', '入侵检测已触发多次扫描拦截。', '19:18:26', 'danger'),
+        signal('漏洞', '高危漏洞进入修复队列', '受影响资产已同步到漏洞清单。', '19:24:41', 'warning'),
+        signal('处置', '高危访问策略收敛完成', '相关源站点已下发阻断策略。', '19:31:05', 'success')
       ]
     }
   ];
 }
 
 function buildBusinessSections(): SituationSection[] {
+  return [
+    chart('business-message-trend', '密信业务量趋势', lineAreaOption(days, [
+      { name: '密信收发量', data: [96, 102, 108, 116, 121, 126, 132] },
+      { name: '已签收', data: [88, 94, 99, 106, 110, 116, 121] }
+    ]), ['左侧', '图表', '密信'], '密信业务量变化。', 360),
+    chart('business-success-ring', '密信/签阅成功率', ringOption('业务成功率', [
+      { name: '密信成功', value: 97 },
+      { name: '签阅成功', value: 94 },
+      { name: '待确认', value: 6 }
+    ]), ['左侧', '图表', '成功率'], '密信和签阅成功率结构。'),
+    chart('business-sign-trend', '签阅处理趋势', lineAreaOption(days, [
+      { name: '签阅待办', data: [20, 24, 28, 30, 29, 31, 33] },
+      { name: '已办结', data: [16, 18, 22, 23, 24, 26, 27] }
+    ]), ['左侧', '图表', '签阅'], '签阅业务流转趋势。', 360),
+    chart('business-volume', '业务处理总量趋势', lineAreaOption(days, [
+      { name: '业务处理量', data: [118, 126, 132, 140, 136, 145, 152] },
+      { name: '完成处理', data: [110, 118, 125, 133, 130, 137, 144] }
+    ]), ['中部', '图表', '趋势'], '终端密信与签阅处理总量走势。', 360),
+    chart('business-latency', '链路时延排行', horizontalBarOption([
+      { name: '签阅服务', value: 420 },
+      { name: '密信服务', value: 260 },
+      { name: '统一网关', value: 148 },
+      { name: '业务数据库', value: 95 },
+      { name: '签收接口', value: 72 }
+    ]), ['右侧', '图表', '时延'], '业务链路时延对比。', 340),
+    chart('business-queue-funnel', '积压队列处置情况', funnelOption([
+      { name: '待处理', value: 54 },
+      { name: '处理中', value: 31 },
+      { name: '已清理', value: 18 },
+      { name: '已恢复', value: 12 }
+    ]), ['右侧', '图表', '队列'], '业务积压队列处理进度。'),
+    chart('business-stack', '终端密信与签阅分布', stackedBarOption(['密信终端', '签阅终端', '网关', '数据库'], [
+      { name: '在线', data: [38, 24, 18, 20] },
+      { name: '关注', data: [6, 5, 4, 7] },
+      { name: '待处理', data: [2, 3, 1, 4] }
+    ]), ['右侧', '图表', '分布'], '业务对象状态分布。', 340),
+    {
+      kind: 'signals',
+      code: 'business-events',
+      title: '业务事件流',
+      description: '密信、签阅、网关和数据库事件滚动呈现。',
+      tags: ['右侧', '事件'],
+      colSpan: 4,
+      minHeight: 340,
+      items: [
+        signal('密信', '密信发送量保持高位', '夜间批量发送带来短时上升。', '21:05:24', 'success'),
+        signal('签阅', '签阅待办在高峰段集中', '签阅处理量进入集中流转阶段。', '21:02:17', 'warning'),
+        signal('网关', '统一网关入口成功率稳定', '流转路径保持顺畅。', '20:58:44', 'success'),
+        signal('数据库', '写入队列短时升高', '写入压力仍在可控范围。', '20:55:32', 'warning')
+      ]
+    }
+  ];
+}
+
+function buildTerminalSections(): SituationSection[] {
   const nodes = [
-    sceneNode('business-center', '核心业务链路', 'domain', 'success', 44, 48, '围绕核心业务的服务依赖与运行态势', '成功率', '99.3%'),
-    sceneNode('business-msg', '密信服务', 'service', 'success', 20, 22, '主消息能力', '业务量', '132 万'),
-    sceneNode('business-approve', '签批服务', 'service', 'warning', 20, 74, '高峰时延关注', '时延', '420 毫秒'),
-    sceneNode('business-gateway', '统一网关', 'gateway', 'success', 68, 20, '入口汇聚与路由分流', '成功率', '99.7%'),
-    sceneNode('business-policy', '策略服务', 'policy', 'success', 68, 74, '鉴权与流程控制', '规则命中', '98.9%'),
-    sceneNode('business-db', '业务数据库', 'database', 'warning', 84, 48, '高峰期写入压力抬升', '积压', '12 队列')
+    sceneNode('terminal-center', '终端保障中枢', 'domain', 'success', 46, 50, '终端资产、人员归属、异常事件统一呈现', '在线', '131 台'),
+    sceneNode('terminal-online', '在线终端', 'terminal', 'success', 18, 24, '当前在线并持续上报状态', '在线率', '91%'),
+    sceneNode('terminal-risk', '高风险终端', 'alert', 'warning', 18, 76, '策略异常、模块异常、行为异常', '关注', '6 台'),
+    sceneNode('terminal-owner', '人员归属', 'person', 'warning', 72, 24, '终端与责任人员关联情况', '确认率', '93%'),
+    sceneNode('terminal-mobile', '移动终端', 'mobile', 'success', 72, 76, '移动侧接入与使用状态', '活跃', '48 台'),
+    sceneNode('terminal-policy', '终端策略', 'policy', 'success', 88, 50, '终端侧策略命中与处置执行', '命中率', '96%')
   ];
 
   const links: VisualLink[] = [
-    { from: 'business-msg', to: 'business-center', tone: 'success' },
-    { from: 'business-approve', to: 'business-center', tone: 'warning' },
-    { from: 'business-center', to: 'business-gateway', tone: 'success' },
-    { from: 'business-center', to: 'business-policy', tone: 'success' },
-    { from: 'business-center', to: 'business-db', tone: 'warning' }
+    { from: 'terminal-online', to: 'terminal-center', tone: 'success' },
+    { from: 'terminal-risk', to: 'terminal-center', tone: 'warning' },
+    { from: 'terminal-center', to: 'terminal-owner', tone: 'warning' },
+    { from: 'terminal-center', to: 'terminal-mobile', tone: 'success' },
+    { from: 'terminal-center', to: 'terminal-policy', tone: 'success' }
   ];
 
   return [
-    sectionRelation('business-scene', '业务依赖拓扑', '将核心业务系统、网关、策略与数据库关系集中到中枢视图。', nodes, links, ['主视觉', '业务依赖']),
-    {
-      kind: 'miniTrendGroup',
-      code: 'business-mini-trends',
-      title: '业务运行摘要',
-      description: '聚焦业务量、成功率、时延与积压。',
-      tags: ['左侧', '趋势'],
-      colSpan: 4,
-      items: [
-        trend('volume', '业务量', '132 万', 88, 'success', '较昨日 +6%'),
-        trend('sla', '成功率', '99.3%', 99, 'success', '主链路稳定'),
-        trend('latency', '高峰时延', '420 毫秒', 48, 'warning', '签批链路需持续观察'),
-        trend('backlog', '积压队列', '12', 30, 'warning', '数据库写入压力抬升')
-      ]
-    },
-    {
-      kind: 'drilldownSummary',
-      code: 'business-recommend',
-      title: '恢复与优化建议',
-      description: '将长文本建议收敛为可执行动作。',
-      tags: ['右侧', '建议'],
-      colSpan: 4,
-      items: [
-        card('优先查看签批链路', '签批服务是当前最值得下钻的对象。', '420 毫秒', '建议从签批服务到数据库链路逐级排查。', 'warning'),
-        card('数据库写入平滑', '数据库在高峰期出现短时积压。', '12 队列', '建议评估写入限流或异步化策略。', 'warning'),
-        card('网关分流正常', '统一网关当前分流正常，入口成功率稳定。', '99.7%', '可将排查重点放在下游服务和数据层。', 'success')
-      ]
-    },
-    {
-      kind: 'matrix',
-      code: 'business-matrix',
-      title: '关键服务清单',
-      description: '压缩文本比重，突出服务责任与运行状态。',
-      tags: ['矩阵', '治理'],
-      colSpan: 6,
-      items: [
-        matrix('密信服务', '业务运行组', '92', '稳定', '业务量持续增长', '业务链路平台', '当前服务稳定，适合作为健康基线。', 'success'),
-        matrix('签批服务', '业务运行组', '79', '时延关注', '高峰期抬升', '网关 / 数据库', '建议结合数据库写入与网关路由进一步排查。', 'warning'),
-        matrix('统一网关', '平台运维组', '90', '稳定', '成功率 99.7%', '网关监控', '入口层稳定，为链路分流提供支撑。', 'success'),
-        matrix('业务数据库', '数据库运维组', '76', '积压关注', '高峰写入抬升', '数据库监控', '需持续观察写入压力与慢查询走势。', 'warning')
-      ]
-    },
+    sectionRelation('terminal-scene', '终端保障拓扑', '终端、人员、策略与异常事件关系。', nodes, links, ['主视觉', '中部']),
+    chart('terminal-online-trend', '近七日终端在线趋势', lineAreaOption(days, [
+      { name: '在线终端', data: [122, 126, 128, 131, 130, 132, 131] },
+      { name: '活跃终端', data: [108, 112, 115, 119, 121, 120, 122] }
+    ]), ['中部', '图表', '趋势'], '终端在线与活跃走势。', 360),
+    chart('terminal-risk-ring', '终端风险分布', ringOption('关注终端', [
+      { name: '策略异常', value: 6 },
+      { name: '模块异常', value: 4 },
+      { name: '软件变更', value: 11 },
+      { name: '长期离线', value: 5 }
+    ]), ['左侧', '图表', '风险'], '终端风险类型分布。'),
+    chart('terminal-owner-stack', '终端归属分布', stackedBarOption(['研发', '运维', '业务', '管理'], [
+      { name: '固定终端', data: [32, 24, 28, 12] },
+      { name: '移动终端', data: [16, 10, 15, 7] },
+      { name: '共享终端', data: [4, 6, 5, 2] }
+    ]), ['左侧', '图表', '归属'], '按组织角色展示终端归属。'),
+    chart('terminal-alert-funnel', '终端异常处置漏斗', funnelOption([
+      { name: '异常事件', value: 18 },
+      { name: '研判确认', value: 12 },
+      { name: '策略处置', value: 9 },
+      { name: '完成闭环', value: 7 }
+    ]), ['右侧', '图表', '处置'], '终端异常事件处置进度。'),
+    chart('terminal-category', '终端异常分类统计', horizontalBarOption([
+      { name: '软件变更', value: 11 },
+      { name: '策略异常', value: 6 },
+      { name: '模块异常', value: 4 },
+      { name: '离线超时', value: 5 },
+      { name: '外设接入', value: 3 }
+    ]), ['中部', '图表', '分类'], '终端异常类型排行。', 360),
     {
       kind: 'signals',
-      code: 'business-signals',
-      title: '受影响链路',
-      description: '从业务影响角度压缩展示重点。',
-      tags: ['右侧', '影响'],
-      colSpan: 6,
+      code: 'terminal-events',
+      title: '终端事件流',
+      description: '重点终端事件滚动呈现。',
+      tags: ['右侧', '事件'],
+      colSpan: 4,
+      minHeight: 340,
       items: [
-        signal('关注', '签批服务高峰时延抬升', '下游数据库队列积压导致响应时间抬升。', '建议联动运维域观察资源情况', 'warning'),
-        signal('稳定', '统一网关入口成功率保持高位', '入口层处理稳定，为分流与限流提供支撑。', '可作为业务健康基线', 'success'),
-        signal('提示', '后续可接入更多业务日志来源', '前端已支持更丰富的业务节点和关系图扩展。', '无需推翻现有页面结构', 'info')
+        signal('关注', '终端安全模块状态异常', '保障组已纳入策略复核清单。', '20:16:24', 'warning'),
+        signal('变更', '终端软件版本发生变化', '软件变更数量高于常态区间。', '20:12:03', 'warning'),
+        signal('稳定', '移动终端活跃率保持稳定', '移动侧接入状态正常。', '20:08:11', 'success')
+      ]
+    },
+    {
+      kind: 'miniTrendGroup',
+      code: 'terminal-mini-trends',
+      title: '终端保障摘要',
+      description: '关键终端指标。',
+      tags: ['底部', '指标'],
+      colSpan: 4,
+      minHeight: 250,
+      items: [
+        trend('online', '在线终端', '131 台', 91, 'success', '较昨日 +2'),
+        trend('risk', '高风险终端', '6 台', 42, 'warning', '持续处置'),
+        trend('owner', '归属确认率', '93%', 93, 'success', '稳步提升'),
+        trend('events', '异常事件', '18 条', 58, 'warning', '处置中 5 条')
       ]
     }
   ];
@@ -327,33 +460,33 @@ const PAGES: Record<SituationPageCode, SituationPage> = {
   overview: {
     code: 'overview',
     name: '综合态势',
-    title: '综合态势-验证',
-    subtitle: '统一联动态势与处置闭环',
+    title: '综合态势',
+    subtitle: '全局态势、风险链路与处置闭环',
     location: '综合态势中心',
     lastUpdated: '2026-07-08 19:18',
     dataMode: 'mock',
     summary: '首屏集中展示整体状态、重点风险和跨主题联动情况。',
     heroTags: [
-      { label: '综合健康度', value: '82 分', tone: 'success' },
-      { label: '待处置告警', value: '28 条', tone: 'warning' },
-      { label: '来源就绪度', value: '91%', tone: 'success' },
-      { label: '联动闭环率', value: '87%', tone: 'success' }
+      { label: '三域汇聚数据', value: '76 条', tone: 'info' },
+      { label: '内网实体数', value: '651 个', tone: 'success' },
+      { label: '综合安全指数', value: '86%', tone: 'success' },
+      { label: '在线资产率', value: '71%', tone: 'warning' }
     ],
     actions: [
-      { label: '重点', detail: '优先核查跨域复合风险和高峰时段业务链路。', tone: 'warning' },
-      { label: '处置', detail: '重点跟踪终端、账号、业务链路之间的联动风险。', tone: 'info' }
+      { label: '重点', detail: '优先关注跨域复合风险和高峰时段业务链路。', tone: 'warning' },
+      { label: '处置', detail: '围绕终端、账号、业务链路推进闭环。', tone: 'info' }
     ],
     kpis: [
-      kpi('综合健康度', '82', '四域综合评分', 'success', '分', '+3'),
-      kpi('待处置告警', '28', '当前未完成闭环的重点事项', 'warning', '条', '-2'),
-      kpi('高危联动', '4', '需要三域协同确认的事件', 'danger', '起', '持平'),
-      kpi('终端待认领', '9', '需要补齐人员手机号与归属', 'warning', '台', '-1'),
-      kpi('在线主机', '168', '资源态势在线主机数量', 'success', '台', '+6'),
-      kpi('业务成功率', '99.3', '核心业务链路成功率', 'success', '%', '+0.2')
+      kpi('三域汇聚数据', '76', '安全、泄密、运维数据汇聚量', 'info', '条', '+8'),
+      kpi('内网实体数', '651', '当前纳管组织、账号、终端与设备', 'success', '个', '+12'),
+      kpi('综合安全指数', '86', '全局安全态势评分', 'success', '%', '+3'),
+      kpi('在线资产率', '71', '在线资产占总资产比例', 'warning', '%', '持平'),
+      kpi('待处置告警', '47', '进入研判队列的事件', 'warning', '件', '-2'),
+      kpi('今日新增运维告警', '21', '运维侧新增告警数量', 'info', '件', '+4')
     ],
     highlights: [
-      highlight('复合风险', '终端、账号、导出行为形成一条清晰风险链。', '高危', '建议从综合中枢直接下钻', 'danger'),
-      highlight('资源态势稳定', '运维域在线主机数量和来源健康度整体稳定。', '168 台在线', '少量主机延迟上报', 'success')
+      highlight('复合风险', '终端、账号、导出行为形成清晰风险链。', '高危', '建议从综合中枢下钻研判', 'danger'),
+      highlight('资源态势稳定', '在线主机数量和来源健康度整体稳定。', '168 台在线', '保障能力维持高位', 'success')
     ],
     sections: buildOverviewSections()
   },
@@ -365,27 +498,27 @@ const PAGES: Record<SituationPageCode, SituationPage> = {
     location: '安全保密中心',
     lastUpdated: '2026-07-08 19:18',
     dataMode: 'mock',
-    summary: '用拓扑化主视觉替代长清单，突出边界、账号、终端、数据对象之间的风险链路。',
+    summary: '通过拓扑、趋势和漏斗展示风险发现、研判和处置全过程。',
     heroTags: [
-      { label: '高危告警', value: '4 条', tone: 'danger' },
-      { label: '策略命中', value: '96.8%', tone: 'success' },
+      { label: '高危告警', value: '4 起', tone: 'danger' },
+      { label: '策略命中率', value: '96.8%', tone: 'success' },
       { label: '异常账号', value: '6 个', tone: 'warning' },
-      { label: '高风险终端', value: '6 台', tone: 'warning' }
+      { label: '闭环率', value: '85%', tone: 'success' }
     ],
     actions: [
-      { label: '重点', detail: '优先关注敏感数据深夜导出与异常账号交叉信号。', tone: 'danger' },
-      { label: '处置', detail: '推荐从账号复核、终端隔离、审批链路审计三步推进。', tone: 'warning' }
+      { label: '重点', detail: '优先关注敏感数据导出与异常账号交叉信号。', tone: 'danger' },
+      { label: '处置', detail: '从账号复核、终端隔离、审批链路审计推进。', tone: 'warning' }
     ],
     kpis: [
-      kpi('高危告警', '4', '待处置高危安全事件', 'danger', '条', '+1'),
-      kpi('策略命中', '96.8', '边界与终端策略命中率', 'success', '%', '+0.4'),
-      kpi('异常账号', '6', '需要核验的账号数量', 'warning', '个', '持平'),
-      kpi('高风险终端', '6', '需要联动终端页处置的设备', 'warning', '台', '+2'),
+      kpi('高危告警', '4', '高危安全事件数量', 'danger', '起', '+1'),
+      kpi('策略命中率', '96.8', '边界与终端策略命中', 'success', '%', '+0.4'),
+      kpi('异常账号', '6', '需复核账号数量', 'warning', '个', '持平'),
+      kpi('高风险终端', '6', '需联动处置设备', 'warning', '台', '+2'),
       kpi('敏感导出', '2', '异常导出次数', 'danger', '次', '持平'),
       kpi('闭环率', '85', '安全处置闭环率', 'success', '%', '+3')
     ],
     highlights: [
-      highlight('敏感导出行为', '异常导出叠加账号与终端风险，是当前最需要优先处置的链路。', '优先级高', '建议直接下钻数据对象节点', 'danger')
+      highlight('敏感导出行为', '异常导出叠加账号与终端风险，是当前优先处置链路。', '优先级高', '建议下钻数据对象节点', 'danger')
     ],
     sections: buildSecuritySections()
   },
@@ -393,20 +526,20 @@ const PAGES: Record<SituationPageCode, SituationPage> = {
     code: 'business',
     name: '业务态势',
     title: '业务态势',
-    subtitle: '服务依赖、链路健康与恢复建议',
+    subtitle: '服务依赖、链路健康与恢复保障',
     location: '业务运行中心',
     lastUpdated: '2026-07-08 19:18',
     dataMode: 'mock',
-    summary: '围绕核心业务拓扑、服务等级与依赖关系组织首屏，让业务页更像指挥舱而不是说明文档。',
+    summary: '围绕核心业务拓扑、服务等级与依赖关系组织首屏。',
     heroTags: [
       { label: '业务量', value: '132 万', tone: 'success' },
       { label: '成功率', value: '99.3%', tone: 'success' },
       { label: '高峰时延', value: '420 毫秒', tone: 'warning' },
-      { label: '积压队列', value: '12', tone: 'warning' }
+      { label: '积压队列', value: '12 个', tone: 'warning' }
     ],
     actions: [
       { label: '重点', detail: '签批服务与数据库写入是当前排查重点。', tone: 'warning' },
-      { label: '优化', detail: '优先从链路依赖入手，而不是继续堆更多表格。', tone: 'info' }
+      { label: '保障', detail: '从链路依赖、资源容量和恢复能力联动观察。', tone: 'info' }
     ],
     kpis: [
       kpi('业务量', '132', '核心业务处理总量', 'success', '万', '+6%'),
@@ -414,7 +547,7 @@ const PAGES: Record<SituationPageCode, SituationPage> = {
       kpi('高峰时延', '420', '签批链路高峰响应时间', 'warning', '毫秒', '+35'),
       kpi('积压队列', '12', '数据库写入积压', 'warning', '个', '+2'),
       kpi('链路告警', '5', '当前业务相关告警', 'warning', '条', '-1'),
-      kpi('恢复建议', '3', '自动生成建议数', 'info', '项', '新增')
+      kpi('保障建议', '3', '系统生成处置建议', 'info', '项', '新增')
     ],
     highlights: [
       highlight('签批链路', '签批链路在高峰期的压力最值得重点观察。', '420 毫秒', '建议下钻服务拓扑', 'warning')
@@ -425,45 +558,40 @@ const PAGES: Record<SituationPageCode, SituationPage> = {
     code: 'terminal',
     name: '终端态势',
     title: '终端态势',
-    subtitle: '终端、人员、异常事件一体呈现',
+    subtitle: '终端资产、人员关联与保障状态',
     location: '终端保障中心',
     lastUpdated: '2026-07-08 19:18',
     dataMode: 'mock',
-    summary: '终端态势已切换到独立页面，这里保留与主题页结构兼容的数据。',
+    summary: '集中呈现终端在线、风险分布、人员归属和异常处置进展。',
     heroTags: [
       { label: '在线终端', value: '131 台', tone: 'success' },
       { label: '高风险终端', value: '6 台', tone: 'warning' },
-      { label: '待认领终端', value: '9 台', tone: 'warning' },
+      { label: '归属确认率', value: '93%', tone: 'success' },
       { label: '异常事件', value: '18 条', tone: 'warning' }
     ],
-    actions: [{ label: '提示', detail: '终端态势请通过独立路由查看资产图标化页面。', tone: 'info' }],
-    kpis: [
-      kpi('在线终端', '131', '终端在线数量', 'success', '台'),
-      kpi('高风险终端', '6', '需要重点处置', 'warning', '台'),
-      kpi('待认领终端', '9', '需补齐归属关系', 'warning', '台'),
-      kpi('来源数量', '2', '当前接入终端来源', 'info', '个'),
-      kpi('密码模块异常', '4', '需要关注的终端', 'warning', '台'),
-      kpi('软件变更', '11', '近 24 小时变化', 'warning', '台')
+    actions: [
+      { label: '重点', detail: '关注高风险终端、模块异常和软件变更。', tone: 'warning' },
+      { label: '保障', detail: '围绕人员归属、策略命中和异常闭环持续治理。', tone: 'info' }
     ],
-    highlights: [highlight('已迁移', '终端主题已由独立页面承载。', '独立页', '点击左侧导航访问终端态势', 'info')],
-    sections: [
-      {
-        kind: 'drilldownSummary',
-        code: 'terminal-guide',
-        title: '使用说明',
-        description: '当前主题数据仅用于兼容展示。',
-        tags: ['兼容'],
-        colSpan: 12,
-        items: [card('请查看终端态势页', '终端态势已具备资产图标化、聚类和详情抽屉。', '已迁移', '通过左侧导航进入终端态势页面。', 'info')]
-      }
-    ]
+    kpis: [
+      kpi('在线终端', '131', '终端在线数量', 'success', '台', '+2'),
+      kpi('高风险终端', '6', '重点处置终端', 'warning', '台', '持平'),
+      kpi('归属确认率', '93', '终端与责任人员确认比例', 'success', '%', '+1'),
+      kpi('移动终端', '48', '移动侧活跃终端', 'success', '台', '+3'),
+      kpi('异常事件', '18', '终端相关异常事件', 'warning', '条', '-2'),
+      kpi('策略命中率', '96', '终端策略命中比例', 'success', '%', '+2')
+    ],
+    highlights: [
+      highlight('终端风险分布', '策略异常、模块异常和软件变更是当前主要关注项。', '26 项', '建议结合终端拓扑下钻查看', 'warning')
+    ],
+    sections: buildTerminalSections()
   }
 };
 
 export async function getMockSituationPage(pageCode: SituationPageCode) {
   const page = PAGES[pageCode];
   if (!page) {
-    throw new Error(`未找到 ${pageCode} 的态势页面 mock。`);
+    throw new Error(`未找到 ${pageCode} 的态势页面数据。`);
   }
 
   return structuredClone(page);
