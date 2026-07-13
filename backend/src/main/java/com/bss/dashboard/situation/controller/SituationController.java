@@ -2,6 +2,8 @@ package com.bss.dashboard.situation.controller;
 
 import com.bss.dashboard.api.ApiResponse;
 import com.bss.dashboard.situation.dto.SituationPageDto;
+import com.bss.dashboard.situation.dto.SituationGeoOverviewDto;
+import com.bss.dashboard.situation.service.SituationGeoService;
 import com.bss.dashboard.situation.service.SituationService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,9 +16,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class SituationController {
 
     private final SituationService situationService;
+    private final SituationGeoService geoService;
 
-    public SituationController(SituationService situationService) {
+    public SituationController(SituationService situationService, SituationGeoService geoService) {
         this.situationService = situationService;
+        this.geoService = geoService;
+    }
+
+    @GetMapping("/overview/geo")
+    @PreAuthorize("hasAuthority('page:overview:view')")
+    public ApiResponse<SituationGeoOverviewDto> getOverviewGeo() {
+        return ApiResponse.success(geoService.getOverview());
     }
 
     @GetMapping("/{pageCode}")

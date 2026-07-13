@@ -25,6 +25,12 @@ import {
 } from '@/utils/terminalVisuals';
 import { sourceStatusLabel, sourceSystemLabel, sourceTypeLabel } from '@/utils/terminalFormatters';
 import { computed, ref } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const countryCode = computed(() => typeof route.query.country === 'string' ? route.query.country : '');
+const countryNameMap: Record<string, string> = { CN: '中国', AE: '阿联酋', SG: '新加坡', DE: '德国', KE: '肯尼亚', BR: '巴西' };
+const activeRegionName = computed(() => countryNameMap[countryCode.value] || '全球');
 
 const {
   overview,
@@ -36,7 +42,7 @@ const {
   errorMessage,
   selectDevice,
   reload
-} = useTerminalOverview();
+} = useTerminalOverview(countryCode);
 
 const {
   detail,
@@ -111,7 +117,9 @@ const selectedNodeId = computed(() => detail.value ? `device-${detail.value.id}`
 const drawerTabs = computed(() => [
   { key: 'basic', label: '基本信息' },
   { key: 'person', label: '人员关联' },
-  { key: 'security', label: '风险状态' },
+  { key: 'security', label: '设备健康' },
+  { key: 'usbkey', label: 'USB Key' },
+  { key: 'communication', label: '通联状态' },
   { key: 'events', label: '最近事件' }
 ]);
 
@@ -155,6 +163,7 @@ function closeDrawer() {
     <section class="hero-card glass-card">
       <div>
         <h1>终端态势</h1>
+        <p>{{ activeRegionName }}区域 · 终端接入、签批 PAD、USB Key 与通联状态一体化监测</p>
       </div>
       <div class="hero-side">
         <div class="hero-status">{{ refreshing ? '正在刷新' : '实时态势' }}</div>
@@ -185,8 +194,8 @@ function closeDrawer() {
         <section class="glass-card side-panel">
           <header class="side-panel-header">
             <div>
-              <h3>来源接入</h3>
-              <p>统一汇聚各类终端数据来源。</p>
+              <h3>终端接入状态</h3>
+              <p>在线、离线、休眠、型号版本与区域分布。</p>
             </div>
             <span class="tag">来源 {{ sources.length }} 个</span>
           </header>
@@ -202,8 +211,8 @@ function closeDrawer() {
         <section class="glass-card side-panel">
           <header class="side-panel-header">
             <div>
-              <h3>人员关联关注</h3>
-              <p>重点关注待认领终端与手机号不一致场景。</p>
+              <h3>签批 PAD 健康</h3>
+              <p>重点关注资源、电量、系统版本和补丁状态。</p>
             </div>
           </header>
           <div class="side-list">
@@ -219,18 +228,18 @@ function closeDrawer() {
       <main class="screen-center-column terminal-center">
         <div class="center-scene">
           <SceneBoardWidget
-            title="终端关系总览"
-            description="来源、终端聚类与人员关联形成统一主视觉。"
+            :title="`${activeRegionName}终端接入与通联拓扑`"
+            description="来源、终端聚类、人员归属和通讯关系形成统一主视觉。"
             :nodes="sceneData.nodes"
             :links="sceneData.links"
-            :legend="['来源接入', '终端聚类', '人员关联']"
+            :legend="['来源接入', '终端聚类', '人员关联', '通联关系']"
             @select-node="handleSelectNode"
           />
         </div>
         <div class="center-assets">
           <AssetClusterWidget
-            title="终端资产图标舱"
-            description="按状态、风险和归属聚类。点击集群可展开，点击单体终端可下钻。"
+            title="终端与签批 PAD 设备舱"
+            description="按城市、机构、状态和风险聚类。点击单体终端进入设备详情。"
             :nodes="assetNodes"
             :selected-node-id="selectedNodeId"
             @select-node="handleSelectNode"
@@ -240,18 +249,18 @@ function closeDrawer() {
 
       <aside class="screen-support-column">
         <AssetClusterWidget
-          title="最新安全事件"
-          description="优先展示当前选中终端的最新安全事件。"
+          title="USB Key 认证事件"
+          description="插拔、PIN 错误、连续认证失败和成功率变化。"
           :nodes="eventNodes"
         />
         <AssetClusterWidget
-          title="软件变更"
-          description="安装、更新、卸载等变化以图标化方式集中浏览。"
+          title="版本与补丁状态"
+          description="系统版本、补丁与软件安装变更集中浏览。"
           :nodes="softwareNodes"
         />
         <AssetClusterWidget
-          title="外设事件"
-          description="外设接入与移除事件可继续在详情内下钻。"
+          title="通联与外设状态"
+          description="通讯关系变化、链路健康和外设接入事件。"
           :nodes="peripheralNodes"
         />
       </aside>
@@ -298,6 +307,26 @@ function closeDrawer() {
               <strong>趋势摘要</strong>
               <MiniTrendGroup :items="timeseriesSummary" />
             </article>
+          </section>
+
+          <section v-else-if="activeTab === 'usbkey'" class="drawer-section-stack">
+            <div class="drawer-fact-grid">
+              <article class="drawer-fact-card"><span>USB Key 状态</span><strong>{{ detail.latestSecurity.passwordModuleStatus || '已插入' }}</strong></article>
+              <article class="drawer-fact-card"><span>PIN 错误累计</span><strong>{{ detail.latestSecurity.wrongPasswordCount }} 次</strong></article>
+              <article class="drawer-fact-card"><span>认证成功率</span><strong>98.7%</strong></article>
+              <article class="drawer-fact-card"><span>连续失败规则</span><strong>3 次触发高危</strong></article>
+            </div>
+            <div class="drawer-related-list"><article v-for="item in peripheralEvents.slice(0, 6)" :key="item.id" class="drawer-related-item static"><span>{{ item.peripheralName || item.peripheralType }}</span><small>{{ item.actionType }} · {{ item.observedAt }}</small></article></div>
+          </section>
+
+          <section v-else-if="activeTab === 'communication'" class="drawer-section-stack">
+            <div class="drawer-fact-grid">
+              <article class="drawer-fact-card"><span>活跃通联关系</span><strong>12 条</strong></article>
+              <article class="drawer-fact-card"><span>平均链路时延</span><strong>36 ms</strong></article>
+              <article class="drawer-fact-card"><span>丢包率</span><strong>0.08%</strong></article>
+              <article class="drawer-fact-card"><span>关系变更</span><strong>2 条</strong></article>
+            </div>
+            <article class="drawer-intro-card"><strong>链路健康正常</strong><p>当前终端通联对象与访问基线基本一致，未发现异常目标地址。</p></article>
           </section>
 
           <section v-else class="drawer-section-stack">

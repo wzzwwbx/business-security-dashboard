@@ -45,6 +45,20 @@ CREATE TABLE IF NOT EXISTS dashboard_widget (
     INDEX idx_widget_page_code (page_code)
 );
 
+CREATE TABLE IF NOT EXISTS ops_site (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    site_code VARCHAR(64) NOT NULL UNIQUE,
+    site_name VARCHAR(128) NOT NULL,
+    country_code VARCHAR(16) NOT NULL,
+    country_name VARCHAR(64) NOT NULL,
+    city VARCHAR(64) NOT NULL,
+    longitude DECIMAL(10,6) NOT NULL,
+    latitude DECIMAL(10,6) NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'success',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS ops_host (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     host_code VARCHAR(128) NOT NULL UNIQUE,
@@ -56,6 +70,7 @@ CREATE TABLE IF NOT EXISTS ops_host (
     arch VARCHAR(64) NOT NULL,
     cpu_cores INT NOT NULL,
     memory_total_bytes BIGINT NOT NULL,
+    site_id BIGINT NULL,
     status VARCHAR(32) NOT NULL DEFAULT 'ONLINE',
     last_observed_at TIMESTAMP NULL,
     last_source_type VARCHAR(64) NULL,
@@ -63,7 +78,45 @@ CREATE TABLE IF NOT EXISTS ops_host (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_ops_host_status (status),
+    INDEX idx_ops_host_site (site_id),
     INDEX idx_ops_host_last_observed (last_observed_at)
+);
+
+CREATE TABLE IF NOT EXISTS ops_device (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    site_id BIGINT NOT NULL,
+    host_id BIGINT NULL,
+    device_code VARCHAR(64) NOT NULL UNIQUE,
+    device_name VARCHAR(128) NOT NULL,
+    device_type VARCHAR(32) NOT NULL,
+    primary_ip VARCHAR(64) NULL,
+    vendor VARCHAR(128) NULL,
+    model VARCHAR(128) NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'success',
+    topology_x INT NOT NULL,
+    topology_y INT NOT NULL,
+    metrics_json JSON NULL,
+    policies_json JSON NULL,
+    audits_json JSON NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_ops_device_site (site_id),
+    INDEX idx_ops_device_host (host_id)
+);
+
+CREATE TABLE IF NOT EXISTS ops_device_link (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    site_id BIGINT NOT NULL,
+    source_device_id BIGINT NOT NULL,
+    target_device_id BIGINT NOT NULL,
+    link_type VARCHAR(32) NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'success',
+    latency_ms INT NOT NULL DEFAULT 0,
+    bandwidth VARCHAR(64) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_ops_link_site (site_id),
+    INDEX idx_ops_link_devices (source_device_id, target_device_id)
 );
 
 CREATE TABLE IF NOT EXISTS ops_host_binding (
@@ -399,6 +452,10 @@ CREATE TABLE IF NOT EXISTS terminal_device (
     phone_number_last_reported VARCHAR(32) NULL,
     phone_number_masked_last_reported VARCHAR(32) NULL,
     primary_ip VARCHAR(64) NULL,
+    country_code VARCHAR(16) NULL,
+    country_name VARCHAR(64) NULL,
+    city VARCHAR(64) NULL,
+    site_id BIGINT NULL,
     os_version VARCHAR(128) NULL,
     imei VARCHAR(64) NULL,
     meid VARCHAR(64) NULL,
@@ -415,6 +472,8 @@ CREATE TABLE IF NOT EXISTS terminal_device (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_terminal_device_person (person_id),
     INDEX idx_terminal_device_status (status, last_observed_at),
+    INDEX idx_terminal_device_region (country_code, city),
+    INDEX idx_terminal_device_site (site_id),
     INDEX idx_terminal_device_imei (imei),
     INDEX idx_terminal_device_meid (meid)
 );
@@ -534,4 +593,3 @@ CREATE TABLE IF NOT EXISTS terminal_ingest_payload (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_terminal_ingest_payload_source (source_type, source_system, created_at)
 );
-

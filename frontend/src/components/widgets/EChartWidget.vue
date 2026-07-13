@@ -38,10 +38,19 @@ import type { ECharts, EChartsOption } from 'echarts';
 
 const props = defineProps<{
   option: Record<string, unknown>;
+  mapDefinition?: {
+    name: string;
+    geoJson: Record<string, unknown>;
+  };
+}>();
+
+const emit = defineEmits<{
+  chartClick: [payload: Record<string, any>];
 }>();
 
 type EChartsModule = {
   init: typeof import('echarts/core')['init'];
+  registerMap: typeof import('echarts/core')['registerMap'];
 };
 
 const chartRef = ref<HTMLDivElement | null>(null);
@@ -102,16 +111,25 @@ const ensureEcharts = async () => {
       charts.PieChart,
       charts.RadarChart,
       charts.GaugeChart,
+      charts.FunnelChart,
+      charts.MapChart,
+      charts.ScatterChart,
+      charts.EffectScatterChart,
+      charts.LinesChart,
+      charts.GraphChart,
+      charts.SankeyChart,
       components.TitleComponent,
       components.TooltipComponent,
       components.LegendComponent,
       components.GridComponent,
       components.RadarComponent,
+      components.GeoComponent,
+      components.VisualMapComponent,
       components.AriaComponent,
       renderers.CanvasRenderer
     ]);
 
-    echartsModule = { init: core.init };
+    echartsModule = { init: core.init, registerMap: core.registerMap };
   }
 
   return echartsModule;
@@ -296,6 +314,10 @@ const renderChart = async () => {
   try {
     const echarts = await ensureEcharts();
 
+    if (props.mapDefinition) {
+      echarts.registerMap(props.mapDefinition.name, props.mapDefinition.geoJson as never);
+    }
+
     if (!chartRef.value) {
       return;
     }
@@ -304,6 +326,7 @@ const renderChart = async () => {
 
     if (!chart) {
       chart = echarts.init(chartRef.value);
+      chart.on('click', (payload) => emit('chartClick', payload as Record<string, any>));
     }
 
     chart.setOption(themedOption.value, true);
@@ -330,8 +353,8 @@ onMounted(() => {
 });
 
 watch(
-  [() => props.option, themedOption, hasData],
-  async ([, , available]) => {
+  [() => props.option, () => props.mapDefinition, themedOption, hasData],
+  async ([, , , available]) => {
     if (!available) {
       disposeChart();
       chartError.value = '';

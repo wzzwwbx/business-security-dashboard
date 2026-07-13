@@ -1,6 +1,6 @@
 import { fetchTerminalDevices, fetchTerminalOverview, fetchTerminalSources } from '@/api/terminal';
 import type { TerminalDeviceSummaryDto, TerminalOverviewDto, TerminalSourceDto } from '@/types/terminal';
-import { onBeforeUnmount, onMounted, readonly, ref, shallowRef } from 'vue';
+import { onBeforeUnmount, onMounted, readonly, ref, shallowRef, watch, type Ref } from 'vue';
 
 function normalizeTerminalLoadError(scope: string) {
   return `${scope}暂时无法获取，请稍后刷新重试。`;
@@ -22,7 +22,7 @@ function emptyOverview(): TerminalOverviewDto {
   };
 }
 
-export function useTerminalOverview() {
+export function useTerminalOverview(countryCode?: Ref<string>) {
   const overview = shallowRef<TerminalOverviewDto | null>(null);
   const sources = ref<TerminalSourceDto[]>([]);
   const devices = ref<TerminalDeviceSummaryDto[]>([]);
@@ -58,13 +58,14 @@ export function useTerminalOverview() {
     try {
       errorMessage.value = '';
       const [overviewResult, sourceResult, deviceResult] = await Promise.allSettled([
-        fetchTerminalOverview(),
+        fetchTerminalOverview(countryCode?.value || undefined),
         fetchTerminalSources(),
         fetchTerminalDevices({
           keyword: keyword.value || undefined,
           status: status.value || undefined,
           riskLevel: riskLevel.value || undefined,
           ownershipStatus: ownershipStatus.value || undefined,
+          countryCode: countryCode?.value || undefined,
           page: 1,
           size: 200
         })
@@ -124,6 +125,10 @@ export function useTerminalOverview() {
       void load(true);
     }, 60000);
   });
+
+  if (countryCode) {
+    watch(countryCode, () => { void load(); });
+  }
 
   onBeforeUnmount(() => {
     if (timer) {

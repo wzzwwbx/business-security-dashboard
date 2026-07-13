@@ -23,6 +23,10 @@ export interface TerminalOverviewDto {
 export interface TerminalSourceDto {
   sourceType: 'EXTERNAL_API' | 'MANUAL_IMPORT' | string;
   sourceSystem: string;
+  countryCode?: string | null;
+  countryName?: string | null;
+  city?: string | null;
+  siteCode?: string | null;
   enabled: boolean;
   status: string;
   deviceCount: number;
@@ -51,6 +55,10 @@ export interface TerminalDeviceSummaryDto {
   lastObservedAt: string;
   sourceType: string;
   sourceSystem: string;
+  countryCode?: string | null;
+  countryName?: string | null;
+  city?: string | null;
+  siteCode?: string | null;
 }
 
 export interface TerminalDeviceListDto {
@@ -87,6 +95,10 @@ export interface TerminalDeviceInfoDto {
   meid: string | null;
   plmn: string | null;
   trafficUsedBytes: number;
+  countryCode?: string | null;
+  countryName?: string | null;
+  city?: string | null;
+  siteCode?: string | null;
 }
 
 export interface TerminalSecurityInfoDto {

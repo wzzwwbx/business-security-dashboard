@@ -3,8 +3,11 @@ import BaseButton from '@/components/common/BaseButton.vue';
 import BaseEmpty from '@/components/common/BaseEmpty.vue';
 import BaseSkeleton from '@/components/common/BaseSkeleton.vue';
 import DetailDrawerShell from '@/components/common/DetailDrawerShell.vue';
+import WorldSituationMap from '@/components/situation/WorldSituationMap.vue';
 import EChartWidget from '@/components/widgets/EChartWidget.vue';
+import { fetchSituationGeoOverview } from '@/api/situationGeo';
 import { useSituationPage } from '@/composables/useSituationPage';
+import { mockSituationGeoOverview } from '@/mocks/situationGeo';
 import type {
   SituationChartSection,
   SituationInsight,
@@ -17,8 +20,9 @@ import type {
   SituationTone
 } from '@/types/situation';
 import type { VisualAssetNode } from '@/types/visualization';
-import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import type { SituationGeoOverview } from '@/types/situationGeo';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 type DashboardPanelKey = 'leftTop' | 'leftMini' | 'leftBottom' | 'rightTop' | 'rightMini' | 'rightBottom' | 'centerTop' | 'bottomCenter';
 
@@ -53,7 +57,35 @@ interface DashboardLayout {
   eventPanel: DashboardEventPanel;
 }
 
+interface TopicFocus {
+  id: string;
+  label: string;
+  description: string;
+  tone: SituationTone;
+  centerCode: string;
+  centerTitle: string;
+  centerDescription: string;
+  bottomCode: string;
+  bottomTitle: string;
+  bottomDescription: string;
+}
+
 const route = useRoute();
+const router = useRouter();
+const geoOverview = ref<SituationGeoOverview>(mockSituationGeoOverview);
+const showDomainOverlay = ref(true);
+const showEventOverlay = ref(true);
+const showTrendOverlay = ref(true);
+const liveClock = ref(new Date());
+let clockTimer: number | undefined;
+
+onMounted(() => {
+  clockTimer = window.setInterval(() => { liveClock.value = new Date(); }, 1000);
+});
+
+onBeforeUnmount(() => {
+  if (clockTimer) window.clearInterval(clockTimer);
+});
 
 const pageCode = computed<SituationPageCode>(() => {
   const candidate = String(route.meta.pageCode ?? 'overview');
@@ -75,10 +107,18 @@ const {
 } = useSituationPage(pageCode);
 
 const selectedNode = ref<VisualAssetNode | null>(null);
+const activeTopicId = ref('risk-chain');
 
-watch(pageCode, () => {
+function defaultTopicId(code: SituationPageCode) {
+  if (code === 'business') return 'message-flow';
+  if (code === 'terminal') return 'access';
+  return 'risk-chain';
+}
+
+watch(pageCode, (code) => {
   selectedNode.value = null;
   clearInsight();
+  activeTopicId.value = defaultTopicId(code);
 });
 
 const titlePrefix = computed(() => {
@@ -94,6 +134,16 @@ const pageTitle = computed(() => `${titlePrefix.value}-${page.value?.title ?? '�
 const topKpis = computed(() => (page.value?.kpis ?? []).slice(0, 4));
 const tickerKpis = computed(() => (page.value?.kpis ?? []).slice(4));
 const highlightItems = computed(() => page.value?.highlights.slice(0, 4) ?? []);
+const tickerItems = computed(() => [
+  ...tickerKpis.value.map((item) => ({ label: item.label, value: `${item.value}${item.unit ?? ''}`, tone: item.tone })),
+  ...highlightItems.value.map((item) => ({ label: item.title, value: item.metric, tone: item.tone }))
+]);
+
+watch(pageCode, async (code) => {
+  if (code === 'overview') {
+    geoOverview.value = await fetchSituationGeoOverview();
+  }
+}, { immediate: true });
 
 const chartSections = computed<SituationChartSection[]>(() =>
   visibleSections.value.filter((section): section is SituationChartSection => section.kind === 'chart')
@@ -109,11 +159,11 @@ const timelineSection = computed<SituationTimelineSection | null>(
 
 const eventItems = computed(() => {
   if (signalSection.value?.items.length) {
-    return signalSection.value.items.slice(0, 8);
+    return signalSection.value.items.slice(0, 12);
   }
 
   if (timelineSection.value?.items.length) {
-    return timelineSection.value.items.slice(0, 8).map((item) => ({
+    return timelineSection.value.items.slice(0, 12).map((item) => ({
       label: item.actor,
       title: item.title,
       description: item.description,
@@ -346,6 +396,34 @@ function hasPanelOption(panel: DashboardPanel) {
 
 const chartSectionMap = computed(() => new Map(chartSections.value.map((section) => [section.code, section] as const)));
 
+const topicOptions = computed<TopicFocus[]>(() => {
+  switch (pageCode.value) {
+    case 'security':
+      return [
+        { id: 'risk-chain', label: '安全事件', description: '账号、终端与敏感操作的风险关联。', tone: 'danger', centerCode: 'security-risk-chain', centerTitle: '安全事件风险关联链', centerDescription: '账号、终端、敏感操作与处置工单关联研判。', bottomCode: 'security-risk-trend', bottomTitle: '高危事件趋势', bottomDescription: '高危事件发现与处置完成情况。' },
+        { id: 'zero-trust', label: '零信任', description: '认证、策略和用户风险因子的综合判定。', tone: 'warning', centerCode: 'security-defense-radar', centerTitle: '零信任风险因子雷达', centerDescription: '认证异常、行为偏离、地理位置与策略命中。', bottomCode: 'security-zero-trust-policy', bottomTitle: '零信任策略命中与执行时效', bottomDescription: '策略命中、二次认证与访问放行结果。' },
+        { id: 'behavior', label: '异常行为', description: '规则、KNN 与 LSTM 模型的实时检出表现。', tone: 'info', centerCode: 'security-behavior-model', centerTitle: '异常行为模型检出对比', centerDescription: '规则、KNN、LSTM 的检出量、准确率与误报控制。', bottomCode: 'security-behavior-baseline', bottomTitle: '行为基线偏离趋势', bottomDescription: '用户访问频率与敏感操作偏离基线情况。' }
+      ];
+    case 'business':
+      return [
+        { id: 'message-flow', label: '密信', description: '密信收发、文件传输与离线消费链路。', tone: 'success', centerCode: 'business-flow', centerTitle: '密信业务流转', centerDescription: '消息接收、文件传输、加密、签阅与归档全过程。', bottomCode: 'business-message-trend', bottomTitle: '密信收发与签收趋势', bottomDescription: '密信收发量、文件字节数与签收完成情况。' },
+        { id: 'sign-flow', label: '签阅', description: '签批待办、停留时长和归档流程瓶颈。', tone: 'warning', centerCode: 'business-sign-flow', centerTitle: '签阅流程与状态分布', centerDescription: '发起、待签、会签、办结和归档的流转关系。', bottomCode: 'business-sign-stay', bottomTitle: '签阅节点平均停留时长', bottomDescription: '定位会签与领导签批环节的流程瓶颈。' },
+        { id: 'envelope', label: '数字信封', description: '加解密、PIN 校验、证书交换与密钥状态。', tone: 'info', centerCode: 'business-envelope-flow', centerTitle: '数字信封加解密链路', centerDescription: '文件加密、PIN 校验、证书交换和安全归档。', bottomCode: 'business-envelope-metrics', bottomTitle: '加解密与证书状态', bottomDescription: '加解密次数、一次一密执行和证书有效性。' }
+      ];
+    case 'terminal':
+      return [
+        { id: 'access', label: '终端接入', description: '国家区域、在线会话和终端策略接入关系。', tone: 'success', centerCode: 'terminal-scene', centerTitle: '终端接入与保障拓扑', centerDescription: '终端、人员、策略与异常事件的关系下钻。', bottomCode: 'terminal-online-trend', bottomTitle: '近七日终端在线趋势', bottomDescription: '在线、活跃与会话时长变化。' },
+        { id: 'pad', label: '签批 PAD', description: '签批 PAD 的资源健康、版本补丁与电量状态。', tone: 'warning', centerCode: 'terminal-pad-health', centerTitle: '签批 PAD 设备健康', centerDescription: 'CPU、内存、存储、电量和补丁合规综合评估。', bottomCode: 'terminal-pad-version', bottomTitle: '签批 PAD 版本与补丁覆盖', bottomDescription: '系统版本、补丁批次和待升级设备分布。' },
+        { id: 'usb', label: 'USB Key', description: '认证成功率、PIN 错误和连续失败风险。', tone: 'danger', centerCode: 'terminal-usb-auth', centerTitle: 'USB Key 认证与插拔状态', centerDescription: '认证成功、PIN 失败、证书异常和离线 Key 监测。', bottomCode: 'terminal-usb-reason', bottomTitle: 'USB Key 失败原因排行', bottomDescription: '连续失败、证书过期、PIN 锁定和设备未识别。' },
+        { id: 'communication', label: '通联状态', description: '终端与业务对象的活跃关系和链路质量。', tone: 'info', centerCode: 'terminal-communication', centerTitle: '终端通联关系', centerDescription: '终端、业务网关、密信与签阅服务的活跃通联。', bottomCode: 'terminal-network-quality', bottomTitle: '通联链路质量趋势', bottomDescription: '时延、丢包率和关系变更告警。' }
+      ];
+    default:
+      return [];
+  }
+});
+
+const activeTopic = computed(() => topicOptions.value.find((item) => item.id === activeTopicId.value) ?? topicOptions.value[0] ?? null);
+
 function resolvePanel(spec: DashboardPanelDraft): DashboardPanel {
   const section = spec.code ? chartSectionMap.value.get(spec.code) ?? null : null;
   return {
@@ -383,17 +461,17 @@ const dashboardLayout = computed<DashboardLayout>(() => {
         ].map(resolvePanel),
         centerTop: resolvePanel({
           key: 'centerTop',
-          code: 'security-risk-trend',
-          title: '高危事件趋势',
-          description: '高危安全事件与处置变化。',
-          accent: 'success'
+          code: activeTopic.value?.centerCode ?? 'security-risk-chain',
+          title: activeTopic.value?.centerTitle ?? '安全事件风险关联链',
+          description: activeTopic.value?.centerDescription,
+          accent: activeTopic.value?.tone ?? 'danger'
         }),
         bottomCenter: resolvePanel({
           key: 'bottomCenter',
-          code: 'security-defense-radar',
-          title: '防护能力雷达',
-          description: '安全防护各维度表现。',
-          accent: 'warning'
+          code: activeTopic.value?.bottomCode ?? 'security-risk-trend',
+          title: activeTopic.value?.bottomTitle ?? '高危事件趋势',
+          description: activeTopic.value?.bottomDescription,
+          accent: activeTopic.value?.tone ?? 'warning'
         }),
         right: [
           { key: 'rightTop', code: 'security-funnel', title: '安全事件处置漏斗', description: '从发现到复盘的闭环进度。', accent: 'warning' },
@@ -411,17 +489,17 @@ const dashboardLayout = computed<DashboardLayout>(() => {
         ].map(resolvePanel),
         centerTop: resolvePanel({
           key: 'centerTop',
-          code: 'business-volume',
-          title: '业务处理总量趋势',
-          description: '终端密信与签阅处理总量走势。',
-          accent: 'success'
+          code: activeTopic.value?.centerCode ?? 'business-flow',
+          title: activeTopic.value?.centerTitle ?? '密信业务流转',
+          description: activeTopic.value?.centerDescription,
+          accent: activeTopic.value?.tone ?? 'success'
         }),
         bottomCenter: resolvePanel({
           key: 'bottomCenter',
-          code: 'business-stack',
-          title: '终端密信与签阅分布',
-          description: '业务对象状态分布。',
-          accent: 'danger'
+          code: activeTopic.value?.bottomCode ?? 'business-message-trend',
+          title: activeTopic.value?.bottomTitle ?? '密信收发与签收趋势',
+          description: activeTopic.value?.bottomDescription,
+          accent: activeTopic.value?.tone ?? 'success'
         }),
         right: [
           { key: 'rightTop', code: 'business-latency', title: '链路时延排行', description: '业务链路时延对比。', accent: 'warning' },
@@ -445,17 +523,17 @@ const dashboardLayout = computed<DashboardLayout>(() => {
         ].map(resolvePanel),
         centerTop: resolvePanel({
           key: 'centerTop',
-          code: 'terminal-online-trend',
-          title: '近七日终端在线趋势',
-          description: '终端在线与活跃走势。',
-          accent: 'success'
+          code: activeTopic.value?.centerCode ?? 'terminal-scene',
+          title: activeTopic.value?.centerTitle ?? '终端接入与保障拓扑',
+          description: activeTopic.value?.centerDescription,
+          accent: activeTopic.value?.tone ?? 'success'
         }),
         bottomCenter: resolvePanel({
           key: 'bottomCenter',
-          code: 'terminal-category',
-          title: '终端异常分类统计',
-          description: '终端异常类型排行。',
-          accent: 'danger'
+          code: activeTopic.value?.bottomCode ?? 'terminal-online-trend',
+          title: activeTopic.value?.bottomTitle ?? '近七日终端在线趋势',
+          description: activeTopic.value?.bottomDescription,
+          accent: activeTopic.value?.tone ?? 'success'
         }),
         right: [
           { key: 'rightTop', code: 'terminal-alert-funnel', title: '终端异常处置漏斗', description: '终端异常事件处置进度。', accent: 'warning' },
@@ -496,10 +574,17 @@ const dashboardLayout = computed<DashboardLayout>(() => {
           code: 'overview-behavior',
           title: '异常行为分类统计',
           description: '按异常行为类型展示月度分布。',
-          accent: 'danger'
+          accent: 'danger',
+          fallbackOption: {
+            grid: { left: 86, right: 28, top: 12, bottom: 18 },
+            xAxis: { type: 'value' }, yAxis: { type: 'category', data: ['异常登录', '敏感导出', '终端偏离', '资源过载', '链路抖动'] },
+            series: [{ type: 'bar', barWidth: 12, data: [37, 29, 24, 21, 16] }]
+          }
         }),
         right: [
-          { key: 'rightTop', code: 'overview-funnel', title: '异常告警处置情况', description: '展示事件从发现到处置的流转规模。', accent: 'warning' },
+          { key: 'rightTop', code: 'overview-funnel', title: '异常告警处置情况', description: '展示事件从发现到处置的流转规模。', accent: 'warning', fallbackOption: {
+            series: [{ type: 'funnel', left: '16%', top: 16, bottom: 12, width: '68%', gap: 5, label: { show: true, position: 'inside' }, data: [{ name: '发现', value: 128 }, { name: '研判', value: 76 }, { name: '处置', value: 47 }, { name: '闭环', value: 35 }] }]
+          } },
           {
             key: 'rightMini',
             title: '事件状态占比',
@@ -523,6 +608,17 @@ const dashboardEventRows = computed(() =>
   }))
 );
 
+const overviewTrendPanel = computed(() => dashboardLayout.value.centerTop);
+const overviewBehaviorPanel = computed(() => dashboardLayout.value.bottomCenter);
+
+function enterSite(siteCode: string) {
+  void router.push({ path: '/ops', query: { site: siteCode } });
+}
+
+function enterCountry(countryCode: string) {
+  void router.push({ path: '/terminal', query: { country: countryCode } });
+}
+
 const statusText = computed(() => {
   if (warningMessage.value) {
     return '数据已更新';
@@ -531,7 +627,7 @@ const statusText = computed(() => {
   return resolvedSource.value === 'integration' ? '数据已更新' : '页面已刷新';
 });
 
-const dashboardTime = computed(() => page.value?.lastUpdated?.slice(11, 19) ?? new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+const dashboardTime = computed(() => liveClock.value.toLocaleTimeString('zh-CN', { hour12: false }));
 
 const drawerOpen = computed(() => Boolean(selectedNode.value || selectedInsight.value));
 const drawerTitle = computed(() => selectedNode.value?.name ?? selectedInsight.value?.title ?? '详情');
@@ -572,6 +668,20 @@ function selectSignal(item: SituationSignalItem | SituationTimelineItem) {
     description: item.description,
     tone: item.tone,
     meta: 'meta' in item ? item.meta : item.time
+  });
+}
+
+function selectChartPoint(panel: DashboardPanel, payload: Record<string, any>) {
+  const value = Array.isArray(payload.value) ? payload.value.join(' / ') : payload.value;
+  const metric = value === undefined || value === null || value === '' ? undefined : String(value);
+  handleSelectInsight({
+    id: `chart-${panel.code ?? panel.key}-${payload.seriesName ?? ''}-${payload.name ?? ''}`,
+    label: panel.title,
+    title: payload.name ? `${panel.title}：${payload.name}` : panel.title,
+    description: panel.description ?? '已选中当前专题图表中的数据对象，可结合相关事件继续研判。',
+    tone: panel.accent,
+    metric,
+    meta: payload.seriesName ? `数据序列：${payload.seriesName}` : '数据来源：当前专题模拟态势'
   });
 }
 
@@ -626,16 +736,74 @@ function closeDrawer() {
     </section>
 
     <section class="board-ticker" aria-label="态势摘要">
-      <strong>{{ page.highlights[0]?.metric ?? statusText }}</strong>
-      <span v-for="item in tickerKpis" :key="item.label" :class="toneClass(item.tone)">
-        {{ item.label }} <b>{{ item.value }}{{ item.unit }}</b>
-      </span>
-      <span v-for="item in highlightItems" :key="item.title" :class="toneClass(item.tone)">
-        {{ item.title }} <b>{{ item.metric }}</b>
-      </span>
+      <div class="ticker-track">
+        <div v-for="copy in 2" :key="copy" class="ticker-group" :aria-hidden="copy === 2">
+          <strong>{{ page.highlights[0]?.metric ?? statusText }}</strong>
+          <span v-for="item in tickerItems" :key="`${copy}-${item.label}`" :class="toneClass(item.tone)">
+            {{ item.label }} <b>{{ item.value }}</b>
+          </span>
+        </div>
+      </div>
     </section>
 
-    <section v-if="hasFilterResult" class="board-grid" :class="dashboardLayout.layoutClass" aria-label="态势驾驶舱">
+    <section v-if="hasFilterResult && pageCode === 'overview'" class="overview-canvas" aria-label="综合态势地图驾驶舱">
+      <div class="overview-map-layer">
+        <WorldSituationMap :data="geoOverview" @enter-site="enterSite" @enter-country="enterCountry" />
+      </div>
+
+      <div class="overview-map-controls" aria-label="统计浮层显示控制">
+        <strong>全球机房与终端分布</strong>
+        <button type="button" :class="{ active: showDomainOverlay }" :aria-pressed="showDomainOverlay" @click="showDomainOverlay = !showDomainOverlay">四域态势</button>
+        <button type="button" :class="{ active: showEventOverlay }" :aria-pressed="showEventOverlay" @click="showEventOverlay = !showEventOverlay">实时事件</button>
+        <button type="button" :class="{ active: showTrendOverlay }" :aria-pressed="showTrendOverlay" @click="showTrendOverlay = !showTrendOverlay">趋势统计</button>
+      </div>
+
+      <aside v-if="showDomainOverlay" class="overview-domain-column overview-overlay overview-overlay--left">
+        <article v-for="domain in geoOverview.domains" :key="domain.code" class="board-card domain-summary" :class="toneClass(domain.status)">
+          <header><span>{{ domain.name }}</span><i /></header>
+          <div class="domain-metrics">
+            <span v-for="metric in domain.metrics" :key="metric.label"><small>{{ metric.label }}</small><strong>{{ metric.value }}</strong></span>
+          </div>
+        </article>
+      </aside>
+
+      <aside v-if="showEventOverlay" class="overview-right-column overview-overlay overview-overlay--right">
+        <article class="board-card event-panel overview-event-panel tone-danger">
+          <header class="panel-heading"><span>实时事件流</span><small>安全、业务、终端、运维事件</small></header>
+          <div class="event-scroll-shell">
+            <div class="event-scroll-track">
+              <div class="event-scroll-group">
+                <button v-for="item in dashboardEventRows" :key="`${item.meta}-${item.title}`" type="button" class="event-row" :class="toneClass(item.tone)" @click="selectSignal(item.source)">
+                  <time>{{ item.meta }}</time><b>{{ item.label }}</b><span>{{ item.title }}</span>
+                </button>
+              </div>
+              <div class="event-scroll-group" aria-hidden="true">
+                <div v-for="item in dashboardEventRows" :key="`clone-${item.meta}-${item.title}`" class="event-row" :class="toneClass(item.tone)">
+                  <time>{{ item.meta }}</time><b>{{ item.label }}</b><span>{{ item.title }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="board-card dashboard-panel overview-funnel tone-warning">
+          <header class="panel-heading"><span>四域处置进度</span><small>异常发现至闭环</small></header>
+          <div class="panel-body"><EChartWidget :option="dashboardLayout.right[0].option" /></div>
+        </article>
+      </aside>
+
+      <div v-if="showTrendOverlay" class="overview-bottom-band overview-overlay overview-overlay--bottom">
+        <article class="board-card dashboard-panel tone-success">
+          <header class="panel-heading"><span>{{ overviewTrendPanel.title }}</span><small>{{ overviewTrendPanel.description }}</small></header>
+          <div class="panel-body"><EChartWidget :option="overviewTrendPanel.option" /></div>
+        </article>
+        <article class="board-card dashboard-panel tone-danger">
+          <header class="panel-heading"><span>{{ overviewBehaviorPanel.title }}</span><small>安全、业务、终端、运维异常汇总</small></header>
+          <div class="panel-body"><EChartWidget :option="overviewBehaviorPanel.option" /></div>
+        </article>
+      </div>
+    </section>
+
+    <section v-else-if="hasFilterResult" class="board-grid" :class="dashboardLayout.layoutClass" aria-label="态势驾驶舱">
       <div class="side-stack side-stack--left">
         <article
           v-for="panel in dashboardLayout.left"
@@ -649,7 +817,7 @@ function closeDrawer() {
           </header>
 
           <div class="panel-body">
-            <EChartWidget v-if="hasPanelOption(panel)" :option="panel.option" />
+            <EChartWidget v-if="hasPanelOption(panel)" :option="panel.option" @chart-click="selectChartPoint(panel, $event)" />
             <BaseEmpty v-else title="暂无数据" description="当前视图暂无可展示内容。" />
           </div>
         </article>
@@ -661,12 +829,25 @@ function closeDrawer() {
         :class="[`panel-${dashboardLayout.centerTop.key}`, toneClass(dashboardLayout.centerTop.accent)]"
       >
         <header class="panel-heading">
-          <span>{{ dashboardLayout.centerTop.title }}</span>
-          <small v-if="dashboardLayout.centerTop.description">{{ dashboardLayout.centerTop.description }}</small>
+          <div class="panel-heading-main">
+            <span>{{ dashboardLayout.centerTop.title }}</span>
+            <small v-if="dashboardLayout.centerTop.description">{{ dashboardLayout.centerTop.description }}</small>
+          </div>
+          <div v-if="topicOptions.length" class="topic-tabs" :aria-label="`${page.name}专题维度`">
+            <button
+              v-for="topic in topicOptions"
+              :key="topic.id"
+              type="button"
+              :class="[toneClass(topic.tone), { active: activeTopicId === topic.id }]"
+              :aria-pressed="activeTopicId === topic.id"
+              :title="topic.description"
+              @click="activeTopicId = topic.id"
+            >{{ topic.label }}</button>
+          </div>
         </header>
 
         <div class="panel-body">
-          <EChartWidget v-if="hasPanelOption(dashboardLayout.centerTop)" :option="dashboardLayout.centerTop.option" />
+          <EChartWidget v-if="hasPanelOption(dashboardLayout.centerTop)" :option="dashboardLayout.centerTop.option" @chart-click="selectChartPoint(dashboardLayout.centerTop, $event)" />
           <BaseEmpty v-else title="暂无数据" description="当前视图暂无可展示内容。" />
         </div>
       </article>
@@ -682,7 +863,7 @@ function closeDrawer() {
         </header>
 
         <div class="panel-body">
-          <EChartWidget v-if="hasPanelOption(dashboardLayout.bottomCenter)" :option="dashboardLayout.bottomCenter.option" />
+          <EChartWidget v-if="hasPanelOption(dashboardLayout.bottomCenter)" :option="dashboardLayout.bottomCenter.option" @chart-click="selectChartPoint(dashboardLayout.bottomCenter, $event)" />
           <BaseEmpty v-else title="暂无数据" description="当前视图暂无可展示内容。" />
         </div>
       </article>
@@ -700,7 +881,7 @@ function closeDrawer() {
           </header>
 
           <div class="panel-body">
-            <EChartWidget v-if="hasPanelOption(panel)" :option="panel.option" />
+            <EChartWidget v-if="hasPanelOption(panel)" :option="panel.option" @chart-click="selectChartPoint(panel, $event)" />
             <BaseEmpty v-else title="暂无数据" description="当前视图暂无可展示内容。" />
           </div>
         </article>
@@ -710,19 +891,19 @@ function closeDrawer() {
             <span>{{ dashboardLayout.eventPanel.title }}</span>
             <small>{{ dashboardLayout.eventPanel.description ?? statusText }}</small>
           </header>
-          <div class="event-list">
-            <button
-              v-for="item in dashboardEventRows"
-              :key="`${item.meta}-${item.title}`"
-              type="button"
-              class="event-row"
-              :class="toneClass(item.tone)"
-              @click="selectSignal(item.source)"
-            >
-              <time>{{ item.meta }}</time>
-              <b>{{ item.label }}</b>
-              <span>{{ item.title }}</span>
-            </button>
+          <div class="event-scroll-shell">
+            <div class="event-scroll-track">
+              <div class="event-scroll-group">
+                <button v-for="item in dashboardEventRows" :key="`${item.meta}-${item.title}`" type="button" class="event-row" :class="toneClass(item.tone)" @click="selectSignal(item.source)">
+                  <time>{{ item.meta }}</time><b>{{ item.label }}</b><span>{{ item.title }}</span>
+                </button>
+              </div>
+              <div class="event-scroll-group" aria-hidden="true">
+                <div v-for="item in dashboardEventRows" :key="`clone-${item.meta}-${item.title}`" class="event-row" :class="toneClass(item.tone)">
+                  <time>{{ item.meta }}</time><b>{{ item.label }}</b><span>{{ item.title }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </article>
       </div>
@@ -799,7 +980,7 @@ function closeDrawer() {
   display: grid;
   grid-template-rows: 54px 102px 38px minmax(0, 1fr);
   gap: 8px;
-  height: calc(100vh - var(--layout-page-padding) * 2);
+  height: calc(100dvh - var(--layout-page-padding) * 2);
   min-height: 680px;
   overflow: hidden;
   color: #eaf7ff;
@@ -929,19 +1110,39 @@ function closeDrawer() {
 }
 
 .board-ticker {
-  display: flex;
+  display: block;
   align-items: center;
   gap: 24px;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  padding: 0 14px;
+  padding: 0;
   border: 1px solid rgba(28, 140, 215, 0.28);
   border-radius: 6px;
   background: rgba(7, 28, 52, 0.72);
   color: rgba(218, 235, 255, 0.76);
   font-size: 12px;
   white-space: nowrap;
+}
+
+.ticker-track {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  animation: ticker-marquee 34s linear infinite;
+}
+
+.ticker-group {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+  padding: 0 24px;
+}
+
+.board-ticker:hover .ticker-track,
+.board-ticker:focus-within .ticker-track {
+  animation-play-state: paused;
 }
 
 .board-ticker strong,
@@ -962,6 +1163,67 @@ function closeDrawer() {
   min-height: 0;
   overflow: hidden;
 }
+
+.overview-canvas {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(40, 177, 255, 0.34);
+  border-radius: 7px;
+  background: #041322;
+  box-shadow: inset 0 0 42px rgba(22, 151, 215, 0.12), 0 0 28px rgba(22, 151, 215, 0.06);
+}
+
+.overview-map-layer { position: absolute; inset: 0; z-index: 0; }
+.overview-map-layer :deep(.world-map-shell) { min-height: 100%; }
+.overview-map-controls {
+  position: absolute;
+  z-index: 8;
+  top: 10px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px;
+  border: 1px solid rgba(53, 216, 255, 0.26);
+  background: rgba(3, 15, 29, 0.86);
+  box-shadow: 0 0 20px rgba(22, 151, 215, 0.1);
+  transform: translateX(-50%);
+}
+.overview-map-controls strong {
+  padding: 0 8px 0 5px;
+  color: #dff9ff;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.overview-map-controls button {
+  min-height: 26px;
+  padding: 0 9px;
+  border: 1px solid rgba(125, 174, 197, 0.22);
+  background: rgba(12, 38, 61, 0.62);
+  color: #86aabd;
+  font-size: 11px;
+  cursor: pointer;
+}
+.overview-map-controls button.active { border-color: #35d8ff; color: #e8fbff; background: rgba(27, 117, 159, 0.5); box-shadow: 0 0 12px rgba(53, 216, 255, 0.16); }
+.overview-overlay { position: absolute; z-index: 6; min-width: 0; min-height: 0; }
+.overview-overlay--left { top: 12px; bottom: 12px; left: 12px; width: min(238px, 22%); display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 7px; }
+.overview-overlay--right { top: 12px; right: 12px; bottom: 12px; width: min(280px, 25%); display: grid; grid-template-rows: minmax(0, 1.7fr) minmax(170px, .82fr); gap: 7px; }
+.overview-overlay--bottom { right: 300px; bottom: 12px; left: 268px; height: min(164px, 25%); display: grid; grid-template-columns: 1.35fr 1fr; gap: 7px; }
+.overview-overlay--left .domain-summary,
+.overview-overlay--right > article,
+.overview-overlay--bottom > article { background: rgba(5, 20, 38, 0.88); backdrop-filter: blur(7px); }
+.overview-overlay--bottom .panel-body { padding-bottom: 4px; }
+
+.domain-summary { display: grid; grid-template-rows: auto minmax(0, 1fr); padding: 10px 12px; overflow: hidden; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.domain-summary:hover { transform: translateX(3px); border-color: rgba(53, 216, 255, .7); box-shadow: inset 3px 0 rgba(53, 216, 255, .7), 0 0 24px rgba(53, 216, 255, .09); }
+.domain-summary header { display: flex; align-items: center; justify-content: space-between; color: #e4f9ff; font-size: 13px; font-weight: 700; }
+.domain-summary header i { width: 7px; height: 7px; border-radius: 50%; background: #35d8ff; box-shadow: 0 0 12px currentColor; }
+.domain-summary.tone-success header i { background: #31e6a1; }.domain-summary.tone-warning header i { background: #ffc857; }.domain-summary.tone-danger header i { background: #ff6178; }
+.domain-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 5px; min-height: 0; }
+.domain-metrics span { display: grid; gap: 3px; min-width: 0; }
+.domain-metrics small { overflow: hidden; color: #7899ac; font-size: 9px; white-space: nowrap; text-overflow: ellipsis; }
+.domain-metrics strong { color: #dff9ff; font-family: var(--font-family-mono, monospace); font-size: 13px; white-space: nowrap; }
 
 .board-grid--security {
   grid-template-columns: minmax(250px, 0.86fr) minmax(0, 2.56fr) minmax(270px, 0.92fr);
@@ -1026,6 +1288,7 @@ function closeDrawer() {
 
 .panel-centerTop {
   grid-area: centerTop;
+  grid-template-rows: 44px minmax(0, 1fr);
 }
 
 .panel-bottomCenter {
@@ -1042,6 +1305,56 @@ function closeDrawer() {
   color: rgba(226, 244, 255, 0.78);
   font-size: 13px;
 }
+
+.panel-heading-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.panel-heading-main > span,
+.panel-heading-main > small {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.panel-heading-main > small {
+  color: rgba(140, 174, 204, 0.82);
+  font-size: 10px;
+}
+
+.topic-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  max-width: 58%;
+  overflow: hidden;
+}
+
+.topic-tabs button {
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid rgba(89, 145, 180, 0.28);
+  border-radius: 3px;
+  background: rgba(7, 29, 49, 0.56);
+  color: #7ea4b8;
+  font-size: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.topic-tabs button.active {
+  color: #e8fbff;
+  border-color: currentColor;
+  background: rgba(25, 104, 144, 0.46);
+  box-shadow: inset 0 0 12px rgba(53, 216, 255, 0.12);
+}
+
+.topic-tabs button.tone-success.active { color: #31e6a1; }
+.topic-tabs button.tone-warning.active { color: #ffc857; }
+.topic-tabs button.tone-danger.active { color: #ff6178; }
+.topic-tabs button.tone-info.active { color: #35d8ff; }
 
 .panel-leftMini,
 .panel-rightMini {
@@ -1081,14 +1394,16 @@ function closeDrawer() {
   padding: 0 8px 8px;
 }
 
-.event-list {
-  display: grid;
-  grid-auto-rows: minmax(0, 1fr);
-  gap: 5px;
+.event-scroll-shell {
   min-height: 0;
   padding: 0 8px 8px;
   overflow: hidden;
 }
+
+.event-scroll-track { display: grid; animation: event-marquee 30s linear infinite; }
+.event-scroll-group { display: grid; gap: 5px; padding-bottom: 5px; }
+.event-scroll-shell:hover .event-scroll-track,
+.event-scroll-shell:focus-within .event-scroll-track { animation-play-state: paused; }
 
 .event-row {
   display: grid;
@@ -1096,8 +1411,8 @@ function closeDrawer() {
   align-items: center;
   gap: 7px;
   min-width: 0;
-  min-height: 0;
-  padding: 0 8px;
+  min-height: 30px;
+  padding: 6px 8px;
   border: 1px solid rgba(28, 202, 255, 0.18);
   border-radius: 4px;
   background: rgba(8, 34, 60, 0.58);
@@ -1105,6 +1420,9 @@ function closeDrawer() {
   text-align: left;
   cursor: pointer;
 }
+
+@keyframes ticker-marquee { to { transform: translateX(-50%); } }
+@keyframes event-marquee { to { transform: translateY(-50%); } }
 
 .event-row time {
   color: rgba(155, 190, 220, 0.86);
@@ -1272,6 +1590,10 @@ function closeDrawer() {
     gap: 7px;
   }
 
+  .overview-overlay--left { width: min(220px, 22%); }
+  .overview-overlay--right { width: min(250px, 24%); }
+  .overview-overlay--bottom { right: 270px; left: 245px; }
+
   .side-stack {
     gap: 7px;
   }
@@ -1288,21 +1610,18 @@ function closeDrawer() {
     gap: 7px;
   }
 
-  .board-ticker {
-    gap: 18px;
-    padding: 0 10px;
-  }
-
   .panel-heading {
     padding-inline: 10px;
   }
+
+  .topic-tabs { max-width: 54%; }
 
   .panel-heading small {
     max-width: 42%;
   }
 
   .panel-body,
-  .event-list {
+  .event-scroll-shell {
     padding-inline: 7px;
   }
 
@@ -1316,6 +1635,7 @@ function closeDrawer() {
 @media (max-width: 980px) {
   .situation-board {
     display: flex;
+    flex-direction: column;
     height: auto;
     min-height: calc(100vh - var(--layout-page-padding) * 2);
     overflow: visible;
@@ -1353,10 +1673,22 @@ function closeDrawer() {
     overflow: visible;
   }
 
+  .overview-canvas { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: visible; border: 0; background: transparent; box-shadow: none; }
+  .overview-map-layer { position: relative; height: 520px; flex: 0 0 520px; border: 1px solid rgba(40, 177, 255, 0.34); border-radius: 7px; overflow: hidden; background: #041322; }
+  .overview-map-controls { top: 8px; max-width: calc(100% - 16px); }
+  .overview-overlay { position: relative; inset: auto; width: 100%; height: auto; }
+  .overview-overlay--left { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(150px, auto)); display: grid; }
+  .overview-overlay--right { grid-template-columns: 1fr 1fr; grid-template-rows: minmax(330px, auto); display: grid; }
+  .overview-overlay--bottom { grid-template-columns: 1fr; display: grid; }
+  .overview-overlay--bottom > article { min-height: 300px; }
+
   .dashboard-panel,
   .event-panel {
     min-height: 280px;
   }
+
+  .panel-centerTop { grid-template-rows: 52px minmax(0, 1fr); }
+  .topic-tabs { max-width: 62%; overflow-x: auto; }
 
   .side-stack {
     overflow: visible;
@@ -1369,12 +1701,36 @@ function closeDrawer() {
   }
 
   .board-ticker {
-    gap: 14px;
-    overflow-x: auto;
+    overflow: hidden;
   }
+
+  .ticker-group { gap: 16px; padding-inline: 16px; }
+  .overview-map-controls strong { display: none; }
+  .overview-map-controls button { padding-inline: 7px; }
+  .panel-centerTop { grid-template-rows: 58px minmax(0, 1fr); }
+  .panel-heading:has(.topic-tabs) { align-items: flex-start; }
+  .topic-tabs { max-width: 64%; padding-top: 2px; }
+  .overview-overlay--left,
+  .overview-overlay--right { grid-template-columns: 1fr; grid-template-rows: none; }
+  .overview-map-layer { height: 430px; flex-basis: 430px; }
 
   .drawer-fact-grid {
     grid-template-columns: 1fr;
   }
+}
+
+@media (max-height: 780px) and (min-width: 981px) {
+  .situation-board { grid-template-rows: 44px 78px 30px minmax(0, 1fr); min-height: 620px; gap: 6px; }
+  .kpi-card { padding-block: 7px; }
+  .kpi-value { font-size: 24px; }
+  .panel-heading { padding-top: 5px; }
+  .overview-command-grid { gap: 6px; }
+  .domain-summary { padding-block: 7px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track,
+  .event-scroll-track { animation: none; }
+  .domain-summary { transition: none; }
 }
 </style>

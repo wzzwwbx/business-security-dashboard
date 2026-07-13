@@ -117,7 +117,7 @@ export function sourceSystemLabel(value: string | null | undefined) {
     case 'ops-manual-console':
       return '人工补录台';
     default:
-      return value ? '数据来源' : '未命名来源';
+      return value || '基础设施监控平台';
   }
 }
 

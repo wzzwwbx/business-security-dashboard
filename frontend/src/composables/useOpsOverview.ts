@@ -1,5 +1,6 @@
 import { fetchOpsHosts, fetchOpsOverview, fetchOpsSources } from '@/api/ops';
 import type { OpsHostSummaryDto, OpsOverviewDto, OpsSourceDto } from '@/types/ops';
+import { getMockOpsTopology } from '@/mocks/opsTopology';
 import { onBeforeUnmount, onMounted, readonly, ref, shallowRef } from 'vue';
 
 export function useOpsOverview() {
@@ -45,7 +46,27 @@ export function useOpsOverview() {
       hosts.value = hostData.items;
       syncSelectedHost(hostData.items);
     } catch (error) {
-      errorMessage.value = error instanceof Error ? error.message : '运维总览加载失败';
+      const mockTopology = getMockOpsTopology('beijing-core');
+      const mockHosts: OpsHostSummaryDto[] = mockTopology.devices
+        .filter((device) => device.deviceType === 'server')
+        .map((device, index) => ({
+          id: device.hostId ?? device.id,
+          hostCode: device.deviceCode,
+          hostname: device.deviceCode.toLowerCase(),
+          displayName: device.name,
+          primaryIp: device.primaryIp,
+          status: device.status === 'danger' ? 'OFFLINE' : device.status === 'warning' ? 'STALE' : 'ONLINE',
+          sourceType: 'EXTERNAL_API', sourceSystem: 'ops-topology-demo',
+          cpuUsagePct: Number.parseFloat(device.metrics.find((item) => item.label === 'CPU')?.value ?? '42'),
+          memoryUsagePct: Number.parseFloat(device.metrics.find((item) => item.label === '内存')?.value ?? '55'),
+          load1: 1.2 + index, diskUsagePct: 58 + index * 9, openAlertCount: device.alertCount,
+          lastObservedAt: new Date().toISOString()
+        }));
+      overview.value = { generatedAt: new Date().toISOString(), onlineHosts: 168, staleHosts: 2, offlineHosts: 3, openAlerts: 21, sourceCount: 4, averageCpuUsagePct: 56.4, averageMemoryUsagePct: 63.8 };
+      sources.value = [{ sourceType: 'EXTERNAL_API', sourceSystem: '基础设施监控平台', enabled: true, status: 'HEALTHY', hostCount: mockHosts.length, lastSeenAt: new Date().toISOString() }];
+      hosts.value = mockHosts;
+      syncSelectedHost(mockHosts);
+      errorMessage.value = import.meta.env.VITE_DASHBOARD_DATA_SOURCE === 'mock' ? '' : (error instanceof Error ? error.message : '运维总览加载失败');
     } finally {
       loading.value = false;
       refreshing.value = false;

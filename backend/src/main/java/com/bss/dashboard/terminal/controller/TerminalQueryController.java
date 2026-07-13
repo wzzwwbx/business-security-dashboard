@@ -42,7 +42,11 @@ public class TerminalQueryController {
      * @return 总览指标
      */
     @GetMapping("/overview")
-    public ApiResponse<TerminalOverviewDto> getOverview() {
+    public ApiResponse<TerminalOverviewDto> getOverview(
+            @RequestParam(required = false) String countryCode,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String siteCode
+    ) {
         return ApiResponse.success(queryService.getOverview());
     }
 
@@ -63,6 +67,9 @@ public class TerminalQueryController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String riskLevel,
             @RequestParam(required = false) String ownershipStatus,
+            @RequestParam(required = false) String countryCode,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String siteCode,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size
     ) {

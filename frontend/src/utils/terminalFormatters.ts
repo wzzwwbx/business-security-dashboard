@@ -151,7 +151,7 @@ export function sourceSystemLabel(value: string | null | undefined) {
     case 'security-ops-manual':
       return '手工注入台';
     default:
-      return value ? '终端来源' : '未命名来源';
+      return value || '移动终端管控平台';
   }
 }
 

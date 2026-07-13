@@ -10,6 +10,9 @@ import type {
   TerminalSourceDto,
   TerminalTimeseriesDto
 } from '@/types/terminal';
+import { getMockTerminalDetail, getMockTerminalEvents, getMockTerminalOverview, getMockTerminalPeripherals, getMockTerminalSoftware, getMockTerminalTimeseries, mockTerminalDevices, mockTerminalSources } from '@/mocks/terminalData';
+
+const useMock = import.meta.env.VITE_DASHBOARD_DATA_SOURCE === 'mock';
 
 export class TerminalApiError extends Error {
   constructor(message: string) {
@@ -35,9 +38,10 @@ function normalize(scope: string, error: unknown): never {
   throw new TerminalApiError(`${scope}失败，请检查后端终端态势服务。`);
 }
 
-export async function fetchTerminalOverview() {
+export async function fetchTerminalOverview(countryCode?: string) {
+  if (useMock) return getMockTerminalOverview(countryCode);
   try {
-    const data = await getApiData<ApiEnvelope<TerminalOverviewDto>>('/terminal/overview');
+    const data = await getApiData<ApiEnvelope<TerminalOverviewDto>>('/terminal/overview', { params: { countryCode } });
     return unwrap<TerminalOverviewDto>(data);
   } catch (error) {
     return normalize('终端总览加载', error);
@@ -45,6 +49,7 @@ export async function fetchTerminalOverview() {
 }
 
 export async function fetchTerminalSources() {
+  if (useMock) return mockTerminalSources;
   try {
     const data = await getApiData<ApiEnvelope<TerminalSourceDto[]>>('/terminal/sources');
     return unwrap<TerminalSourceDto[]>(data);
@@ -58,9 +63,16 @@ export async function fetchTerminalDevices(params?: {
   status?: string;
   riskLevel?: string;
   ownershipStatus?: string;
+  countryCode?: string;
+  city?: string;
+  siteCode?: string;
   page?: number;
   size?: number;
 }) {
+  if (useMock) {
+    const items = mockTerminalDevices.filter((item) => !params?.countryCode || item.countryCode === params.countryCode);
+    return { items, page: 1, size: items.length, total: items.length };
+  }
   try {
     const data = await getApiData<ApiEnvelope<TerminalDeviceListDto>>('/terminal/devices', { params });
     return unwrap<TerminalDeviceListDto>(data);
@@ -70,6 +82,7 @@ export async function fetchTerminalDevices(params?: {
 }
 
 export async function fetchTerminalDeviceDetail(deviceId: number) {
+  if (useMock) return getMockTerminalDetail(deviceId);
   try {
     const data = await getApiData<ApiEnvelope<TerminalDeviceDetailDto>>(`/terminal/devices/${deviceId}`);
     return unwrap<TerminalDeviceDetailDto>(data);
@@ -79,6 +92,7 @@ export async function fetchTerminalDeviceDetail(deviceId: number) {
 }
 
 export async function fetchTerminalDeviceEvents(deviceId: number, limit = 20) {
+  if (useMock) return getMockTerminalEvents(deviceId).slice(0, limit);
   try {
     const data = await getApiData<ApiEnvelope<TerminalEventDto[]>>(`/terminal/devices/${deviceId}/events`, { params: { limit } });
     return unwrap<TerminalEventDto[]>(data);
@@ -88,6 +102,7 @@ export async function fetchTerminalDeviceEvents(deviceId: number, limit = 20) {
 }
 
 export async function fetchTerminalSoftwareChanges(deviceId: number, limit = 10) {
+  if (useMock) return getMockTerminalSoftware(deviceId).slice(0, limit);
   try {
     const data = await getApiData<ApiEnvelope<TerminalSoftwareChangeDto[]>>(`/terminal/devices/${deviceId}/software-changes`, { params: { limit } });
     return unwrap<TerminalSoftwareChangeDto[]>(data);
@@ -97,6 +112,7 @@ export async function fetchTerminalSoftwareChanges(deviceId: number, limit = 10)
 }
 
 export async function fetchTerminalPeripheralEvents(deviceId: number, limit = 10) {
+  if (useMock) return getMockTerminalPeripherals(deviceId).slice(0, limit);
   try {
     const data = await getApiData<ApiEnvelope<TerminalPeripheralEventDto[]>>(`/terminal/devices/${deviceId}/peripherals`, { params: { limit } });
     return unwrap<TerminalPeripheralEventDto[]>(data);
@@ -106,6 +122,7 @@ export async function fetchTerminalPeripheralEvents(deviceId: number, limit = 10
 }
 
 export async function fetchTerminalTimeseries(deviceId: number, range: '6h' | '24h' | '7d') {
+  if (useMock) return { ...getMockTerminalTimeseries(), range };
   try {
     const data = await getApiData<ApiEnvelope<TerminalTimeseriesDto>>(`/terminal/devices/${deviceId}/timeseries`, { params: { range } });
     return unwrap<TerminalTimeseriesDto>(data);

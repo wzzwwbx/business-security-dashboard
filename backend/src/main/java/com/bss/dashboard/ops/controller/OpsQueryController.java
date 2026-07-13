@@ -3,6 +3,7 @@ package com.bss.dashboard.ops.controller;
 import com.bss.dashboard.api.ApiResponse;
 import com.bss.dashboard.ops.dto.*;
 import com.bss.dashboard.ops.service.OpsQueryService;
+import com.bss.dashboard.ops.service.OpsTopologyService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,9 +21,26 @@ import java.util.List;
 public class OpsQueryController {
 
     private final OpsQueryService queryService;
+    private final OpsTopologyService topologyService;
 
-    public OpsQueryController(OpsQueryService queryService) {
+    public OpsQueryController(OpsQueryService queryService, OpsTopologyService topologyService) {
         this.queryService = queryService;
+        this.topologyService = topologyService;
+    }
+
+    @GetMapping("/sites")
+    public ApiResponse<List<OpsSiteTopologyDto.Site>> listSites() {
+        return ApiResponse.success(topologyService.listSites());
+    }
+
+    @GetMapping("/sites/{siteCode}/topology")
+    public ApiResponse<OpsSiteTopologyDto> getSiteTopology(@PathVariable String siteCode) {
+        return ApiResponse.success(topologyService.getTopology(siteCode));
+    }
+
+    @GetMapping("/devices/{deviceId}")
+    public ApiResponse<OpsSiteTopologyDto.Device> getDevice(@PathVariable long deviceId) {
+        return ApiResponse.success(topologyService.getDevice(deviceId));
     }
 
     @GetMapping("/overview")
@@ -34,6 +52,7 @@ public class OpsQueryController {
     public ApiResponse<OpsHostListDto> listHosts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String siteCode,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size
     ) {

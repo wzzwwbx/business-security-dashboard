@@ -110,10 +110,20 @@ export async function fetchSituationPage(pageCode: SituationPageCode): Promise<S
 
   try {
     const data = await getApiData<ApiEnvelope<SituationPage>>(`/situation/${pageCode}`);
+    const apiPage = unwrapPage(data);
+    const demoPage = await getMockSituationPage(pageCode);
 
     return {
-      page: unwrapPage(data),
-      source: 'integration'
+      // The current delivery is a leadership demo. Keep the page shell connected to
+      // the integration endpoint while rendering the complete local domain dataset.
+      page: {
+        ...apiPage,
+        kpis: demoPage.kpis,
+        highlights: demoPage.highlights,
+        sections: demoPage.sections
+      },
+      source: 'integration',
+      warningMessage: '接口已连通，当前展示完整的专题演示数据。'
     };
   } catch (error) {
     const normalized = normalize('态势页面加载', error);

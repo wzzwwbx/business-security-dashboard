@@ -6,10 +6,12 @@ import AssetFilterBar from '@/components/common/AssetFilterBar.vue';
 import DetailDrawerShell from '@/components/common/DetailDrawerShell.vue';
 import AssetClusterWidget from '@/components/widgets/AssetClusterWidget.vue';
 import MiniTrendGroup from '@/components/widgets/MiniTrendGroup.vue';
-import SceneBoardWidget from '@/components/widgets/SceneBoardWidget.vue';
+import OpsSiteTopologyWidget from '@/components/widgets/OpsSiteTopologyWidget.vue';
+import { fetchOpsSites, fetchOpsSiteTopology } from '@/api/opsTopology';
 import { useOpsHostDetail } from '@/composables/useOpsHostDetail';
 import { useOpsOverview } from '@/composables/useOpsOverview';
 import type { OpsHostSummaryDto } from '@/types/ops';
+import type { OpsSiteSummary, OpsSiteTopology, OpsTopologyDevice } from '@/types/opsTopology';
 import type { VisualFilterOption } from '@/types/visualization';
 import {
   buildOpsAlertNodes,
@@ -20,11 +22,14 @@ import {
   buildOpsProcessNodes,
   buildOpsRelations,
   buildOpsRuntimeFacts,
-  buildOpsScene,
   buildOpsTimeseriesSummary
 } from '@/utils/opsVisuals';
 import { formatRelativeTime, sourceSystemLabel, statusLabel } from '@/utils/opsFormatters';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+
+const route = useRoute();
+const router = useRouter();
 
 const {
   overview,
@@ -51,6 +56,30 @@ const keyword = ref('');
 const activeGroup = ref('all');
 const drawerOpen = ref(false);
 const activeTab = ref('basic');
+const sites = ref<OpsSiteSummary[]>([]);
+const selectedSiteCode = ref('beijing-core');
+const topology = ref<OpsSiteTopology | null>(null);
+const topologyLoading = ref(false);
+const selectedTopologyDevice = ref<OpsTopologyDevice | null>(null);
+
+async function loadSite(siteCode: string) {
+  topologyLoading.value = true;
+  try {
+    if (!sites.value.length) sites.value = await fetchOpsSites();
+    const resolvedCode = sites.value.some((site) => site.siteCode === siteCode)
+      ? siteCode
+      : [...sites.value].sort((a, b) => b.alertCount - a.alertCount)[0]?.siteCode ?? 'beijing-core';
+    selectedSiteCode.value = resolvedCode;
+    topology.value = await fetchOpsSiteTopology(resolvedCode);
+    selectedTopologyDevice.value = topology.value.devices[0] ?? null;
+  } finally {
+    topologyLoading.value = false;
+  }
+}
+
+watch(() => route.query.site, (site) => {
+  void loadSite(typeof site === 'string' ? site : '');
+}, { immediate: true });
 
 const heroTags = computed(() => [
   { label: '在线主机', value: `${overview.value?.onlineHosts ?? 0} 台` },
@@ -102,7 +131,6 @@ const highlightedHosts = computed(() => [...filteredHosts.value]
   .slice(0, 6));
 
 const overviewTrends = computed(() => buildOpsOverviewMetrics(overview.value));
-const sceneData = computed(() => buildOpsScene(sources.value, filteredHosts.value));
 const assetNodes = computed(() => buildOpsAssetCluster(filteredHosts.value));
 const alertNodes = computed(() => buildOpsAlertNodes(alerts.value));
 const processNodes = computed(() => buildOpsProcessNodes(processes.value));
@@ -119,10 +147,23 @@ const drawerTabs = computed(() => [
   { key: 'runtime', label: '运行指标' },
   { key: 'alerts', label: '风险告警' },
   { key: 'relations', label: '关联关系' },
-  { key: 'processes', label: '热点进程' }
+  { key: 'processes', label: '热点进程' },
+  { key: 'policy', label: '策略与审计' }
 ]);
 
-const drawerTitle = computed(() => detail.value?.displayName || detail.value?.hostname || selectedHostSummary.value?.displayName || selectedHostSummary.value?.hostname || '主机详情');
+const drawerTitle = computed(() => selectedTopologyDevice.value?.name || detail.value?.displayName || detail.value?.hostname || selectedHostSummary.value?.displayName || selectedHostSummary.value?.hostname || '设备详情');
+const currentSite = computed(() => sites.value.find((site) => site.siteCode === selectedSiteCode.value) ?? topology.value?.site ?? null);
+
+function selectSite(siteCode: string) {
+  void router.replace({ query: { ...route.query, site: siteCode } });
+}
+
+function handleSelectTopologyDevice(device: OpsTopologyDevice) {
+  selectedTopologyDevice.value = device;
+  if (device.hostId) selectHost(device.hostId);
+  drawerOpen.value = true;
+  activeTab.value = 'basic';
+}
 
 function scoreHost(host: OpsHostSummaryDto) {
   const statusScore = host.status === 'OFFLINE' ? 100 : host.status === 'STALE' ? 65 : 0;
@@ -136,6 +177,7 @@ function handleSelectNode(node: { drilldownKey?: string; children?: { drilldownK
   }
 
   selectHost(Number(targetKey));
+  selectedTopologyDevice.value = topology.value?.devices.find((device) => device.hostId === Number(targetKey)) ?? null;
   drawerOpen.value = true;
   activeTab.value = 'basic';
 }
@@ -180,9 +222,9 @@ function closeDrawer() {
   <div v-else class="screen-page ops-page">
     <section class="hero-card glass-card">
       <div>
-        <div class="hero-eyebrow">基础设施资源舱</div>
+        <div class="hero-eyebrow">{{ currentSite?.countryName }} · {{ currentSite?.city }}</div>
         <h1>运维态势</h1>
-        <p>以来源关系、主机集群和异常联动为主，不再把长列表放在首屏中心。</p>
+        <p>{{ currentSite?.name || '机房资源中心' }} · 网络拓扑、设备状态、策略执行与日志审计统一呈现。</p>
       </div>
       <div class="hero-side">
         <div class="hero-status">{{ refreshing ? '正在刷新' : '实时态势' }}</div>
@@ -210,6 +252,14 @@ function closeDrawer() {
 
     <section class="screen-workbench ops-workbench">
       <aside class="screen-support-column">
+        <section class="glass-card side-panel compact-panel">
+          <header class="side-panel-header"><div><h3>机房导航</h3><p>从综合地图进入后保留当前机房上下文。</p></div><span class="tag">{{ sites.length }} 个</span></header>
+          <div class="site-switcher">
+            <button v-for="site in sites" :key="site.siteCode" type="button" :class="[`is-${site.status}`, { active: site.siteCode === selectedSiteCode }]" @click="selectSite(site.siteCode)">
+              <span><strong>{{ site.name }}</strong><small>{{ site.city }} · {{ site.deviceCount }} 台设备</small></span><b>{{ site.alertCount }}</b>
+            </button>
+          </div>
+        </section>
         <section class="glass-card side-panel">
           <header class="side-panel-header">
             <div>
@@ -251,20 +301,15 @@ function closeDrawer() {
 
       <main class="screen-center-column ops-center">
         <div class="center-scene">
-          <SceneBoardWidget
-            title="资源关系总览"
-            description="来源接入、主机聚类和异常联动形成统一主视觉。"
-            :nodes="sceneData.nodes"
-            :links="sceneData.links"
-            :legend="['来源接入', '资源中枢', '主机集群', '异常联动']"
-            :active-node-id="selectedNodeId"
-            @select-node="handleSelectNode"
-          />
+          <section class="glass-card topology-panel">
+            <header class="side-panel-header"><div><h3>{{ currentSite?.name }}网络拓扑</h3><p>外部链路、安全边界、核心交换与业务资源分层展示。</p></div><span class="tag">{{ topologyLoading ? '加载中' : `${topology?.devices.length ?? 0} 个节点` }}</span></header>
+            <OpsSiteTopologyWidget v-if="topology" :topology="topology" :selected-device-id="selectedTopologyDevice?.id" @select-device="handleSelectTopologyDevice" />
+          </section>
         </div>
         <div class="center-assets">
           <AssetClusterWidget
-            title="主机资产图标舱"
-            description="主机数量增加时自动聚类。点击集群展开，点击主机进入详情。"
+            title="服务器资源集群"
+            description="服务器节点复用实时主机指标；点击主机可查看时序、进程和告警。"
             :nodes="assetNodes"
             :selected-node-id="selectedNodeId"
             @select-node="handleSelectNode"
@@ -281,16 +326,14 @@ function closeDrawer() {
             </div>
             <button class="panel-link" type="button" @click="drawerOpen = true">打开详情</button>
           </header>
-          <div v-if="detail" class="selected-summary">
-            <strong>{{ detail.displayName || detail.hostname }}</strong>
-            <span>{{ detail.primaryIp }} · {{ statusLabel(detail.status) }}</span>
+          <div v-if="selectedTopologyDevice" class="selected-summary">
+            <strong>{{ selectedTopologyDevice.name }}</strong>
+            <span>{{ selectedTopologyDevice.primaryIp }} · {{ selectedTopologyDevice.vendor }} {{ selectedTopologyDevice.model }}</span>
             <div class="selected-summary-metrics">
-              <span>处理器 {{ detail.latestSnapshot.cpuUsagePct.toFixed(1) }}%</span>
-              <span>内存 {{ detail.latestSnapshot.memoryUsagePct.toFixed(1) }}%</span>
-              <span>磁盘 {{ detail.latestSnapshot.diskUsagePct.toFixed(1) }}%</span>
-              <span>连接 {{ detail.latestSnapshot.tcpEstablishedCount }}</span>
+              <span v-for="metric in selectedTopologyDevice.metrics" :key="metric.label">{{ metric.label }} {{ metric.value }}</span>
+              <span>告警 {{ selectedTopologyDevice.alertCount }} 条</span>
             </div>
-            <small>{{ detailLoading ? '正在加载补充数据' : (detailErrorMessage || '详情数据已就绪') }}</small>
+            <small>{{ selectedTopologyDevice.hostId && detailLoading ? '正在加载主机时序' : '设备详情已就绪' }}</small>
           </div>
           <div v-else class="selected-summary empty">
             <strong>请选择主机</strong>
@@ -323,16 +366,33 @@ function closeDrawer() {
     </section>
 
     <DetailDrawerShell
-      :open="drawerOpen && Boolean(selectedHostId)"
+      :open="drawerOpen && Boolean(selectedTopologyDevice || selectedHostId)"
       :title="drawerTitle"
-      subtitle="主机下钻详情"
+      subtitle="机房设备下钻详情"
       :badges="drawerBadges"
       :tabs="drawerTabs"
       :active-tab="activeTab"
       @close="closeDrawer"
       @select-tab="activeTab = $event"
     >
-      <template v-if="detail">
+      <template v-if="selectedTopologyDevice && !selectedTopologyDevice.hostId">
+        <div class="drawer-section-stack">
+          <section v-if="activeTab === 'basic'" class="drawer-fact-grid">
+            <article v-for="fact in [
+              { label: '设备编码', value: selectedTopologyDevice.deviceCode }, { label: '设备类型', value: selectedTopologyDevice.deviceType },
+              { label: '管理地址', value: selectedTopologyDevice.primaryIp }, { label: '厂商型号', value: `${selectedTopologyDevice.vendor} ${selectedTopologyDevice.model}` }
+            ]" :key="fact.label" class="drawer-fact-card"><span>{{ fact.label }}</span><strong>{{ fact.value }}</strong></article>
+          </section>
+          <section v-else-if="activeTab === 'runtime'" class="drawer-fact-grid">
+            <article v-for="metric in selectedTopologyDevice.metrics" :key="metric.label" class="drawer-fact-card"><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong></article>
+          </section>
+          <section v-else-if="activeTab === 'alerts'" class="drawer-intro-card"><strong>当前告警 {{ selectedTopologyDevice.alertCount }} 条</strong><p>{{ selectedTopologyDevice.alertCount ? '设备存在需复核的链路或运行状态告警。' : '设备当前未发现未闭环告警。' }}</p></section>
+          <section v-else-if="activeTab === 'relations'" class="drawer-related-list"><strong>上下游链路</strong><div v-for="link in topology?.links.filter(link => link.from === selectedTopologyDevice?.id || link.to === selectedTopologyDevice?.id)" :key="`${link.from}-${link.to}`" class="drawer-related-item static"><span>设备 {{ link.from }} → {{ link.to }}</span><small>{{ link.bandwidth }} · {{ link.latencyMs }} ms</small></div></section>
+          <section v-else-if="activeTab === 'policy'" class="drawer-section-stack"><article class="drawer-intro-card"><strong>策略执行</strong><p v-for="item in selectedTopologyDevice.policies" :key="item">{{ item }}</p></article><article class="drawer-intro-card"><strong>最近审计</strong><p v-for="item in selectedTopologyDevice.audits" :key="item">{{ item }}</p></article></section>
+          <section v-else class="drawer-intro-card"><strong>热点进程</strong><p>该网络设备不提供主机进程数据。</p></section>
+        </div>
+      </template>
+      <template v-else-if="detail">
         <div class="drawer-section-stack">
           <article v-if="detailErrorMessage" class="drawer-intro-card">
             <strong>补充数据加载提示</strong>
@@ -383,6 +443,11 @@ function closeDrawer() {
               <strong>当前主机暂无外部绑定</strong>
               <p>后续接入外部资产系统或人工绑定后，会在这里展示来源关系。</p>
             </article>
+          </section>
+
+          <section v-else-if="activeTab === 'policy'" class="drawer-section-stack">
+            <article class="drawer-intro-card"><strong>策略执行</strong><p v-for="item in selectedTopologyDevice?.policies ?? ['主机基线策略已生效']" :key="item">{{ item }}</p></article>
+            <article class="drawer-intro-card"><strong>最近审计</strong><p v-for="item in selectedTopologyDevice?.audits ?? ['主机运行日志已归档']" :key="item">{{ item }}</p></article>
           </section>
 
           <section v-else class="drawer-section-stack">
@@ -541,9 +606,16 @@ function closeDrawer() {
 }
 
 .center-scene {
-  flex: 0 0 42%;
-  min-height: 220px;
+  flex: 0 0 66%;
+  min-height: 430px;
 }
+
+.topology-panel { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; min-height: 0; padding: 10px; overflow: hidden; }
+.site-switcher { display: grid; gap: 6px; max-height: 220px; overflow: auto; }
+.site-switcher button { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px; border: 1px solid var(--sys-color-border-secondary); border-radius: 4px; background: rgba(7,23,40,.76); color: inherit; text-align: left; cursor: pointer; }
+.site-switcher button.active { border-color: #35d8ff; box-shadow: inset 3px 0 #35d8ff; }
+.site-switcher button.is-danger { border-color: rgba(255,97,120,.55); }.site-switcher button.is-warning { border-color: rgba(255,200,87,.5); }
+.site-switcher span { display: grid; gap: 2px; }.site-switcher small { color: var(--sys-color-text-secondary); font-size: 10px; }.site-switcher b { display: grid; place-items: center; min-width: 22px; height: 22px; border-radius: 50%; background: rgba(255,97,120,.18); color: #ff7187; font-size: 11px; }
 
 .center-assets {
   flex: 1;
