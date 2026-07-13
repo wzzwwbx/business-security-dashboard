@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  nginx:
+    image: llmss/nginx:1.24.0
+    ports:
+      - "3001:80"          # 映射容器 80 端口到主机 80 端口
+      - "3002:3002"        # 如果需要 HTTPS，可以打开该端口映射
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf      # 挂载自定义 Nginx 配置
+      - ./dist:/usr/share/nginx/html            # 挂载静态网页文件
+      - ./logs:/var/log/nginx                   # 可选：挂载日志文件目录
+    container_name: my-nginx
+    restart: unless-stopped                    # 自动重启策略
+    environment:
+      - HTTPS_PORT=3002
+      - PROXY_IP=127.0.0.1
+    networks:
+      - app-network                           # 可选：定义网络
+networks:
+  app-network:
+    driver: bridge

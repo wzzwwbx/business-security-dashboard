@@ -1,0 +1,156 @@
+{
+  "_comment": "本文件打包后可在 dist/ 目录下直接修改，刷新页面即可生效",
+
+  "overviewText": {
+    "sections": {
+      "leftTop": {
+        "title": "内网实体台账概览",
+        "subtitle": ""
+      },
+      "leftBottom": {
+        "title": "接入资源概览",
+        "trendLabel": "近7日处置趋势",
+        "minLabel": "最小",
+        "maxLabel": "最大"
+      },
+      "middle": {
+        "bottom": {
+          "disposal": {
+            "title": "异常告警处置情况",
+            "suffixTemplate": "及时率 {timelinessRate}%"
+          },
+          "behavior": {
+            "title": "异常行为分类统计（月度）",
+            "suffixTemplate": "共{totalCount}次"
+          }
+        }
+      },
+      "right": {
+        "bottom": { "title": "实时事件流" }
+      }
+    },
+    "eventTypeMap": {
+      "security": "安全",
+      "leak": "泄密",
+      "ops": "运维"
+    },
+    "severityColors": {
+      "critical": "#ff1744",
+      "high": "#ff6b35",
+      "medium": "#ffd740",
+      "low": "#00d4ff"
+    },
+    "assetPieItems": [
+      { "name": "组织数量", "key": "orgCount" },
+      { "name": "用户数量", "key": "userCount" },
+      { "name": "终端数量", "key": "terminalCount" },
+      { "name": "服务器数量", "key": "serverCount" },
+      { "name": "网络设备数量", "key": "networkCount" },
+      { "name": "安全防护系统", "key": "securityCount" }
+    ],
+    "fusionPieItems": [
+      { "name": "运管系统", "value": 91, "color": "#00d4ff" },
+      { "name": "Z监管系统", "value": 8, "color": "#ff6b35" },
+      { "name": "安管系统", "value": 3, "color": "#00e676" }
+    ],
+    "chartCenterLabels": {
+      "assetCenter": "内网实体总数",
+      "fusionCenter": "三域融合"
+    },
+    "tooltips": {
+      "behaviorBar": {
+        "monthTotal": "本月累计",
+        "countUnit": "次",
+        "severity": "严重等级",
+        "sourceDist": "来源分布"
+      },
+      "fusionPie": {
+        "dataVolume": "数据量",
+        "analysisTask": "分析任务",
+        "fusionPercent": "融合占比"
+      }
+    },
+    "fusionDomainNames": {
+      "security": "安全运行监管",
+      "leak": "泄密监管",
+      "ops": "运维监管"
+    }
+  },
+
+  "overviewStats": {
+    "terminalCount": 33,
+    "serverCount": 2,
+    "networkCount": 10,
+    "securityCount": 0,
+    "userCount": 9,
+    "orgCount": 4,
+    "orgLevel1Count": 2,
+    "orgLevel2Count": 2,
+    "totalAlertAccess": 76,
+    "totalAlertDisposed": 29,
+    "totalAlertPending": 47,
+    "totalTicketAccess": 20,
+    "totalDeviceAccess": 70,
+    "totalPersonAccess": 23,
+    "resourcePerson": [10, 6, 7],
+    "resourceDevice": [30, 15, 25],
+    "resourceOrg": [2, 1, 1],
+    "alertDisposalRate": 0,
+    "vulnFixRate": 0,
+    "complianceRate": 0,
+    "onlinerate": 0.71,
+    "totalEventsToday": 41,
+    "abnormalBehaviorMonthTotal": 41,
+    "pendingAlertCount": 47,
+    "opsAlertCount": 21
+  },
+
+  "realtimeEventList": [
+    { "id": "1", "title": "安管 【王芳】连续五次输错证书口令，疑似暴力破解攻击", "type": "security", "level": "critical", "source": "安管系统", "detail": "" },
+    { "id": "2", "title": "安管【服务器A】CPU使用率持续超过90%，已达95%", "type": "security", "level": "warning", "source": "安管系统", "detail": "" },
+    { "id": "3", "title": "安管【服务器A】CPU使用率持续超过90%，已达95%", "type": "security", "level": "warning", "source": "安管系统", "detail": "" },
+    { "id": "4", "title": "安管【应用系统ERP】域内应用访问域外IP 203.0.113.50，疑似数据外传", "type": "security", "level": "critical", "source": "安管系统", "detail": "" },
+    { "id": "5", "title": "安管【防火墙FW-01】检测到异常流量，疑似DDoS攻击", "type": "security", "level": "critical", "source": "安管系统", "detail": "" },
+    { "id": "6", "title": "安管【防火墙FW-01】检测到异常流量，疑似DDoS攻击", "type": "security", "level": "critical", "source": "安管系统", "detail": "" },
+    { "id": "7", "title": "安管【数据库服务器DB-01】磁盘剩余空间不足，仅剩5%", "type": "security", "level": "warning", "source": "安管系统", "detail": "" },
+    { "id": "8", "title": "安管【陈强】终端长期未使用，已超过90天未登录", "type": "security", "level": "info", "source": "安管系统", "detail": "" },
+    { "id": "9", "title": "安管【运维终端OP-01】运维终端上传下载数据量超过指定限额，已达2TB", "type": "security", "level": "warning", "source": "安管系统", "detail": "" },
+    { "id": "10", "title": "安管【网络设备SW-01】网络不可达，ping超时", "type": "security", "level": "warning", "source": "安管系统", "detail": "" }
+  ],
+
+  "disposalStages": [
+    { "name": "异常事件", "value": 76 },
+    { "name": "已处置事件", "value": 29 },
+    { "name": "未处置事件", "value": 47 }
+  ],
+
+  "weekData": {
+    "days": ["7/3", "7/4", "7/5", "7/6", "7/7", "7/8", "7/9"],
+    "alertValues": [3, 41, 16, 14, 6, 12, 11],
+    "disposalValues": [1, 10, 10, 6, 2, 5, 7],
+    "disposalRate": ["50%", "24.39%", "62.5%", "42.86%", "33.33%", "41.67%", "63.64%"]
+  },
+
+  "lineChartLines": [
+    { "key": "alert", "label": "告警数", "color": "#ff1744" },
+    { "key": "disposal", "label": "处置数", "color": "#00e676" }
+  ],
+
+  "resourceChartData": {
+    "systems": ["安全运行监管", "泄密监管", "运维监管"],
+    "series": [
+      { "name": "人员", "color": "#00d4ff" },
+      { "name": "设备", "color": "#00e676" },
+      { "name": "组织", "color": "#ffd740" }
+    ]
+  },
+
+  "pieValueKeys": {
+    "orgCount": "orgCount",
+    "userCount": "userCount",
+    "terminalCount": "terminalCount",
+    "serverCount": "serverCount",
+    "networkCount": "networkCount",
+    "securityCount": "securityCount"
+  }
+}
