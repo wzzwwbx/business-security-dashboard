@@ -1,6 +1,7 @@
 package com.bss.dashboard.ops.support;
 
 import com.bss.dashboard.ops.domain.SourceType;
+import com.bss.dashboard.ops.config.OpsProperties;
 import com.bss.dashboard.ops.dto.OpsHostPayload;
 import com.bss.dashboard.ops.dto.OpsIngestRequest;
 import com.bss.dashboard.ops.dto.OpsNetworkInterfacePayload;
@@ -29,11 +30,13 @@ public class OpsDemoDataSeeder implements ApplicationRunner {
     private final JdbcTemplate jdbcTemplate;
     private final OpsIngestService ingestService;
     private final ObjectMapper objectMapper;
+    private final OpsProperties properties;
 
-    public OpsDemoDataSeeder(JdbcTemplate jdbcTemplate, OpsIngestService ingestService, ObjectMapper objectMapper) {
+    public OpsDemoDataSeeder(JdbcTemplate jdbcTemplate, OpsIngestService ingestService, ObjectMapper objectMapper, OpsProperties properties) {
         this.jdbcTemplate = jdbcTemplate;
         this.ingestService = ingestService;
         this.objectMapper = objectMapper;
+        this.properties = properties;
     }
 
     @Override
@@ -92,7 +95,7 @@ public class OpsDemoDataSeeder implements ApplicationRunner {
                 Map.of(),
                 Map.of()
         );
-        ingestService.ingestExternal("external-dev-token", externalRequest);
+        ingestService.ingestExternal(properties.getExternal().getIngestToken(), externalRequest);
 
         OpsIngestRequest manualRequest = new OpsIngestRequest(
                 SourceType.MANUAL_IMPORT,
@@ -111,14 +114,14 @@ public class OpsDemoDataSeeder implements ApplicationRunner {
                 Map.of(),
                 Map.of()
         );
-        ingestService.ingestManual("manual-dev-token", manualRequest);
+        ingestService.ingestManual(properties.getManual().getIngestToken(), manualRequest);
     }
 
     private String sign(String timestamp, OpsIngestRequest request) {
         try {
             String payload = objectMapper.writeValueAsString(request);
             Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec("dev-probe-secret".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            mac.init(new SecretKeySpec(properties.getProbe().getSharedSecret().getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             return HexFormat.of().formatHex(mac.doFinal((timestamp + "\n" + payload).getBytes(StandardCharsets.UTF_8)));
         } catch (Exception exception) {
             throw new IllegalStateException("生成 demo probe 签名失败", exception);

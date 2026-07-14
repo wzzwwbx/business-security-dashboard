@@ -4,9 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-command -v docker >/dev/null || { echo "Docker is required" >&2; exit 1; }
 test -f .env.production || { echo "Missing .env.production" >&2; exit 1; }
-test -f bss-images-arm64.tar || { echo "Missing bss-images-arm64.tar" >&2; exit 1; }
 test -f backend/business-security-dashboard-0.1.0.jar || { echo "Missing backend/business-security-dashboard-0.1.0.jar" >&2; exit 1; }
 test -f frontend/dist/maps/world-110m.json || { echo "Missing world map asset" >&2; exit 1; }
 
@@ -19,16 +17,8 @@ else
   exit 1
 fi
 
-echo "Loading ARM64 images..."
-docker load -i bss-images-arm64.tar
-
-echo "Validating Compose configuration..."
-"${COMPOSE[@]}" --env-file .env.production -f deploy/compose.offline.yml config >/dev/null
-
-echo "Starting dashboard..."
-"${COMPOSE[@]}" --env-file .env.production -f deploy/compose.offline.yml up -d
+echo "Updating backend JAR and frontend assets without rebuilding images..."
+"${COMPOSE[@]}" --env-file .env.production -f deploy/compose.offline.yml up -d --force-recreate backend nginx
 "${COMPOSE[@]}" --env-file .env.production -f deploy/compose.offline.yml ps
-
-echo "Health check:"
 curl --fail --retry 20 --retry-delay 2 http://127.0.0.1/actuator/health
 echo

@@ -7,6 +7,7 @@ Wants=network-online.target
 Type=simple
 User=root
 WorkingDirectory=/opt/business-security-probe
+EnvironmentFile=-/opt/business-security-probe/probe.env
 ExecStart=/usr/bin/java -jar /opt/business-security-probe/business-security-probe.jar --spring.config.location=/opt/business-security-probe/application.yml
 Restart=always
 RestartSec=10

@@ -17,3 +17,10 @@ tmp-screens/
 
 # offline deployment bundle
 dist-offline-arm64/
+rpm-out/
+
+# deployment secrets and large offline runtime binaries
+.env.production
+deploy/docker/*.tgz
+deploy/docker/docker-compose-linux-*
+*.rpm

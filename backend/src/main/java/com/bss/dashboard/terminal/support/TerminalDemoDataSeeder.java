@@ -1,5 +1,6 @@
 package com.bss.dashboard.terminal.support;
 
+import com.bss.dashboard.terminal.config.TerminalProperties;
 import com.bss.dashboard.terminal.domain.TerminalSourceType;
 import com.bss.dashboard.terminal.dto.TerminalDevicePayload;
 import com.bss.dashboard.terminal.dto.TerminalEventPayload;
@@ -29,10 +30,12 @@ public class TerminalDemoDataSeeder implements ApplicationRunner {
 
     private final TerminalRepository repository;
     private final TerminalIngestService ingestService;
+    private final TerminalProperties properties;
 
-    public TerminalDemoDataSeeder(TerminalRepository repository, TerminalIngestService ingestService) {
+    public TerminalDemoDataSeeder(TerminalRepository repository, TerminalIngestService ingestService, TerminalProperties properties) {
         this.repository = Objects.requireNonNull(repository, "repository must not be null");
         this.ingestService = Objects.requireNonNull(ingestService, "ingestService must not be null");
+        this.properties = Objects.requireNonNull(properties, "properties must not be null");
     }
 
     @Override
@@ -66,7 +69,7 @@ public class TerminalDemoDataSeeder implements ApplicationRunner {
                 Map.of("trafficPackageMb", 5120),
                 Map.of("passwordModuleVendor", "国产密码卡")
         );
-        ingestService.ingestExternal("terminal-external-dev-token", externalOne);
+        ingestService.ingestExternal(properties.getExternal().getIngestToken(), externalOne);
 
         TerminalIngestRequest externalTwo = new TerminalIngestRequest(
                 TerminalSourceType.EXTERNAL_API,
@@ -89,7 +92,7 @@ public class TerminalDemoDataSeeder implements ApplicationRunner {
                 Map.of("trafficPackageMb", 12288),
                 Map.of("policyHitCount", 3)
         );
-        ingestService.ingestExternal("terminal-external-dev-token", externalTwo);
+        ingestService.ingestExternal(properties.getExternal().getIngestToken(), externalTwo);
 
         TerminalIngestRequest manualLead = new TerminalIngestRequest(
                 TerminalSourceType.MANUAL_IMPORT,
@@ -109,9 +112,9 @@ public class TerminalDemoDataSeeder implements ApplicationRunner {
                 Map.of("trafficPackageMb", 8192),
                 Map.of("note", "用于演示手机号关联人员的终端归一")
         );
-        ingestService.ingestManual("terminal-manual-dev-token", manualLead);
+        ingestService.ingestManual(properties.getManual().getIngestToken(), manualLead);
 
-        ingestService.ingestExternal("terminal-external-dev-token", new TerminalIngestRequest(
+        ingestService.ingestExternal(properties.getExternal().getIngestToken(), new TerminalIngestRequest(
                 TerminalSourceType.EXTERNAL_API,
                 "zero-trust-gateway",
                 "zt-terminal-001-history-01",
@@ -129,7 +132,7 @@ public class TerminalDemoDataSeeder implements ApplicationRunner {
                 Map.of("trafficPackageMb", 3072),
                 Map.of()
         ));
-        ingestService.ingestExternal("terminal-external-dev-token", new TerminalIngestRequest(
+        ingestService.ingestExternal(properties.getExternal().getIngestToken(), new TerminalIngestRequest(
                 TerminalSourceType.EXTERNAL_API,
                 "zero-trust-gateway",
                 "zt-terminal-001-history-02",
@@ -148,7 +151,7 @@ public class TerminalDemoDataSeeder implements ApplicationRunner {
                 Map.of()
         ));
 
-        ingestService.ingestExternal("terminal-external-dev-token", new TerminalIngestRequest(
+        ingestService.ingestExternal(properties.getExternal().getIngestToken(), new TerminalIngestRequest(
                 TerminalSourceType.EXTERNAL_API,
                 "zero-trust-gateway",
                 "zt-terminal-002-history-01",
@@ -166,7 +169,7 @@ public class TerminalDemoDataSeeder implements ApplicationRunner {
                 Map.of("trafficPackageMb", 10240),
                 Map.of()
         ));
-        ingestService.ingestExternal("terminal-external-dev-token", new TerminalIngestRequest(
+        ingestService.ingestExternal(properties.getExternal().getIngestToken(), new TerminalIngestRequest(
                 TerminalSourceType.EXTERNAL_API,
                 "zero-trust-gateway",
                 "zt-terminal-002-history-02",
@@ -185,7 +188,7 @@ public class TerminalDemoDataSeeder implements ApplicationRunner {
                 Map.of()
         ));
 
-        ingestService.ingestManual("terminal-manual-dev-token", new TerminalIngestRequest(
+        ingestService.ingestManual(properties.getManual().getIngestToken(), new TerminalIngestRequest(
                 TerminalSourceType.MANUAL_IMPORT,
                 "security-ops-manual",
                 "manual-terminal-003-history-01",
@@ -203,7 +206,7 @@ public class TerminalDemoDataSeeder implements ApplicationRunner {
                 Map.of("trafficPackageMb", 6144),
                 Map.of()
         ));
-        ingestService.ingestManual("terminal-manual-dev-token", new TerminalIngestRequest(
+        ingestService.ingestManual(properties.getManual().getIngestToken(), new TerminalIngestRequest(
                 TerminalSourceType.MANUAL_IMPORT,
                 "security-ops-manual",
                 "manual-terminal-003-history-02",
