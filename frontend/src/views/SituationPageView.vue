@@ -975,6 +975,9 @@ function closeDrawer() {
 </template>
 
 <style scoped>
+.board-header { display: none; }
+.situation-board { grid-template-rows: 0 102px 38px minmax(0, 1fr); }
+
 .situation-board {
   position: relative;
   display: grid;
@@ -1732,5 +1735,16 @@ function closeDrawer() {
   .ticker-track,
   .event-scroll-track { animation: none; }
   .domain-summary { transition: none; }
+}
+</style>
+
+<style scoped>
+.situation-board { grid-template-rows: 102px 38px minmax(0, 1fr) !important; }
+.situation-board .board-header { display: none !important; }
+@media (max-width: 960px) {
+  .situation-board { grid-template-rows: 78px 30px minmax(0, 1fr) !important; }
+}
+@media (max-height: 780px) and (min-width: 981px) {
+  .situation-board { grid-template-rows: 78px 30px minmax(0, 1fr) !important; }
 }
 </style>

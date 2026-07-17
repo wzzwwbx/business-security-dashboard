@@ -27,6 +27,10 @@ export default defineConfig(({ mode }) => {
       }
     },
     define: clientEnvDefine,
+    optimizeDeps: {
+      force: true,
+      include: ['echarts/core', 'echarts/charts', 'echarts/components', 'echarts/renderers']
+    },
     server: {
       host: '0.0.0.0',
       port: 5173,

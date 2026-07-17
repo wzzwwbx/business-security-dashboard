@@ -1,0 +1,511 @@
+<!DOCTYPE html><html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        try {
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        "colors": {
+                            "error": "#ffb4ab",
+                            "on-primary-fixed-variant": "#004398",
+                            "on-surface-variant": "#c1c6d7",
+                            "danger-crimson": "#ff4d4f",
+                            "tertiary-fixed-dim": "#ffb695",
+                            "on-background": "#e0e2ed",
+                            "outline": "#8b90a0",
+                            "surface-dim": "#10131b",
+                            "background": "#10131b",
+                            "secondary-fixed-dim": "#bfc6de",
+                            "error-container": "#93000a",
+                            "primary-container": "#528dff",
+                            "tertiary": "#ffb695",
+                            "secondary": "#bfc6de",
+                            "surface-navy": "#141b2d",
+                            "on-tertiary": "#571e00",
+                            "primary-fixed-dim": "#afc6ff",
+                            "surface": "#10131b",
+                            "surface-container-highest": "#32353d",
+                            "on-tertiary-container": "#4c1a00",
+                            "on-tertiary-fixed-variant": "#7c2e00",
+                            "surface-container": "#1c1f28",
+                            "secondary-container": "#3f465a",
+                            "on-secondary-fixed-variant": "#3f465a",
+                            "tertiary-container": "#ee681b",
+                            "success-emerald": "#52c41a",
+                            "on-primary-fixed": "#001a43",
+                            "bg-deep-navy": "#0a0f1d",
+                            "on-secondary-fixed": "#141b2d",
+                            "on-secondary-container": "#aeb4cc",
+                            "on-primary": "#002d6c",
+                            "inverse-on-surface": "#2d3039",
+                            "on-primary-container": "#00275f",
+                            "warning-amber": "#faad14",
+                            "text-muted": "#8c96a8",
+                            "surface-tint": "#afc6ff",
+                            "on-tertiary-fixed": "#351000",
+                            "tertiary-fixed": "#ffdbcc",
+                            "surface-container-low": "#181b23",
+                            "surface-container-high": "#272a32",
+                            "on-surface": "#e0e2ed",
+                            "inverse-primary": "#0059c7",
+                            "outline-variant": "#414755",
+                            "primary": "#afc6ff",
+                            "primary-fixed": "#d9e2ff",
+                            "inverse-surface": "#e0e2ed",
+                            "surface-bright": "#363942",
+                            "secondary-fixed": "#dbe2fb",
+                            "border-subtle": "#262e3f",
+                            "on-secondary": "#293043",
+                            "on-error": "#690005",
+                            "on-error-container": "#ffdad6",
+                            "surface-container-lowest": "#0b0e16",
+                            "surface-variant": "#32353d"
+                        },
+                        "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                        },
+                        "spacing": {
+                            "gutter": "16px",
+                            "margin-page": "24px",
+                            "density-tight": "4px",
+                            "density-comfortable": "12px",
+                            "card-padding": "12px",
+                            "unit": "4px"
+                        },
+                        "fontFamily": {
+                            "body-sm": ["Inter"],
+                            "label-caps": ["Inter"],
+                            "headline-lg": ["Inter"],
+                            "body-md": ["Inter"],
+                            "data-label": ["JetBrains Mono"],
+                            "data-display": ["JetBrains Mono"],
+                            "headline-md": ["Inter"]
+                        },
+                        "fontSize": {
+                            "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                            "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+                            "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                            "data-label": ["11px", {"lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                            "data-display": ["20px", {"lineHeight": "24px", "fontWeight": "700"}],
+                            "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+                        }
+                    }
+                }
+            }
+        } catch (_e) {}
+    </script>
+</head>
+<body class="flex flex-col h-screen w-screen overflow-hidden bg-bg-deep-navy text-on-surface">
+<!-- TopNavBar -->
+<header class="w-full h-14 bg-surface-dim border-b border-border-subtle flex justify-between items-center px-6 shrink-0 z-50">
+<div class="flex items-center gap-8">
+<div class="font-headline-md font-bold text-on-surface flex items-center gap-3">
+<img alt="SDT Logo" class="w-8 h-8 object-contain shrink-0" src="https://lh3.googleusercontent.com/aida/AP1WRLvv03kcjH1Gs7QWcMPYU9CDz57GZPf7rN8y9QxCuw1w2mAYZxxrnum16d2GlhXSzl42Q44bURN8HW1UrqHnfC3AgBGHXhZGig9xr7BriKokG0z4PW5AazVgHc7L9pePMDUrOJ4Gyt-UDdNQejMyyDCo-XxC72VYv3tQjlatS4E0mjdjPxtwx8sVhd1s5eR7VkUxpkZFWmgn-OkzgO96dTveBPpHuhxHG06SHISj7qBLTDm-0iz6MvmpQkA">
+                SDT 业务安全态势系统
+            </div>
+<nav class="hidden lg:flex items-center gap-6">
+<a class="font-label-caps text-text-muted hover:text-primary transition-colors py-4 px-2 border-b-2 border-transparent" href="#">综合态势</a>
+<a class="font-label-caps text-text-muted hover:text-primary transition-colors py-4 px-2 border-b-2 border-transparent" href="#">业务态势</a>
+<a class="font-label-caps text-primary border-b-2 border-primary py-4 px-2" href="#">终端态势</a>
+
+<a class="font-label-caps text-text-muted hover:text-primary transition-colors py-4 px-2 border-b-2 border-transparent" href="#">运维态势</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-data-label font-data-label text-on-surface-variant bg-surface-navy px-3 py-1 rounded border border-border-subtle flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-success-emerald"></span>
+                2023-10-27 14:32:05
+            </div>
+<div class="flex items-center gap-2">
+<button class="p-1 text-text-muted hover:text-primary transition-colors">
+<span class="material-symbols-outlined">fullscreen</span>
+</button>
+<div class="ml-2 pl-4 border-l border-border-subtle flex items-center gap-2 cursor-pointer group">
+<img alt="Admin" class="w-6 h-6 rounded-full border border-border-subtle group-hover:border-primary transition-colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhI4UZXBVjLNreVr6Ywq06pRjfmy-cbtGhMR7K7jJhl6L2K3RmMlb9ZIH-kBYZWEuLDOGNRgM7XLwI3rIwMbxYPch_d3RXiXb6BppxyrjOmKG6FEq89a3qtp36ahiznvg6dqd_khlVPK6JMeYKrQlf5Sig9RgDQSQv0cAkPqZa7s4JXZCrEvgJqyNX_cICic16vTbvFvJblTetV72Rt7hsfk7PSKtSdGodGP0SqbqFfWDecobKsbo1">
+<span class="font-body-sm text-on-surface group-hover:text-primary transition-colors">Admin</span>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col overflow-hidden">
+<!-- Search and Filter Bar -->
+<section class="px-6 py-4 flex items-center justify-between bg-bg-deep-navy/50 border-b border-border-subtle">
+<div class="flex gap-4 items-center">
+<div class="relative w-96">
+<input class="w-full bg-surface-navy border border-border-subtle rounded px-10 py-2 text-body-sm focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/30 transition-all" placeholder="按终端名称、人员、地址或手机号搜索..." type="text">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-sm">search</span>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-1.5 rounded-full bg-primary-container text-on-primary-container text-body-sm font-bold flex items-center gap-1">
+                        全部终端 <span class="bg-primary/20 px-1.5 rounded text-[10px]">28</span>
+</button>
+<button class="px-4 py-1.5 rounded-full border border-border-subtle text-on-surface-variant hover:text-on-surface text-body-sm transition-all">
+                        在线 <span class="text-[10px] opacity-60">25</span>
+</button>
+<button class="px-4 py-1.5 rounded-full border border-border-subtle text-on-surface-variant hover:text-on-surface text-body-sm transition-all">
+                        高风险 <span class="text-[10px] opacity-60">6</span>
+</button>
+<button class="px-4 py-1.5 rounded-full border border-border-subtle text-on-surface-variant hover:text-on-surface text-body-sm transition-all">
+                        待认领 <span class="text-[10px] opacity-60">2</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant text-body-sm">
+<span class="material-symbols-outlined text-sm">update</span>
+                实时状态
+            </div>
+</section>
+<!-- Main Content Area: Bento Grid Layout -->
+<div class="flex-1 p-6 grid grid-cols-12 grid-rows-6 gap-4 overflow-hidden">
+<!-- Summary Stats Panel (Row 1) -->
+<div class="col-span-12 row-span-1 glass-panel rounded-lg p-4 flex gap-8 items-center bg-surface-container/30 border border-border-subtle">
+<div class="flex-1 flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">在线终端趋势 (24h)</span>
+<span class="font-data-display text-primary text-xl">622</span>
+</div>
+<div class="h-1.5 w-full bg-border-subtle rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[82%] relative">
+<div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+</div>
+</div>
+<div class="flex justify-between text-[10px] text-on-surface-variant">
+<span class="">稳定运行</span>
+<span class="">来源 4 个节点</span>
+</div>
+</div>
+<div class="w-px h-full bg-border-subtle"></div>
+<div class="flex-1 flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">高风险告警频度</span>
+<span class="font-data-display text-danger-crimson text-xl">6</span>
+</div>
+<div class="h-1.5 w-full bg-border-subtle rounded-full overflow-hidden">
+<div class="h-full bg-danger-crimson w-[12%]"></div>
+</div>
+<div class="flex justify-between text-[10px] text-on-surface-variant">
+<span class="">告警中</span>
+<span class="">待确认 8 台</span>
+</div>
+</div>
+<div class="w-px h-full bg-border-subtle"></div>
+<div class="flex-1 flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">指纹特征变更</span>
+<span class="font-data-display text-warning-amber text-xl">3</span>
+</div>
+<div class="h-1.5 w-full bg-border-subtle rounded-full overflow-hidden">
+<div class="h-full bg-warning-amber w-[4%]"></div>
+</div>
+<div class="flex justify-between text-[10px] text-on-surface-variant">
+<span class="">关注变化</span>
+<span class="">软件变更 12</span>
+</div>
+</div>
+</div>
+<!-- Left Navigation/List Panel (Rows 2-6) -->
+<div class="col-span-3 row-span-5 glass-panel rounded-lg flex flex-col bg-surface-container/30 border border-border-subtle">
+<div class="p-4 border-b border-border-subtle flex justify-between items-center bg-surface-navy/50">
+<h3 class="font-headline-md text-headline-md text-on-surface">终端接入列表</h3>
+<span class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">来源 4</span>
+</div>
+<div class="flex-1 overflow-y-auto no-scrollbar p-3 flex flex-col gap-3">
+<div class="p-3 rounded bg-surface-container-high/50 border border-border-subtle hover:border-primary/50 transition-all cursor-pointer">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-primary text-lg">tablet_android</span>
+<div class="font-body-md font-bold">北京签批 PAD-01</div>
+</div>
+<div class="text-[11px] text-on-surface-variant flex flex-col gap-1">
+<div class="flex justify-between"><span class="">责任人: 王芳</span><span class="text-success-emerald">在线</span></div>
+<div class="">138****1200</div>
+</div>
+</div>
+<div class="p-3 rounded bg-surface-container-high/50 border border-border-subtle hover:border-primary/50 transition-all cursor-pointer">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-primary text-lg">smartphone</span>
+<div class="font-body-md font-bold">上海移动终端-02</div>
+</div>
+<div class="text-[11px] text-on-surface-variant flex flex-col gap-1">
+<div class="flex justify-between"><span class="">责任人: 李强</span><span class="text-success-emerald">在线</span></div>
+<div class="">138****1201</div>
+</div>
+</div>
+<div class="p-3 rounded bg-surface-container-high/50 border border-border-subtle hover:border-primary/50 transition-all cursor-pointer">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-danger-crimson text-lg">computer</span>
+<div class="font-body-md font-bold">油田运维终端-03</div>
+</div>
+<div class="text-[11px] text-on-surface-variant flex flex-col gap-1">
+<div class="flex justify-between"><span class="">责任人: 张伟</span><span class="text-danger-crimson">高风险</span></div>
+<div class="">138****1202</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Central Topology Map Panel (Rows 2-6) -->
+<div class="col-span-6 row-span-5 glass-panel rounded-lg relative flex flex-col bg-surface-container/30 border border-border-subtle overflow-hidden">
+<div class="absolute inset-0 z-0 opacity-10">
+<div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, #262e3f 1px, transparent 0); background-size: 24px 24px;"></div>
+</div>
+<div class="p-4 border-b border-border-subtle flex justify-between items-center z-10 bg-surface-navy/80 backdrop-blur-sm">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">全球终端地理分布态势</h3>
+<p class="text-[10px] text-on-surface-variant">基于地理位置的终端接入分布，支持按区域下钻分析。</p>
+</div>
+<div class="flex gap-2">
+<button class="text-[10px] px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high border border-border-subtle transition-colors">来源接入</button>
+<button class="text-[10px] px-2 py-1 rounded bg-primary-container text-on-primary-container">终端聚类</button>
+<button class="text-[10px] px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high border border-border-subtle transition-colors">人员关联</button>
+</div>
+</div>
+<div class="flex-1 relative overflow-hidden z-10 flex items-center justify-center"><div class="relative w-full h-full flex items-center justify-center overflow-hidden">
+<!-- SVG World Map Background -->
+<svg class="absolute inset-0 w-full h-full opacity-20 pointer-events-none" fill="currentColor" viewBox="0 0 1000 500">
+<path d="M250,150 Q280,100 350,120 T450,150 T550,120 T650,180 T750,150 T850,200" fill="none" stroke="#528dff" stroke-width="1" style="stroke-dasharray: 826.212; stroke-dashoffset: 826.212; animation: 2s ease-out 0s 1 normal forwards running draw;"></path>
+<circle cx="400" cy="200" fill="url(#map-gradient)" opacity="0.1" r="150"></circle>
+<defs>
+<radialGradient id="map-gradient">
+<stop offset="0%" stop-color="#528dff"></stop>
+<stop offset="100%" stop-color="transparent"></stop>
+</radialGradient>
+</defs>
+<!-- Simplified World Map Path Placeholder -->
+<path d="M150,100 L180,120 L200,110 L220,130 L250,120 L280,150 L260,180 L230,170 L200,190 L170,180 L150,150 Z M450,150 L480,170 L500,160 L520,180 L550,170 L580,200 L560,230 L530,220 L500,240 L470,230 L450,200 Z" fill="#262e3f" style="stroke-dasharray: 764.324; stroke-dashoffset: 764.324; animation: 2s ease-out 0s 1 normal forwards running draw;"></path>
+</svg>
+<!-- Interactive Nodes -->
+<div class="absolute inset-0 z-10">
+<!-- China Node -->
+<div class="absolute top-[45%] left-[75%] group cursor-pointer" onclick="console.log('Filter: China')">
+<div class="relative">
+<div class="w-3 h-3 bg-primary rounded-full animate-pulse"></div>
+<div class="absolute -top-10 -left-12 bg-surface-navy/90 backdrop-blur-sm border border-primary/40 p-1.5 rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity">
+<div class="text-[10px] font-bold mb-1">中国地区</div>
+<div class="flex gap-2 text-[9px]">
+<span class="text-success-emerald">412 在线</span>
+<span class="text-danger-crimson">6 异常</span>
+</div>
+</div>
+<div class="mt-2 bg-surface-container-high/80 px-2 py-0.5 rounded-full border border-border-subtle text-[9px] font-bold flex items-center gap-1">
+<span class="">124 / 3</span>
+</div>
+</div>
+</div>
+<!-- USA Node -->
+<div class="absolute top-[40%] left-[20%] group cursor-pointer" onclick="console.log('Filter: USA')">
+<div class="relative">
+<div class="w-3 h-3 bg-primary/60 rounded-full"></div>
+<div class="absolute -top-10 -left-12 bg-surface-navy/90 backdrop-blur-sm border border-primary/40 p-1.5 rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity">
+<div class="text-[10px] font-bold mb-1">北美地区</div>
+<div class="flex gap-2 text-[9px]">
+<span class="text-success-emerald">86 在线</span>
+<span class="text-danger-crimson">0 异常</span>
+</div>
+</div>
+<div class="mt-2 bg-surface-container-high/80 px-2 py-0.5 rounded-full border border-border-subtle text-[9px] font-bold">
+<span class="">86 / 0</span>
+</div>
+</div>
+</div>
+<!-- Europe Node -->
+<div class="absolute top-[35%] left-[50%] group cursor-pointer" onclick="console.log('Filter: Europe')">
+<div class="relative">
+<div class="w-3 h-3 bg-primary/60 rounded-full"></div>
+<div class="absolute -top-10 -left-12 bg-surface-navy/90 backdrop-blur-sm border border-primary/40 p-1.5 rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity">
+<div class="text-[10px] font-bold mb-1">欧洲地区</div>
+<div class="flex gap-2 text-[9px]">
+<span class="text-success-emerald">54 在线</span>
+<span class="text-warning-amber">2 预警</span>
+</div>
+</div>
+<div class="mt-2 bg-surface-container-high/80 px-2 py-0.5 rounded-full border border-border-subtle text-[9px] font-bold">
+<span class="">54 / 2</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Immersive Mode Toggle -->
+<button class="absolute bottom-4 right-4 z-20 p-2 bg-surface-navy/80 border border-border-subtle rounded hover:bg-surface-container-high transition-colors text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-sm">open_in_full</span>
+</button>
+</div></div>
+<div class="p-3 bg-surface-container-high/40 border-t border-border-subtle flex justify-between items-center text-[10px] text-on-surface-variant z-10">
+<div class="flex gap-4"><span class="flex items-center gap-1"><i class="w-1.5 h-1.5 bg-success-emerald rounded-full"></i> 运行正常</span>
+<span class="flex items-center gap-1"><i class="w-1.5 h-1.5 bg-warning-amber rounded-full"></i> 风险预警</span>
+<span class="flex items-center gap-1"><i class="w-1.5 h-1.5 bg-danger-crimson rounded-full"></i> 严重告警</span></div>
+<span class="font-data-label">REFRESH IN 4s</span>
+</div>
+</div>
+<!-- Right Event & Status Panel (Rows 2-6) -->
+<div class="col-span-3 row-span-5 flex flex-col gap-4">
+<!-- USB Key Events -->
+<div class="flex-1 glass-panel rounded-lg flex flex-col bg-surface-container/30 border border-border-subtle">
+<div class="p-3 border-b border-border-subtle flex items-center justify-between bg-surface-navy/50">
+<h4 class="text-body-sm font-bold">USB Key 认证事件</h4>
+<span class="material-symbols-outlined text-sm text-on-surface-variant cursor-pointer">more_horiz</span>
+</div>
+<div class="p-3 flex flex-col gap-2 overflow-y-auto no-scrollbar">
+<div class="p-2 bg-danger-crimson/10 border-l-2 border-danger-crimson flex flex-col gap-1">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-bold text-danger-crimson">连续认证失败</span>
+<span class="text-[9px] text-on-surface-variant">14:20:12</span>
+</div>
+<p class="text-[10px] leading-tight text-on-surface">终端 ID: 013A, 连续认证失败 5 次</p>
+<div class="text-[9px] flex gap-2 mt-1">
+<span class="bg-danger-crimson/20 text-danger-crimson px-1 rounded">PIN_FAILURE</span>
+<span class="text-on-surface-variant">上海研发中心</span>
+</div>
+</div>
+<div class="p-2 bg-surface-container-high/40 border-l-2 border-primary/40 flex flex-col gap-1">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-bold text-primary">新设备注册</span>
+<span class="text-[9px] text-on-surface-variant">14:15:30</span>
+</div>
+<p class="text-[10px] leading-tight text-on-surface">移动签批 PAD 申请连接，正在验证指纹...</p>
+</div>
+</div>
+</div>
+<!-- Version & Patch Status -->
+<div class="flex-1 glass-panel rounded-lg flex flex-col bg-surface-container/30 border border-border-subtle">
+<div class="p-3 border-b border-border-subtle flex items-center justify-between bg-surface-navy/50">
+<h4 class="text-body-sm font-bold">版本与补丁状态</h4>
+<span class="text-[9px] text-primary">全量更新中</span>
+</div>
+<div class="p-3 flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">system_update</span>
+<div class="flex-1">
+<div class="flex justify-between text-[10px] mb-1">
+<span class="">签批客户端 6.2.1</span>
+<span class="text-success-emerald">92%</span>
+</div>
+<div class="h-1 bg-border-subtle rounded-full overflow-hidden">
+<div class="h-full bg-success-emerald w-[92%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">verified_user</span>
+<div class="flex-1">
+<div class="flex justify-between text-[10px] mb-1">
+<span class="">安全基线检查</span>
+<span class="text-warning-amber">78%</span>
+</div>
+<div class="h-1 bg-border-subtle rounded-full overflow-hidden">
+<div class="h-full bg-warning-amber w-[78%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Peripheral Status -->
+<div class="flex-1 glass-panel rounded-lg flex flex-col bg-surface-container/30 border border-border-subtle">
+<div class="p-3 border-b border-border-subtle bg-surface-navy/50">
+<h4 class="text-body-sm font-bold">通联与外设状态</h4>
+</div>
+<div class="p-3 flex flex-wrap gap-2">
+<div class="flex-1 min-w-[45%] bg-surface-container-high p-2 rounded flex flex-col gap-1 items-center">
+<span class="text-[10px] text-on-surface-variant">接入外设</span>
+<span class="font-data-display text-primary text-sm">124</span>
+</div>
+<div class="flex-1 min-w-[45%] bg-surface-container-high p-2 rounded flex flex-col gap-1 items-center">
+<span class="text-[10px] text-on-surface-variant">未知链路</span>
+<span class="font-data-display text-danger-crimson text-sm">3</span>
+</div>
+<div class="w-full mt-1">
+<div class="flex justify-between text-[9px] mb-1 text-on-surface-variant">
+<span class="">实时流量 (Down/Up)</span>
+<span class="">12.4 MB/s</span>
+</div>
+<div class="h-10 flex items-end gap-0.5">
+<div class="bg-primary/40 w-full h-[60%]"></div>
+<div class="bg-primary/40 w-full h-[40%]"></div>
+<div class="bg-primary/40 w-full h-[80%]"></div>
+<div class="bg-primary/40 w-full h-[55%]"></div>
+<div class="bg-primary/40 w-full h-[90%]"></div>
+<div class="bg-primary/40 w-full h-[70%]"></div>
+<div class="bg-primary/40 w-full h-[65%]"></div>
+<div class="bg-primary/40 w-full h-[40%]"></div>
+<div class="bg-primary/40 w-full h-[30%]"></div>
+<div class="bg-primary/40 w-full h-[50%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating UI Elements -->
+<div class="fixed bottom-6 right-6 z-50 transform transition-all duration-500 ease-out translate-y-20 opacity-0" id="alert-toast">
+<div class="bg-danger-crimson text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3">
+<span class="material-symbols-outlined">warning</span>
+<div>
+<div class="font-bold text-sm">新高风险终端探测</div>
+<div class="text-xs opacity-90">IP: 192.168.4.12 已自动阻断连接</div>
+</div>
+</div>
+</div>
+<script>
+        function updateStats() {
+            const el = document.querySelector('.font-data-display.text-primary.text-xl');
+            if (el) {
+                let val = parseInt(el.innerText);
+                val += Math.floor(Math.random() * 3) - 1;
+                el.innerText = Math.max(610, Math.min(630, val));
+            }
+            
+            if (Math.random() > 0.95) {
+                const toast = document.getElementById('alert-toast');
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 4000);
+            }
+        }
+        setInterval(updateStats, 3000);
+
+        // Simple SVG line animation logic
+        const paths = document.querySelectorAll('svg path');
+        paths.forEach(path => {
+            const length = path.getTotalLength();
+            path.style.strokeDasharray = length;
+            path.style.strokeDashoffset = length;
+            path.style.animation = 'draw 2s ease-out forwards';
+        });
+    </script>
+<style>
+        @keyframes draw {
+            to { stroke-dashoffset: 0; }
+        }
+        
+        .no-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .no-scrollbar::-webkit-scrollbar-thumb {
+            background: #262e3f;
+            border-radius: 2px;
+        }
+        .no-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .glass-panel {
+            background: rgba(28, 31, 40, 0.4);
+            backdrop-filter: blur(8px);
+        }
+
+        .status-glow-blue {
+            box-shadow: 0 0 15px rgba(82, 141, 255, 0.15);
+        }
+    </style>
+
+
+</body></html>

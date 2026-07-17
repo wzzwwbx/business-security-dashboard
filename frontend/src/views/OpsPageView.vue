@@ -2,30 +2,30 @@
 import BaseButton from '@/components/common/BaseButton.vue';
 import BaseEmpty from '@/components/common/BaseEmpty.vue';
 import BaseSkeleton from '@/components/common/BaseSkeleton.vue';
+import BaseIcon from '@/components/common/BaseIcon.vue';
 import AssetFilterBar from '@/components/common/AssetFilterBar.vue';
 import DetailDrawerShell from '@/components/common/DetailDrawerShell.vue';
-import AssetClusterWidget from '@/components/widgets/AssetClusterWidget.vue';
 import MiniTrendGroup from '@/components/widgets/MiniTrendGroup.vue';
 import OpsSiteTopologyWidget from '@/components/widgets/OpsSiteTopologyWidget.vue';
 import { fetchOpsSites, fetchOpsSiteTopology } from '@/api/opsTopology';
+import { fetchSituationPage } from '@/api/situations';
 import { useOpsHostDetail } from '@/composables/useOpsHostDetail';
 import { useOpsOverview } from '@/composables/useOpsOverview';
 import type { OpsHostSummaryDto } from '@/types/ops';
 import type { OpsSiteSummary, OpsSiteTopology, OpsTopologyDevice } from '@/types/opsTopology';
+import type { SituationPage } from '@/types/situation';
 import type { VisualFilterOption } from '@/types/visualization';
 import {
   buildOpsAlertNodes,
-  buildOpsAssetCluster,
   buildOpsDetailFacts,
   buildOpsDrawerBadges,
-  buildOpsOverviewMetrics,
   buildOpsProcessNodes,
   buildOpsRelations,
   buildOpsRuntimeFacts,
   buildOpsTimeseriesSummary
 } from '@/utils/opsVisuals';
-import { formatRelativeTime, sourceSystemLabel, statusLabel } from '@/utils/opsFormatters';
-import { computed, ref, watch } from 'vue';
+import { formatRelativeTime, statusLabel } from '@/utils/opsFormatters';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
@@ -33,7 +33,6 @@ const router = useRouter();
 
 const {
   overview,
-  sources,
   hosts,
   selectedHostId,
   loading,
@@ -48,7 +47,6 @@ const {
   timeseries,
   processes,
   alerts,
-  loading: detailLoading,
   errorMessage: detailErrorMessage
 } = useOpsHostDetail(selectedHostId);
 
@@ -61,6 +59,11 @@ const selectedSiteCode = ref('beijing-core');
 const topology = ref<OpsSiteTopology | null>(null);
 const topologyLoading = ref(false);
 const selectedTopologyDevice = ref<OpsTopologyDevice | null>(null);
+const securityPage = ref<SituationPage | null>(null);
+
+onMounted(async () => {
+  securityPage.value = (await fetchSituationPage('security')).page;
+});
 
 async function loadSite(siteCode: string) {
   topologyLoading.value = true;
@@ -88,15 +91,22 @@ const heroTags = computed(() => [
   { label: '资源告警', value: `${overview.value?.openAlerts ?? 0} 条` }
 ]);
 
+const securitySnapshot = computed(() => {
+  const valueFor = (label: string, fallback: string) => securityPage.value?.kpis.find((item) => item.label === label)?.value || fallback;
+  return {
+    highRiskAlerts: valueFor('高危告警', '4'),
+    abnormalAccounts: valueFor('异常账号', '6'),
+    closureRate: valueFor('闭环率', '85'),
+    vulnerabilities: '67'
+  };
+});
+
 const groupOptions = computed<VisualFilterOption[]>(() => {
   const items = hosts.value;
   return [
     { key: 'all', label: '全部主机', count: items.length },
     { key: 'online', label: '在线', count: items.filter((item) => item.status === 'ONLINE').length },
-    { key: 'attention', label: '重点关注', count: items.filter((item) => item.status !== 'ONLINE' || item.openAlertCount > 0 || item.cpuUsagePct >= 75 || item.memoryUsagePct >= 80).length },
-    { key: 'probe', label: '主机采集', count: items.filter((item) => item.sourceType === 'PROBE').length },
-    { key: 'external', label: '业务接入', count: items.filter((item) => item.sourceType === 'EXTERNAL_API').length },
-    { key: 'manual', label: '人工补录', count: items.filter((item) => item.sourceType === 'MANUAL_IMPORT').length }
+    { key: 'attention', label: '重点关注', count: items.filter((item) => item.status !== 'ONLINE' || item.openAlertCount > 0 || item.cpuUsagePct >= 75 || item.memoryUsagePct >= 80).length }
   ];
 });
 
@@ -130,8 +140,6 @@ const highlightedHosts = computed(() => [...filteredHosts.value]
   .sort((a, b) => scoreHost(b) - scoreHost(a))
   .slice(0, 6));
 
-const overviewTrends = computed(() => buildOpsOverviewMetrics(overview.value));
-const assetNodes = computed(() => buildOpsAssetCluster(filteredHosts.value));
 const alertNodes = computed(() => buildOpsAlertNodes(alerts.value));
 const processNodes = computed(() => buildOpsProcessNodes(processes.value));
 const timeseriesSummary = computed(() => buildOpsTimeseriesSummary(timeseries.value));
@@ -190,14 +198,6 @@ function openAlertDrawer() {
   activeTab.value = 'alerts';
 }
 
-function openProcessDrawer() {
-  if (!selectedHostId.value && filteredHosts.value[0]) {
-    selectHost(filteredHosts.value[0].id);
-  }
-  drawerOpen.value = true;
-  activeTab.value = 'processes';
-}
-
 function closeDrawer() {
   drawerOpen.value = false;
 }
@@ -223,7 +223,7 @@ function closeDrawer() {
     <section class="hero-card glass-card">
       <div>
         <div class="hero-eyebrow">{{ currentSite?.countryName }} · {{ currentSite?.city }}</div>
-        <h1>运维态势</h1>
+        <h1>业务安全与运维态势</h1>
         <p>{{ currentSite?.name || '机房资源中心' }} · 网络拓扑、设备状态、策略执行与日志审计统一呈现。</p>
       </div>
       <div class="hero-side">
@@ -246,43 +246,11 @@ function closeDrawer() {
       @select-group="activeGroup = $event"
     />
 
-    <section class="glass-card summary-card">
-      <MiniTrendGroup :items="overviewTrends" />
-    </section>
-
     <section class="screen-workbench ops-workbench">
       <aside class="screen-support-column">
-        <section class="glass-card side-panel compact-panel">
-          <header class="side-panel-header"><div><h3>机房导航</h3><p>从综合地图进入后保留当前机房上下文。</p></div><span class="tag">{{ sites.length }} 个</span></header>
-          <div class="site-switcher">
-            <button v-for="site in sites" :key="site.siteCode" type="button" :class="[`is-${site.status}`, { active: site.siteCode === selectedSiteCode }]" @click="selectSite(site.siteCode)">
-              <span><strong>{{ site.name }}</strong><small>{{ site.city }} · {{ site.deviceCount }} 台设备</small></span><b>{{ site.alertCount }}</b>
-            </button>
-          </div>
-        </section>
-        <section class="glass-card side-panel">
+        <section class="glass-card side-panel ops-left-panel abnormal-host-panel">
           <header class="side-panel-header">
-            <div>
-              <h3>来源接入</h3>
-              <p>各类主机数据统一接入后，在同一资源域中汇聚展示。</p>
-            </div>
-            <span class="tag">来源 {{ sources.length }} 个</span>
-          </header>
-          <div class="side-list">
-            <article v-for="source in sources" :key="`${source.sourceType}-${source.sourceSystem}`" class="side-list-item">
-              <strong>{{ sourceSystemLabel(source.sourceSystem) }}</strong>
-              <span>{{ statusLabel(source.sourceType) }} · {{ source.enabled ? statusLabel(source.status) : '停用' }}</span>
-              <small>{{ source.hostCount }} 台主机 · {{ source.lastSeenAt ? formatRelativeTime(source.lastSeenAt) : '暂无更新时间' }}</small>
-            </article>
-          </div>
-        </section>
-
-        <section class="glass-card side-panel">
-          <header class="side-panel-header">
-            <div>
-              <h3>异常主机</h3>
-              <p>优先关注离线、告警较多和资源过热的主机。</p>
-            </div>
+            <h3>异常主机 <small>优先关注离线、告警较多...</small></h3>
           </header>
           <div class="side-list">
             <article
@@ -297,6 +265,21 @@ function closeDrawer() {
             </article>
           </div>
         </section>
+
+        <section class="glass-card side-panel ops-left-panel latest-alert-panel clickable-panel" @click="openAlertDrawer">
+          <header class="side-panel-header"><h3>最新告警</h3><span class="tag">{{ alerts.length }} 条</span></header>
+          <article v-if="alerts[0]" class="latest-alert-card" :class="alerts[0].severity === 'CRITICAL' ? 'danger' : 'warning'">
+            <strong>{{ alerts[0].title }}</strong>
+            <p>{{ alerts[0].hostName }} · {{ alerts[0].detail }}</p>
+            <time>{{ formatRelativeTime(alerts[0].lastSeenAt) }}</time>
+          </article>
+          <BaseEmpty v-else title="暂无未闭环告警" description="当前主机资源运行稳定。" />
+        </section>
+
+        <section class="glass-card side-panel ops-left-panel account-track-panel">
+          <header class="side-panel-header"><h3>异常账号追踪</h3><BaseIcon name="user" /></header>
+          <div class="account-track-item"><span class="account-initial">ADM</span><div><strong>admin_sys</strong><small>192.168.1.104</small></div><b>锁定</b></div>
+        </section>
       </aside>
 
       <main class="screen-center-column ops-center">
@@ -306,62 +289,31 @@ function closeDrawer() {
             <OpsSiteTopologyWidget v-if="topology" :topology="topology" :selected-device-id="selectedTopologyDevice?.id" @select-device="handleSelectTopologyDevice" />
           </section>
         </div>
-        <div class="center-assets">
-          <AssetClusterWidget
-            title="服务器资源集群"
-            description="服务器节点复用实时主机指标；点击主机可查看时序、进程和告警。"
-            :nodes="assetNodes"
-            :selected-node-id="selectedNodeId"
-            @select-node="handleSelectNode"
-          />
-        </div>
       </main>
 
       <aside class="screen-support-column">
-        <section class="glass-card side-panel compact-panel">
+        <section class="glass-card side-panel compact-panel security-risk-panel">
           <header class="side-panel-header">
-            <div>
-              <h3>当前主机摘要</h3>
-              <p>点击左侧或中央资产，可切换当前主机并查看明细。</p>
-            </div>
-            <button class="panel-link" type="button" @click="drawerOpen = true">打开详情</button>
+            <div><h3>漏洞风险等级</h3><p>安全资产风险分布与修复进度。</p></div>
+            <BaseIcon name="security" />
           </header>
-          <div v-if="selectedTopologyDevice" class="selected-summary">
-            <strong>{{ selectedTopologyDevice.name }}</strong>
-            <span>{{ selectedTopologyDevice.primaryIp }} · {{ selectedTopologyDevice.vendor }} {{ selectedTopologyDevice.model }}</span>
-            <div class="selected-summary-metrics">
-              <span v-for="metric in selectedTopologyDevice.metrics" :key="metric.label">{{ metric.label }} {{ metric.value }}</span>
-              <span>告警 {{ selectedTopologyDevice.alertCount }} 条</span>
-            </div>
-            <small>{{ selectedTopologyDevice.hostId && detailLoading ? '正在加载主机时序' : '设备详情已就绪' }}</small>
-          </div>
-          <div v-else class="selected-summary empty">
-            <strong>请选择主机</strong>
-            <span>点击主视觉节点或资产卡片后，在此查看摘要并下钻。</span>
+          <div class="risk-summary">
+            <div class="risk-donut"><strong>{{ securitySnapshot.vulnerabilities }}</strong><span>总计</span></div>
+            <div class="risk-legend"><span><i class="danger"></i>高危 8</span><span><i class="warning"></i>中危 18</span><span><i class="info"></i>低危 27</span><span><i class="success"></i>已修复 14</span></div>
           </div>
         </section>
 
-        <section class="glass-card side-panel compact-panel clickable-panel" @click="openAlertDrawer">
-          <header class="side-panel-header">
-            <div>
-              <h3>最新告警</h3>
-              <p>优先展示当前主机及同类资源中的最新风险告警。</p>
-            </div>
-            <span class="tag">{{ alerts.length }} 条</span>
-          </header>
-          <AssetClusterWidget title="" :nodes="alertNodes" />
+        <section class="glass-card side-panel compact-panel system-overview-panel">
+          <header class="side-panel-header"><div><h3>系统总览</h3><p>全局运行状态与关键指标统计。</p></div></header>
+          <div class="system-health-grid"><strong>98.5%<small>系统健康度</small></strong><strong>99.9%<small>在线率</small></strong></div>
+          <div class="system-progress"><span>总 CPU 负载 <b>72%</b></span><i><em style="width:72%"></em></i><span>总内存使用 <b class="danger-text">85%</b></span><i><em class="danger-fill" style="width:85%"></em></i><span>网络吞吐量 <b>450 Mbps</b></span><i><em class="info-fill" style="width:50%"></em></i></div>
         </section>
 
-        <section class="glass-card side-panel compact-panel clickable-panel" @click="openProcessDrawer">
-          <header class="side-panel-header">
-            <div>
-              <h3>热点进程</h3>
-              <p>按资源占用和白名单情况聚焦热点进程。</p>
-            </div>
-            <span class="tag">{{ processes.length }} 个</span>
-          </header>
-          <AssetClusterWidget title="" :nodes="processNodes" />
+        <section class="glass-card side-panel compact-panel security-event-panel clickable-panel" @click="openAlertDrawer">
+          <header class="side-panel-header"><div><h3>实时安全事件流</h3><p>安全、业务、终端与运维事件。</p></div><span class="tag">{{ alerts.length }} 条</span></header>
+          <div class="security-event-list"><article v-for="alert in alerts.slice(0, 4)" :key="alert.id" :class="alert.severity.toLowerCase()"><time>{{ formatRelativeTime(alert.lastSeenAt) }}</time><div><strong>{{ alert.title }}</strong><span>{{ alert.detail }}</span></div></article></div>
         </section>
+
       </aside>
     </section>
 
@@ -699,5 +651,86 @@ function closeDrawer() {
   .selected-summary-metrics {
     grid-template-columns: 1fr;
   }
+}
+</style>
+
+<style scoped>
+.ops-page { gap: 12px; min-height: calc(100vh - 100px); height: auto; overflow: visible; }
+.ops-page .hero-card { min-height: 104px; padding: 14px; }
+.ops-page .hero-card > :first-child { display: block; }
+.ops-page .hero-side { width: auto; height: auto; flex-direction: column; align-items: flex-end; justify-content: center; gap: 8px; }
+.ops-page .hero-status { display: block; }
+.ops-page .hero-tags { align-items: stretch; height: auto; }
+.ops-page .hero-tag { min-width: 92px; padding: 8px 10px; border-radius: 4px; }
+.ops-page .hero-tags { justify-content: flex-end; }
+.ops-page .hero-card h1 { font-size: 24px; }
+.ops-page .hero-card p { max-width: 720px; }
+.ops-page > .filter-bar { flex: none; padding: 10px 12px; }
+.ops-page > .filter-bar :deep(.filter-search) { min-width: 330px; }
+.ops-page > .filter-bar :deep(.filter-search > span) { display: none; }
+.ops-page > .filter-bar :deep(.filter-search input) { height: 40px; border-radius: 4px; background: #0a0f1d; }
+.ops-page > .filter-bar :deep(.filter-chip) { min-height: 40px; border-radius: 4px; }
+.ops-page > .filter-bar :deep(.filter-chip.active) { color: #0a0f1d; background: #afc6ff; border-color: #afc6ff; }
+.ops-page > .filter-bar :deep(.filter-chip.active strong) { color: #00275f; }
+.ops-workbench { grid-template-columns: minmax(270px, 24%) minmax(0, 1fr) minmax(300px, 25%); min-height: 620px; overflow: visible; }
+.ops-workbench > .screen-support-column { overflow: visible; }
+.ops-left-panel { flex: 1; min-height: 0; }
+.ops-left-panel .side-panel-header h3 { display: flex; align-items: baseline; gap: 8px; }
+.ops-left-panel .side-panel-header h3 small { color: #8c96a8; font-size: 12px; font-weight: 400; }
+.abnormal-host-panel .side-list { overflow: auto; }
+.abnormal-host-panel .side-list-item { padding: 9px; }
+.latest-alert-panel { min-height: 0; }
+.latest-alert-card { display: grid; gap: 6px; padding: 12px; border: 1px solid rgba(255, 77, 79, .42); border-radius: 4px; background: rgba(255, 77, 79, .1); }
+.latest-alert-card.warning { border-color: rgba(250, 173, 20, .42); background: rgba(250, 173, 20, .08); }
+.latest-alert-card strong { color: #ff4d4f; font-size: 14px; }
+.latest-alert-card.warning strong { color: #faad14; }
+.latest-alert-card p { margin: 0; color: #c1c6d7; font-size: 12px; line-height: 1.5; }
+.latest-alert-card time { color: #8c96a8; font: 11px var(--font-family-mono, monospace); text-align: right; }
+.account-track-panel { flex: 0 0 auto; }
+.account-track-item { display: flex; align-items: center; gap: 9px; padding: 9px; border: 1px solid #262e3f; border-radius: 4px; background: #181b23; }
+.account-initial { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 4px; color: #ff4d4f; background: rgba(255, 77, 79, .12); font: 11px var(--font-family-mono, monospace); }
+.account-track-item div { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.account-track-item small { color: #8c96a8; font: 10px var(--font-family-mono, monospace); }
+.account-track-item b { padding: 3px 6px; border-radius: 3px; color: #ff4d4f; background: rgba(255, 77, 79, .14); font-size: 10px; }
+.ops-center .center-scene { flex: 1; min-height: 0; }
+.ops-workbench .topology-panel { min-height: 620px; }
+.ops-workbench .topology-panel :deep(.ops-topology-shell) { min-height: 540px; }
+.ops-workbench > .screen-support-column:last-child .security-event-panel { flex: 1; min-height: 0; }
+.ops-page .side-panel { padding: 14px; }
+.ops-page .side-list-item,
+.ops-page .selected-summary { border-radius: 4px; background: #181b23; }
+.security-risk-panel .side-panel-header,
+.system-overview-panel .side-panel-header,
+.security-event-panel .side-panel-header { margin-bottom: 12px; }
+.security-risk-panel .side-panel-header > .base-icon { color: #c1c6d7; }
+.risk-summary { display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 128px; }
+.risk-donut { width: 104px; height: 104px; display: grid; place-items: center; align-content: center; border-radius: 50%; background: conic-gradient(#ff4d4f 0 15%, #faad14 15% 42%, #afc6ff 42% 82%, #414755 82%); position: relative; }
+.risk-donut::after { position: absolute; inset: 9px; content: ''; border-radius: 50%; background: #141b2d; }
+.risk-donut strong,.risk-donut span { position: relative; z-index: 1; }
+.risk-donut strong { font: 700 20px var(--font-family-mono, monospace); }
+.risk-donut span { color: #8c96a8; font-size: 10px; }
+.risk-legend { display: grid; gap: 7px; color: #c1c6d7; font-size: 11px; }
+.risk-legend span { display: flex; align-items: center; gap: 7px; }
+.risk-legend i { width: 10px; height: 10px; display: inline-block; }
+.risk-legend i.danger { background: #ff4d4f; }.risk-legend i.warning { background: #faad14; }.risk-legend i.info { background: #afc6ff; }.risk-legend i.success { background: #52c41a; }
+.system-health-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.system-health-grid strong { padding: 12px 8px; border: 1px solid #262e3f; border-radius: 4px; color: #52c41a; text-align: center; font: 700 18px var(--font-family-mono, monospace); background: #181b23; }
+.system-health-grid strong:nth-child(2) { color: #e0e2ed; }
+.system-health-grid small { display: block; margin-top: 5px; color: #8c96a8; font: 11px Inter, sans-serif; }
+.system-progress { display: grid; gap: 7px; margin-top: 14px; color: #8c96a8; font-size: 11px; }
+.system-progress span { display: flex; justify-content: space-between; gap: 8px; }.system-progress b { color: #faad14; font: 700 12px var(--font-family-mono, monospace); }.system-progress .danger-text { color: #ff4d4f; }
+.system-progress > i { display: block; height: 7px; overflow: hidden; border-radius: 2px; background: #32353d; }.system-progress em { display: block; height: 100%; background: #faad14; }.system-progress .danger-fill { background: #ff4d4f; }.system-progress .info-fill { background: #afc6ff; }
+.security-event-list { display: grid; gap: 7px; overflow: auto; }
+.security-event-list article { display: grid; grid-template-columns: 50px minmax(0,1fr); gap: 8px; padding: 9px; border-left: 2px solid #afc6ff; background: #181b23; }
+.security-event-list article.danger { border-color: #ff4d4f; }.security-event-list article.warning { border-color: #faad14; }.security-event-list article.success { border-color: #52c41a; }
+.security-event-list time { color: #8c96a8; font: 10px var(--font-family-mono, monospace); }.security-event-list strong,.security-event-list span { display: block; }.security-event-list strong { color: #e0e2ed; font-size: 12px; }.security-event-list span { margin-top: 3px; overflow: hidden; color: #8c96a8; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.ops-workbench > .screen-support-column:first-child .legacy-ops-rail { display: grid; gap: 12px; }
+.ops-workbench > .screen-support-column:last-child .legacy-ops-rail { display: none; }
+
+@media (max-width: 1480px) {
+  .ops-workbench { grid-template-columns: 1fr; }
+  .ops-workbench .topology-panel { min-height: 560px; }
+  .ops-workbench .topology-panel :deep(.ops-topology-shell) { min-height: 480px; }
+  .ops-workbench > .screen-support-column:last-child .legacy-ops-rail { display: grid; gap: 12px; }
 }
 </style>

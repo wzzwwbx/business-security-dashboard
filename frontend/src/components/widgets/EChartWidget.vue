@@ -35,6 +35,10 @@ import BaseIcon from '@/components/common/BaseIcon.vue';
 import BaseSkeleton from '@/components/common/BaseSkeleton.vue';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { ECharts, EChartsOption } from 'echarts';
+import * as echartsCore from 'echarts/core';
+import * as echartsCharts from 'echarts/charts';
+import * as echartsComponents from 'echarts/components';
+import * as echartsRenderers from 'echarts/renderers';
 
 const props = defineProps<{
   option: Record<string, unknown>;
@@ -49,8 +53,8 @@ const emit = defineEmits<{
 }>();
 
 type EChartsModule = {
-  init: typeof import('echarts/core')['init'];
-  registerMap: typeof import('echarts/core')['registerMap'];
+  init: typeof echartsCore.init;
+  registerMap: typeof echartsCore.registerMap;
 };
 
 const chartRef = ref<HTMLDivElement | null>(null);
@@ -59,8 +63,32 @@ const chartReady = ref(false);
 const chartError = ref('');
 
 let chart: ECharts | null = null;
-let echartsModule: EChartsModule | null = null;
+const echartsModule: EChartsModule = { init: echartsCore.init, registerMap: echartsCore.registerMap };
 let resizeObserver: ResizeObserver | null = null;
+
+echartsCore.use([
+  echartsCharts.LineChart,
+  echartsCharts.BarChart,
+  echartsCharts.PieChart,
+  echartsCharts.RadarChart,
+  echartsCharts.GaugeChart,
+  echartsCharts.FunnelChart,
+  echartsCharts.MapChart,
+  echartsCharts.ScatterChart,
+  echartsCharts.EffectScatterChart,
+  echartsCharts.LinesChart,
+  echartsCharts.GraphChart,
+  echartsCharts.SankeyChart,
+  echartsComponents.TitleComponent,
+  echartsComponents.TooltipComponent,
+  echartsComponents.LegendComponent,
+  echartsComponents.GridComponent,
+  echartsComponents.RadarComponent,
+  echartsComponents.GeoComponent,
+  echartsComponents.VisualMapComponent,
+  echartsComponents.AriaComponent,
+  echartsRenderers.CanvasRenderer
+]);
 
 const readToken = (name: string, fallback: string) => {
   if (typeof window === 'undefined') {
@@ -96,44 +124,7 @@ const cloneOptionValue = <T>(value: T): T => {
   return value;
 };
 
-const ensureEcharts = async () => {
-  if (!echartsModule) {
-    const [core, charts, components, renderers] = await Promise.all([
-      import('echarts/core'),
-      import('echarts/charts'),
-      import('echarts/components'),
-      import('echarts/renderers')
-    ]);
-
-    core.use([
-      charts.LineChart,
-      charts.BarChart,
-      charts.PieChart,
-      charts.RadarChart,
-      charts.GaugeChart,
-      charts.FunnelChart,
-      charts.MapChart,
-      charts.ScatterChart,
-      charts.EffectScatterChart,
-      charts.LinesChart,
-      charts.GraphChart,
-      charts.SankeyChart,
-      components.TitleComponent,
-      components.TooltipComponent,
-      components.LegendComponent,
-      components.GridComponent,
-      components.RadarComponent,
-      components.GeoComponent,
-      components.VisualMapComponent,
-      components.AriaComponent,
-      renderers.CanvasRenderer
-    ]);
-
-    echartsModule = { init: core.init, registerMap: core.registerMap };
-  }
-
-  return echartsModule;
-};
+const ensureEcharts = async () => echartsModule;
 
 const normalizeAxis = (axis: unknown, axisType: 'x' | 'y') => {
   if (!axis) {

@@ -204,3 +204,62 @@
   --accent-red: var(--sys-color-status-danger);
   --shadow: var(--shadow-md);
 }
+
+/* Obsidian command visual baseline. */
+:root {
+  --font-family-base: Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  --sys-color-bg-page: #0a0f1d;
+  --sys-color-bg-page-top: #0b0e16;
+  --sys-color-bg-page-bottom: #10131b;
+  --sys-color-surface-1: #141b2d;
+  --sys-color-surface-2: #181b23;
+  --sys-color-surface-3: #1c1f28;
+  --sys-color-surface-card: #141b2d;
+  --sys-color-surface-muted: #1c1f28;
+  --sys-color-surface-muted-strong: #272a32;
+  --sys-color-surface-panel: #141b2d;
+  --sys-color-surface-node: #10131b;
+  --sys-color-text-primary: #e0e2ed;
+  --sys-color-text-secondary: #c1c6d7;
+  --sys-color-text-tertiary: #8c96a8;
+  --sys-color-border-primary: #262e3f;
+  --sys-color-border-secondary: #414755;
+  --sys-color-border-strong: #528dff;
+  --sys-color-border-accent: #528dff;
+  --sys-color-brand-primary: #528dff;
+  --sys-color-brand-secondary: #afc6ff;
+  --sys-color-brand-primary-soft: rgba(82, 141, 255, .14);
+  --sys-color-brand-primary-weak: rgba(82, 141, 255, .05);
+  --sys-color-brand-primary-tint: rgba(82, 141, 255, .18);
+  --sys-color-brand-secondary-tint: rgba(175, 198, 255, .12);
+  --sys-color-brand-secondary-soft: rgba(175, 198, 255, .08);
+  --sys-color-status-success: #52c41a;
+  --sys-color-status-success-bg: rgba(82, 196, 26, .12);
+  --sys-color-status-success-border: rgba(82, 196, 26, .35);
+  --sys-color-status-success-text: #9be56e;
+  --sys-color-status-warning: #faad14;
+  --sys-color-status-warning-bg: rgba(250, 173, 20, .12);
+  --sys-color-status-warning-border: rgba(250, 173, 20, .4);
+  --sys-color-status-warning-text: #ffd47a;
+  --sys-color-status-danger: #ff4d4f;
+  --sys-color-status-danger-bg: rgba(255, 77, 79, .12);
+  --sys-color-status-danger-border: rgba(255, 77, 79, .42);
+  --sys-color-status-danger-text: #ffb3b3;
+  --sys-color-status-info: #afc6ff;
+  --sys-color-status-info-bg: rgba(175, 198, 255, .12);
+  --sys-color-status-info-border: rgba(175, 198, 255, .35);
+  --sys-color-status-info-text: #d9e2ff;
+  --sys-color-scrollbar: #414755;
+  --layout-page-padding: 18px;
+  --layout-page-max-width-desktop: none;
+  --layout-grid-gap: 12px;
+  --layout-card-gap: 12px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --radius-2xl: 8px;
+  --shadow-sm: 0 8px 20px rgba(0, 0, 0, .24);
+  --shadow-md: 0 12px 30px rgba(0, 0, 0, .3);
+}

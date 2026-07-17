@@ -34,7 +34,7 @@ export function buildTerminalOverviewMetrics(overview: TerminalOverviewDto | nul
   return [
     {
       key: 'online',
-      label: '在线终端',
+      label: '在线终端趋势 (24H)',
       value: `${overview.onlineDevices}`,
       trend: `来源 ${overview.sourceCount} 个`,
       percent: Math.min(100, overview.onlineDevices),
@@ -42,27 +42,19 @@ export function buildTerminalOverviewMetrics(overview: TerminalOverviewDto | nul
     },
     {
       key: 'risk',
-      label: '高风险终端',
+      label: '高风险告警频度',
       value: `${overview.highRiskDevices}`,
-      trend: `待认领 ${overview.pendingClaimDevices} 台`,
+      trend: `待确认 ${overview.pendingClaimDevices} 台`,
       percent: Math.min(100, overview.highRiskDevices * 10),
       tone: overview.highRiskDevices > 0 ? 'danger' : 'success'
     },
     {
-      key: 'module',
-      label: '密码模块异常',
-      value: `${overview.abnormalPasswordModuleDevices}`,
-      trend: `指纹变化 ${overview.fingerprintChangedDevices} 台`,
-      percent: Math.min(100, overview.abnormalPasswordModuleDevices * 12),
-      tone: overview.abnormalPasswordModuleDevices > 0 ? 'warning' : 'success'
-    },
-    {
-      key: 'software',
-      label: '软件变更',
-      value: `${overview.softwareChangeDevices}`,
-      trend: `外设事件 ${overview.peripheralAlertCount} 条`,
-      percent: Math.min(100, overview.softwareChangeDevices * 6),
-      tone: overview.softwareChangeDevices > 0 ? 'warning' : 'info'
+      key: 'fingerprint',
+      label: '指纹特征变更',
+      value: `${overview.fingerprintChangedDevices}`,
+      trend: `软件变更 ${overview.softwareChangeDevices} 台`,
+      percent: Math.min(100, overview.fingerprintChangedDevices * 12),
+      tone: overview.fingerprintChangedDevices > 0 ? 'warning' : 'success'
     }
   ];
 }

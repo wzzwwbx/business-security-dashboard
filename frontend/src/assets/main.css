@@ -311,3 +311,51 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
+/* Prototype-aligned shared surfaces. */
+html,
+body,
+#app {
+  background: #0a0f1d;
+  color: #e0e2ed;
+  font-family: Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+body { overflow-x: hidden; }
+.glass-card,
+.board-card,
+.panel-card,
+.summary-card,
+.side-panel,
+.hero-card,
+.topology-panel {
+  border: 1px solid #262e3f !important;
+  border-radius: 6px !important;
+  background: rgba(20, 27, 45, .62) !important;
+  border-color: rgba(175, 198, 255, .18) !important;
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 12px 28px rgba(0, 0, 0, .22) !important;
+}
+.glass-card::before,
+.glass-card::after { display: none !important; }
+.asset-card,
+.side-list-item,
+.selected-summary,
+.drawer-fact-card,
+.drawer-intro-card,
+.drawer-related-item,
+.event-row {
+  background: rgba(16, 19, 31, .52) !important;
+  border-color: rgba(175, 198, 255, .14) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.tag,
+.badge {
+  border-radius: 4px !important;
+  border-color: #414755 !important;
+  background: #1c1f28 !important;
+  color: #c1c6d7 !important;
+}
+.content-shell { background: #0a0f1d; }

@@ -4,30 +4,28 @@ import BaseEmpty from '@/components/common/BaseEmpty.vue';
 import BaseSkeleton from '@/components/common/BaseSkeleton.vue';
 import AssetFilterBar from '@/components/common/AssetFilterBar.vue';
 import DetailDrawerShell from '@/components/common/DetailDrawerShell.vue';
-import AssetClusterWidget from '@/components/widgets/AssetClusterWidget.vue';
 import MiniTrendGroup from '@/components/widgets/MiniTrendGroup.vue';
-import SceneBoardWidget from '@/components/widgets/SceneBoardWidget.vue';
+import WorldSituationMap from '@/components/situation/WorldSituationMap.vue';
+import { fetchSituationGeoOverview } from '@/api/situationGeo';
+import { mockSituationGeoOverview } from '@/mocks/situationGeo';
+import type { SituationGeoOverview } from '@/types/situationGeo';
 import { useTerminalDetail } from '@/composables/useTerminalDetail';
 import { useTerminalOverview } from '@/composables/useTerminalOverview';
 import type { VisualFilterOption } from '@/types/visualization';
 import {
-  buildTerminalAssetCluster,
   buildTerminalBasicFacts,
   buildTerminalDrawerBadges,
-  buildTerminalEventNodes,
   buildTerminalOverviewMetrics,
-  buildTerminalPeripheralNodes,
   buildTerminalPersonFacts,
-  buildTerminalScene,
   buildTerminalSecurityFacts,
-  buildTerminalSoftwareNodes,
   buildTerminalTimeseriesSummary
 } from '@/utils/terminalVisuals';
-import { sourceStatusLabel, sourceSystemLabel, sourceTypeLabel } from '@/utils/terminalFormatters';
-import { computed, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { formatRelativeTime } from '@/utils/terminalFormatters';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
+const router = useRouter();
 const countryCode = computed(() => typeof route.query.country === 'string' ? route.query.country : '');
 const countryNameMap: Record<string, string> = { CN: '中国', AE: '阿联酋', SG: '新加坡', DE: '德国', KE: '肯尼亚', BR: '巴西' };
 const activeRegionName = computed(() => countryNameMap[countryCode.value] || '全球');
@@ -57,6 +55,11 @@ const keyword = ref('');
 const activeGroup = ref('all');
 const drawerOpen = ref(false);
 const activeTab = ref('basic');
+const geoOverview = ref<SituationGeoOverview>(mockSituationGeoOverview);
+
+onMounted(async () => {
+  geoOverview.value = await fetchSituationGeoOverview();
+});
 
 const heroTags = computed(() => [
   { label: '在线终端', value: `${overview.value?.onlineDevices ?? 0} 台` },
@@ -72,7 +75,6 @@ const groupOptions = computed<VisualFilterOption[]>(() => {
     { key: 'online', label: '在线', count: items.filter((item) => item.status === 'ONLINE').length },
     { key: 'risk', label: '高风险', count: items.filter((item) => item.riskLevel === 'HIGH' || item.riskLevel === 'CRITICAL').length },
     { key: 'claim', label: '待认领', count: items.filter((item) => item.ownershipStatus === 'PENDING_CLAIM').length },
-    { key: 'changed', label: '指纹变化', count: items.filter((item) => item.fingerprintChanged).length }
   ];
 });
 
@@ -101,18 +103,11 @@ const filteredDevices = computed(() => devices.value.filter((item) => {
 }));
 
 const overviewTrends = computed(() => buildTerminalOverviewMetrics(overview.value));
-const sceneData = computed(() => buildTerminalScene(sources.value, filteredDevices.value));
-const assetNodes = computed(() => buildTerminalAssetCluster(filteredDevices.value));
-const eventNodes = computed(() => buildTerminalEventNodes(events.value));
-const softwareNodes = computed(() => buildTerminalSoftwareNodes(softwareChanges.value));
-const peripheralNodes = computed(() => buildTerminalPeripheralNodes(peripheralEvents.value));
 const drawerBadges = computed(() => buildTerminalDrawerBadges(detail.value));
 const basicFacts = computed(() => buildTerminalBasicFacts(detail.value));
 const personFacts = computed(() => buildTerminalPersonFacts(detail.value));
 const securityFacts = computed(() => buildTerminalSecurityFacts(detail.value));
 const timeseriesSummary = computed(() => buildTerminalTimeseriesSummary(timeseries.value));
-
-const selectedNodeId = computed(() => detail.value ? `device-${detail.value.id}` : undefined);
 
 const drawerTabs = computed(() => [
   { key: 'basic', label: '基本信息' },
@@ -135,6 +130,14 @@ function handleSelectNode(node: { drilldownKey?: string }) {
 
 function closeDrawer() {
   drawerOpen.value = false;
+}
+
+function handleEnterCountry(code: string) {
+  router.push({ path: '/terminal', query: { country: code } });
+}
+
+function handleEnterSite(siteCode: string) {
+  router.push({ path: '/ops', query: { site: siteCode } });
 }
 </script>
 
@@ -194,75 +197,66 @@ function closeDrawer() {
         <section class="glass-card side-panel">
           <header class="side-panel-header">
             <div>
-              <h3>终端接入状态</h3>
+              <h3>终端接入列表</h3>
               <p>在线、离线、休眠、型号版本与区域分布。</p>
             </div>
             <span class="tag">来源 {{ sources.length }} 个</span>
           </header>
           <div class="side-list">
-            <article v-for="source in sources" :key="`${source.sourceType}-${source.sourceSystem}`" class="side-list-item">
-              <strong>{{ sourceSystemLabel(source.sourceSystem) }}</strong>
-              <span>{{ sourceTypeLabel(source.sourceType) }} · {{ sourceStatusLabel(source.status) }}</span>
-              <small>终端 {{ source.deviceCount }} 台</small>
+            <article v-for="device in filteredDevices.slice(0, 8)" :key="device.id" class="side-list-item clickable" @click="handleSelectNode({ drilldownKey: String(device.id) })">
+              <strong>{{ device.displayName }}</strong>
+              <span>责任人：{{ device.personName || '未关联' }}</span>
+              <small>{{ device.phoneNumberMasked || '未上报手机号' }} · {{ device.status === 'ONLINE' ? '在线' : '离线' }}</small>
             </article>
           </div>
         </section>
 
-        <section class="glass-card side-panel">
-          <header class="side-panel-header">
-            <div>
-              <h3>签批 PAD 健康</h3>
-              <p>重点关注资源、电量、系统版本和补丁状态。</p>
-            </div>
-          </header>
-          <div class="side-list">
-            <article v-for="device in filteredDevices.slice(0, 6)" :key="device.id" class="side-list-item clickable" @click="handleSelectNode({ drilldownKey: String(device.id) })">
-              <strong>{{ device.displayName }}</strong>
-              <span>{{ device.personName || '未关联人员' }}</span>
-              <small>{{ device.phoneNumberMasked || '未上报手机号' }}</small>
-            </article>
-          </div>
-        </section>
       </aside>
 
       <main class="screen-center-column terminal-center">
         <div class="center-scene">
-          <SceneBoardWidget
-            :title="`${activeRegionName}终端接入与通联拓扑`"
-            description="来源、终端聚类、人员归属和通讯关系形成统一主视觉。"
-            :nodes="sceneData.nodes"
-            :links="sceneData.links"
-            :legend="['来源接入', '终端聚类', '人员关联', '通联关系']"
-            @select-node="handleSelectNode"
-          />
-        </div>
-        <div class="center-assets">
-          <AssetClusterWidget
-            title="终端与签批 PAD 设备舱"
-            description="按城市、机构、状态和风险聚类。点击单体终端进入设备详情。"
-            :nodes="assetNodes"
-            :selected-node-id="selectedNodeId"
-            @select-node="handleSelectNode"
-          />
+          <section class="terminal-map-panel glass-card">
+            <header class="terminal-map-header">
+              <div>
+                <h3>全球终端地理分布态势</h3>
+                <p>基于地理位置的终端接入分布，支持按区域下钻分析。</p>
+              </div>
+              <div class="terminal-map-tabs"><span class="active">终端聚类</span><span>人员关联</span></div>
+            </header>
+            <div class="terminal-map-canvas">
+              <WorldSituationMap :data="geoOverview" @enter-site="handleEnterSite" @enter-country="handleEnterCountry" />
+            </div>
+          </section>
         </div>
       </main>
 
       <aside class="screen-support-column">
-        <AssetClusterWidget
-          title="USB Key 认证事件"
-          description="插拔、PIN 错误、连续认证失败和成功率变化。"
-          :nodes="eventNodes"
-        />
-        <AssetClusterWidget
-          title="版本与补丁状态"
-          description="系统版本、补丁与软件安装变更集中浏览。"
-          :nodes="softwareNodes"
-        />
-        <AssetClusterWidget
-          title="通联与外设状态"
-          description="通讯关系变化、链路健康和外设接入事件。"
-          :nodes="peripheralNodes"
-        />
+        <section class="glass-card terminal-side-panel">
+          <header class="terminal-panel-heading"><h3>USB Key 认证事件</h3><BaseIcon name="security" /></header>
+          <div class="terminal-event-list">
+            <article v-for="event in events.slice(0, 3)" :key="event.id" :class="event.severity === 'CRITICAL' ? 'danger' : event.severity === 'WARNING' ? 'warning' : 'info'">
+              <div><strong>{{ event.title }}</strong><p>终端 ID: {{ event.detail || '认证状态发生变化' }}</p><span>{{ event.eventType }}</span></div>
+              <time>{{ formatRelativeTime(event.observedAt) }}</time>
+            </article>
+          </div>
+        </section>
+
+        <section class="glass-card terminal-side-panel">
+          <header class="terminal-panel-heading"><h3>版本与补丁状态</h3><a href="#" @click.prevent>全量更新中</a></header>
+          <div class="terminal-progress-list">
+            <div v-for="(change, index) in softwareChanges.slice(0, 3)" :key="change.id" class="terminal-progress-row">
+              <div><strong>{{ change.softwareName }}</strong><b>{{ [92, 78, 64][index] ?? 58 }}%</b></div>
+              <i><em :style="{ width: `${[92, 78, 64][index] ?? 58}%` }" /></i>
+              <small>{{ change.softwareVersion || change.detail || '版本检查完成' }}</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="glass-card terminal-side-panel">
+          <header class="terminal-panel-heading"><h3>通联与外设状态</h3><BaseIcon name="ops" /></header>
+          <div class="terminal-stat-grid"><strong>{{ overview?.onlineDevices ?? 0 }}<small>接入外设</small></strong><strong>{{ overview?.pendingClaimDevices ?? 0 }}<small>未知链路</small></strong></div>
+          <div class="terminal-traffic"><div><span>实时流量 (Down/Up)</span><b>{{ peripheralEvents.length ? '12.4 MB/s' : '0 MB/s' }}</b></div><div class="terminal-bars"><i v-for="bar in [45, 34, 60, 42, 72, 54, 38, 30, 48]" :key="bar" :style="{ height: `${bar}%` }" /></div></div>
+        </section>
       </aside>
     </section>
 
@@ -556,5 +550,134 @@ function closeDrawer() {
   .drawer-fact-grid {
     grid-template-columns: 1fr;
   }
+}
+</style>
+
+<style scoped>
+.terminal-page { gap: 12px; min-height: calc(100vh - 100px); height: auto; overflow: visible; }
+.terminal-page .hero-card { display: none; }
+.terminal-page > .filter-bar { flex: none; }
+.terminal-page > .summary-card { padding: 14px; }
+.terminal-page :deep(.mini-trend-grid) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+.terminal-page :deep(.mini-trend-card) { border: 0; border-right: 1px solid #414755; border-radius: 0; background: transparent; padding: 8px 20px; }
+.terminal-page :deep(.mini-trend-card:last-child) { display: none; }
+.terminal-page :deep(.mini-trend-card:first-child) { padding-left: 0; }
+.terminal-page :deep(.mini-trend-card:nth-child(3)) { border-right: 0; }
+.terminal-workbench { grid-template-columns: minmax(270px, 24%) minmax(0, 1fr) minmax(300px, 25%); min-height: 620px; overflow: visible; }
+.terminal-workbench > .screen-support-column { overflow: visible; }
+.terminal-workbench > .screen-support-column:first-child .side-panel:nth-child(2) { display: none; }
+.terminal-workbench > .screen-support-column:first-child .side-panel:first-child { height: 100%; overflow: hidden; }
+.terminal-workbench > .screen-support-column:first-child .side-list { overflow: auto; }
+.terminal-map-panel { height: 100%; min-height: 620px; display: flex; flex-direction: column; overflow: hidden; }
+.terminal-map-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border-bottom: 1px solid #262e3f; }
+.terminal-map-header h3 { margin: 0; font-size: 20px; }
+.terminal-map-header p { margin: 4px 0 0; color: #8c96a8; font-size: 12px; }
+.terminal-map-tabs { display: flex; gap: 6px; }
+.terminal-map-tabs span { padding: 8px 10px; border: 1px solid #414755; border-radius: 4px; color: #c1c6d7; font-size: 11px; }
+.terminal-map-tabs .active { color: #0a0f1d; border-color: #528dff; background: #528dff; }
+.terminal-map-canvas { flex: 1; min-height: 0; }
+.terminal-map-canvas :deep(.world-map-shell) { min-height: 100%; background: #10131b; }
+.terminal-map-canvas :deep(.map-toolbar) { top: auto; right: 12px; bottom: 12px; left: auto; background: rgba(20,27,45,.92); border-color: #414755; }
+.terminal-map-canvas :deep(.map-toolbar label) { color: #c1c6d7; }
+.terminal-map-canvas :deep(.map-selection) { right: 12px; bottom: 54px; background: #1c1f28; border-color: #528dff; }
+.terminal-map-canvas :deep(.chart-shell) { height: 100%; }
+.terminal-map-canvas :deep(.chart-box) { min-height: 100%; }
+.terminal-page .center-assets { display: none; }
+.terminal-page .side-panel { padding: 14px; }
+.terminal-page .side-list-item { border-radius: 4px; background: #181b23; }
+
+@media (max-width: 1480px) {
+  .terminal-workbench { grid-template-columns: 1fr; }
+  .terminal-map-panel { min-height: 560px; }
+  .terminal-workbench > .screen-support-column:first-child .side-panel:first-child { height: auto; max-height: 420px; }
+  .terminal-workbench > .screen-support-column:first-child .side-panel:nth-child(2) { display: block; }
+  .terminal-page .center-assets { display: block; min-height: 420px; }
+}
+
+@media (max-width: 720px) {
+  .terminal-page :deep(.mini-trend-grid) { grid-template-columns: 1fr; }
+  .terminal-page :deep(.mini-trend-card) { border-right: 0; border-bottom: 1px solid #414755; padding: 10px 0; }
+  .terminal-page :deep(.mini-trend-card:last-child) { display: block; border-bottom: 0; }
+  .terminal-map-header { align-items: flex-start; flex-direction: column; }
+}
+</style>
+
+<style scoped>
+.terminal-page { gap: 12px; min-height: calc(100vh - 100px); height: auto; overflow: visible; }
+.terminal-page .hero-card { display: none; }
+.terminal-page > .filter-bar { flex: none; padding: 10px 12px; }
+.terminal-page > .filter-bar :deep(.filter-search) { min-width: 330px; }
+.terminal-page > .filter-bar :deep(.filter-search > span) { display: none; }
+.terminal-page > .filter-bar :deep(.filter-search input) { height: 40px; border-radius: 4px; background: #0a0f1d; }
+.terminal-page > .filter-bar :deep(.filter-chip) { min-height: 40px; border-radius: 4px; }
+.terminal-page > .filter-bar :deep(.filter-chip.active) { color: #0a0f1d; background: #528dff; border-color: #528dff; }
+.terminal-page > .filter-bar :deep(.filter-chip.active strong) { color: #00275f; }
+.terminal-page > .summary-card { flex: none; padding: 18px 20px; }
+.terminal-page > .summary-card :deep(.mini-trend-grid) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+.terminal-page > .summary-card :deep(.mini-trend-card) { padding: 8px 20px; border: 0; border-right: 1px solid #262e3f; border-radius: 0; background: transparent; }
+.terminal-page > .summary-card :deep(.mini-trend-card:first-child) { padding-left: 0; }
+.terminal-page > .summary-card :deep(.mini-trend-card:last-child) { display: grid; border-right: 0; padding-right: 0; }
+.terminal-page > .summary-card :deep(.mini-trend-top strong) { font: 700 24px var(--font-family-mono, monospace); color: #afc6ff; }
+.terminal-workbench { grid-template-columns: minmax(270px, 24%) minmax(0, 1fr) minmax(300px, 24%); min-height: 620px; overflow: visible; }
+.terminal-workbench > .screen-support-column { overflow: hidden; }
+.terminal-workbench > .screen-support-column:first-child .side-panel { height: 100%; min-height: 0; }
+.terminal-workbench > .screen-support-column:first-child .side-list { overflow: auto; }
+.terminal-page .side-panel-header { padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #262e3f; }
+.terminal-page .side-panel-header h3 { font-size: 18px; }
+.terminal-page .side-list-item { padding: 14px; border-radius: 4px; background: #1c1f28 !important; }
+.terminal-page .side-list-item strong { font-size: 16px; }
+.terminal-page .side-list-item span { margin-top: 6px; color: #c1c6d7; }
+.terminal-page .side-list-item small { font: 11px var(--font-family-mono, monospace); }
+.terminal-center .center-scene { flex: 1; min-height: 0; }
+.terminal-map-panel { height: 100%; min-height: 620px; }
+.terminal-map-header { padding: 14px; }
+.terminal-map-header h3 { font-size: 20px; }
+.terminal-map-tabs span { padding: 8px 10px; }
+.terminal-map-canvas :deep(.map-toolbar) { display: none; }
+.terminal-workbench > .screen-support-column:last-child { gap: 12px; }
+.terminal-side-panel { flex: 1; min-height: 0; padding: 12px; overflow: hidden; }
+.terminal-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid #262e3f; }
+.terminal-panel-heading h3 { margin: 0; font-size: 16px; }
+.terminal-panel-heading a { color: #afc6ff; font-size: 11px; }
+.terminal-panel-heading .base-icon { width: 16px; height: 16px; color: #c1c6d7; }
+.terminal-event-list,
+.terminal-progress-list { display: grid; gap: 8px; margin-top: 12px; overflow: auto; }
+.terminal-event-list article { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 10px; border-left: 2px solid #afc6ff; background: rgba(28, 31, 40, .78); }
+.terminal-event-list article.danger { border-color: #ff4d4f; background: rgba(255, 77, 79, .1); }
+.terminal-event-list article.warning { border-color: #faad14; }
+.terminal-event-list strong { color: #e0e2ed; font-size: 12px; }
+.terminal-event-list article.danger strong { color: #ff4d4f; }
+.terminal-event-list p { margin: 4px 0 0; color: #c1c6d7; font-size: 10px; line-height: 1.45; }
+.terminal-event-list span,
+.terminal-event-list time { color: #8c96a8; font: 10px var(--font-family-mono, monospace); }
+.terminal-event-list time { white-space: nowrap; }
+.terminal-progress-row { display: grid; gap: 6px; }
+.terminal-progress-row > div { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+.terminal-progress-row b { color: #52c41a; font: 700 12px var(--font-family-mono, monospace); }
+.terminal-progress-row i { display: block; height: 6px; overflow: hidden; border-radius: 2px; background: #32353d; }
+.terminal-progress-row em { display: block; height: 100%; background: #52c41a; }
+.terminal-progress-row:nth-child(2) b { color: #faad14; }.terminal-progress-row:nth-child(2) em { background: #faad14; }
+.terminal-progress-row small { overflow: hidden; color: #8c96a8; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.terminal-stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.terminal-stat-grid strong { padding: 12px 8px; border-radius: 4px; background: #272a32; color: #afc6ff; text-align: center; font: 700 18px var(--font-family-mono, monospace); }
+.terminal-stat-grid strong:nth-child(2) { color: #ff4d4f; }
+.terminal-stat-grid small { display: block; margin-top: 4px; color: #8c96a8; font: 10px Inter, sans-serif; }
+.terminal-traffic { margin-top: 14px; }
+.terminal-traffic > div:first-child { display: flex; justify-content: space-between; gap: 8px; color: #8c96a8; font-size: 11px; }
+.terminal-traffic b { color: #c1c6d7; font: 11px var(--font-family-mono, monospace); }
+.terminal-bars { display: flex; align-items: end; gap: 4px; height: 58px; margin-top: 8px; }
+.terminal-bars i { flex: 1; min-height: 8px; background: #596985; }
+@media (max-width: 1480px) {
+  .terminal-workbench { grid-template-columns: 1fr; }
+  .terminal-workbench > .screen-support-column { overflow: visible; }
+  .terminal-workbench > .screen-support-column:first-child .side-panel { height: auto; max-height: 420px; }
+  .terminal-map-panel { min-height: 560px; }
+  .terminal-side-panel { min-height: 240px; }
+}
+@media (max-width: 720px) {
+  .terminal-page > .filter-bar :deep(.filter-search) { min-width: 0; width: 100%; }
+  .terminal-page > .summary-card :deep(.mini-trend-grid) { grid-template-columns: 1fr; }
+  .terminal-page > .summary-card :deep(.mini-trend-card) { border-right: 0; border-bottom: 1px solid #262e3f; padding: 10px 0; }
+  .terminal-page > .summary-card :deep(.mini-trend-card:last-child) { border-bottom: 0; }
 }
 </style>

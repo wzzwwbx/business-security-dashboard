@@ -32,11 +32,9 @@ export const DEFAULT_PAGE_ORDER: AppPageCode[] = ['overview', 'security', 'busin
 
 export const MAIN_NAV_ITEMS: MainNavItem[] = [
   { code: 'overview', label: '综合态势', route: '/overview', icon: 'overview', description: '统一展示业务、安全、终端与运维的综合态势。' },
-  { code: 'security', label: '安全态势', route: '/security', icon: 'security', description: '汇聚漏洞、告警、策略执行与防护覆盖情况。' },
   { code: 'business', label: '业务态势', route: '/business', icon: 'business', description: '关注业务连续性、链路健康与关键系统服务质量。' },
   { code: 'terminal', label: '终端态势', route: '/terminal', icon: 'terminal', description: '呈现终端资产、健康度、风险分布与处置状态。' },
-  { code: 'ops', label: '运维态势', route: '/ops', icon: 'ops', description: '查看多源接入的主机、探针、告警与趋势数据。' },
-  { code: 'system', label: '系统管理', route: '/system/accounts', icon: 'system', description: '三员分立账户、审批、审计与权限配置。' }
+  { code: 'ops', label: '运维态势', route: '/ops', icon: 'ops', description: '查看安全与运维合并后的主机、拓扑、告警与趋势数据。' }
 ];
 
 export const SYSTEM_TAB_ITEMS: SystemTabDefinition[] = [

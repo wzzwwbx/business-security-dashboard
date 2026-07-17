@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "primary-fixed-dim": "#afc6ff",
+                "surface-container-lowest": "#0b0e16",
+                "on-secondary-fixed-variant": "#3f465a",
+                "primary": "#afc6ff",
+                "surface-container": "#1c1f28",
+                "on-primary": "#002d6c",
+                "on-primary-container": "#00275f",
+                "on-error-container": "#ffdad6",
+                "danger-crimson": "#ff4d4f",
+                "surface": "#10131b",
+                "success-emerald": "#52c41a",
+                "outline": "#8b90a0",
+                "outline-variant": "#414755",
+                "on-secondary-container": "#aeb4cc",
+                "error-container": "#93000a",
+                "text-muted": "#8c96a8",
+                "on-surface-variant": "#c1c6d7",
+                "surface-container-low": "#181b23",
+                "on-secondary": "#293043",
+                "surface-bright": "#363942",
+                "secondary-fixed-dim": "#bfc6de",
+                "surface-variant": "#32353d",
+                "primary-fixed": "#d9e2ff",
+                "on-background": "#e0e2ed",
+                "surface-container-high": "#272a32",
+                "secondary-fixed": "#dbe2fb",
+                "on-error": "#690005",
+                "on-primary-fixed": "#001a43",
+                "on-tertiary-container": "#4c1a00",
+                "surface-tint": "#afc6ff",
+                "surface-dim": "#10131b",
+                "on-tertiary-fixed": "#351000",
+                "secondary": "#bfc6de",
+                "on-tertiary-fixed-variant": "#7c2e00",
+                "on-surface": "#e0e2ed",
+                "inverse-surface": "#e0e2ed",
+                "tertiary-fixed": "#ffdbcc",
+                "surface-navy": "#141b2d",
+                "on-primary-fixed-variant": "#004398",
+                "surface-container-highest": "#32353d",
+                "secondary-container": "#3f465a",
+                "tertiary-fixed-dim": "#ffb695",
+                "inverse-primary": "#0059c7",
+                "primary-container": "#528dff",
+                "on-tertiary": "#571e00",
+                "error": "#ffb4ab",
+                "inverse-on-surface": "#2d3039",
+                "on-secondary-fixed": "#141b2d",
+                "border-subtle": "#262e3f",
+                "background": "#10131b",
+                "bg-deep-navy": "#0a0f1d",
+                "tertiary-container": "#ee681b",
+                "tertiary": "#ffb695",
+                "warning-amber": "#faad14",
+                "accent": "#528dff"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "card-padding": "12px",
+                "margin-page": "24px",
+                "gutter": "16px",
+                "density-tight": "4px",
+                "unit": "4px",
+                "density-comfortable": "12px"
+        },
+        "fontFamily": {
+                "headline-md": [
+                        "Inter"
+                ],
+                "body-sm": [
+                        "Inter"
+                ],
+                "headline-lg": [
+                        "Inter"
+                ],
+                "body-md": [
+                        "Inter"
+                ],
+                "data-label": [
+                        "JetBrains Mono"
+                ],
+                "label-caps": [
+                        "Inter"
+                ],
+                "data-display": [
+                        "JetBrains Mono"
+                ]
+        },
+        "fontSize": {
+                "headline-md": [
+                        "18px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-sm": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "data-label": [
+                        "11px",
+                        {
+                                "lineHeight": "14px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "label-caps": [
+                        "10px",
+                        {
+                                "lineHeight": "12px",
+                                "letterSpacing": "0.08em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "data-display": [
+                        "20px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "700"
+                        }
+                ]
+        }
+},
+    },
+  }
+}catch(_e){}</script>
+<style>
+    .immersive-mode .side-panel,
+    .immersive-mode .stats-row,
+    .immersive-mode .bottom-row {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(20px);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .side-panel, .stats-row, .bottom-row {
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .immersive-mode .restore-btn {
+        display: flex !important;
+    }
+
+    .restore-btn {
+        display: none !important;
+    }
+    
+    .glass-panel {
+        background-color: rgba(20, 27, 45, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(38, 46, 63, 1);
+    }
+</style>
+</head>
+<body class="font-body-md text-body-md h-screen flex flex-col bg-background text-on-surface selection:bg-primary/30">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 w-full h-12 bg-surface-dim border-b border-border-subtle flex justify-between items-center px-gutter z-40">
+<div class="flex items-center gap-6">
+<div class="font-headline-md font-bold text-on-surface flex items-center gap-2">
+<img alt="SDT Logo" class="w-8 h-8 object-contain shrink-0" src="https://lh3.googleusercontent.com/aida/AP1WRLvv03kcjH1Gs7QWcMPYU9CDz57GZPf7rN8y9QxCuw1w2mAYZxxrnum16d2GlhXSzl42Q44bURN8HW1UrqHnfC3AgBGHXhZGig9xr7BriKokG0z4PW5AazVgHc7L9pePMDUrOJ4Gyt-UDdNQejMyyDCo-XxC72VYv3tQjlatS4E0mjdjPxtwx8sVhd1s5eR7VkUxpkZFWmgn-OkzgO96dTveBPpHuhxHG06SHISj7qBLTDm-0iz6MvmpQkA"/>
+                SDT 业务安全态势系统
+            </div>
+<nav class="hidden md:flex gap-4">
+<a class="font-label-caps text-accent border-b-2 border-accent pb-1" href="#">综合态势</a>
+<a class="font-label-caps text-text-muted hover:text-accent transition-opacity" href="#">业务态势</a>
+<a class="font-label-caps text-text-muted hover:text-accent transition-opacity" href="#">终端态势</a>
+<a class="font-label-caps text-text-muted hover:text-accent transition-opacity" href="#">安全态势</a>
+<a class="font-label-caps text-text-muted hover:text-accent transition-opacity" href="#">运维态势</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-data-label font-data-label text-on-surface-variant bg-surface-navy px-3 py-1 rounded border border-border-subtle flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-success-emerald shadow-[0_0_8px_#52c41a]"></span>
+<span class="" id="clock-display">2023-10-27 14:32:05</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant transition-colors flex items-center justify-center" onclick="togglePanels()">
+<span class="material-symbols-outlined">fullscreen</span>
+</button>
+<div class="ml-2 pl-4 border-l border-border-subtle flex items-center gap-2 cursor-pointer group">
+<img alt="System Administrator" class="w-6 h-6 rounded-full border border-border-subtle group-hover:border-accent transition-colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhI4UZXBVjLNreVr6Ywq06pRjfmy-cbtGhMR7K7jJhl6L2K3RmMlb9ZIH-kBYZWEuLDOGNRgM7XLwI3rIwMbxYPch_d3RXiXb6BppxyrjOmKG6FEq89a3qtp36ahiznvg6dqd_khlVPK6JMeYKrQlf5Sig9RgDQSQv0cAkPqZa7s4JXZCrEvgJqyNX_cICic16vTbvFvJblTetV72Rt7hsfk7PSKtSdGodGP0SqbqFfWDecobKsbo1"/>
+<span class="font-body-sm text-on-surface group-hover:text-accent transition-colors">Admin</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Container -->
+<div class="flex flex-1 overflow-hidden relative" id="page-container">
+<!-- Main Content -->
+<main class="flex-1 relative overflow-hidden flex flex-col gap-4 p-4 mt-12 w-full h-full bg-background" id="main-content">
+<!-- Map Background -->
+<div class="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
+<img alt="World Map Background" class="w-full h-full object-cover opacity-60" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxihlNWS-lE65efHEh3oIaw4HNpNbZZpIZtVRkv9G70UjqgH2iEoXcbv0g0e0W9fkkFA98PBrTfFZ37Zup9KvRxXVFxLejD7yAm4Id_fEObOI6-lz8--csSgiE-bvEcnvfwdumGz6yTJZ1Nxgagpnm8syw2NiYwQo6Poehk2rwOnh35RFb9kBhS82Ngryii3QGG85FJbfNEVVA7qW8fvBQKPieZ87iyr2MNV8TpKwrpqyoV72FRFF56PMmVCo7LBgNPg"/>
+<svg class="absolute inset-0 w-full h-full object-cover" preserveaspectratio="xMidYMid slice" viewbox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+<!-- Connection Arcs originating from Beijing -->
+<path class="animated-arc opacity-80" d="M 900,300 Q 600,200 300,400" fill="none" stroke="#528dff" stroke-width="2"></path>
+<path class="animated-arc opacity-80" d="M 900,300 Q 1000,250 1150,500" fill="none" stroke="#528dff" stroke-width="2"></path>
+<path class="animated-arc opacity-80" d="M 900,300 Q 750,450 500,550" fill="none" stroke="#528dff" stroke-width="2"></path>
+<!-- Terminal Nodes -->
+<circle class="animate-pulse shadow-[0_0_8px_#00ffff]" cx="300" cy="400" fill="#00ffff" r="4"></circle>
+<circle class="animate-pulse shadow-[0_0_8px_#00ffff]" cx="1150" cy="500" fill="#00ffff" r="4"></circle>
+<circle class="animate-pulse shadow-[0_0_8px_#00ffff]" cx="500" cy="550" fill="#00ffff" r="4"></circle>
+<!-- Beijing Central Node-->
+<circle class="animate-ping opacity-75" cx="900" cy="300" fill="#528dff" r="10"></circle>
+<circle cx="900" cy="300" fill="#ffffff" r="6"></circle>
+<circle cx="900" cy="300" fill="#528dff" r="3"></circle>
+</svg>
+</div>
+<!-- Restore Button (Visible only in immersive mode) -->
+<button class="restore-btn fixed bottom-6 right-6 z-50 glass-panel px-6 py-3 flex items-center gap-2 text-accent hover:bg-surface-container-high transition-all cursor-pointer border-accent/50 shadow-lg group" onclick="togglePanels()">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">visibility</span>
+<span class="font-headline-md text-sm">显示看板</span>
+</button>
+<div class="panel-container flex flex-col h-full w-full pointer-events-none relative z-10">
+<!-- Top Level Stats -->
+<div class="grid grid-cols-12 gap-4 h-24 stats-row">
+<div class="col-span-12 grid grid-cols-4 gap-4 pointer-events-auto">
+<div class="glass-panel p-card-padding flex flex-col justify-between overflow-hidden relative">
+<div class="flex justify-between items-start">
+<span class="text-on-surface-variant font-label-caps text-label-caps">四域汇聚事件</span>
+<span class="text-success-emerald font-data-label text-data-label">+8%</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-accent font-data-display text-[36px] font-bold">128</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">万</span>
+</div>
+</div>
+<div class="glass-panel p-card-padding flex flex-col justify-between overflow-hidden relative">
+<div class="flex justify-between items-start">
+<span class="text-on-surface-variant font-label-caps text-label-caps">内网实体数</span>
+<span class="text-accent font-data-label text-data-label">+12</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-accent font-data-display text-[36px] font-bold">651</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">个</span>
+</div>
+</div>
+<div class="glass-panel p-card-padding flex flex-col justify-between border-accent/30 shadow-[0_0_15px_rgba(82,141,255,0.15)] relative">
+<div class="flex justify-between items-start">
+<span class="text-on-surface-variant font-label-caps text-label-caps">综合安全指数</span>
+<span class="text-success-emerald font-data-label text-data-label">+3</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-accent font-data-display text-[36px] font-bold">86</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">%</span>
+</div>
+</div>
+<div class="glass-panel p-card-padding flex flex-col justify-between overflow-hidden relative">
+<div class="flex justify-between items-start">
+<span class="text-on-surface-variant font-label-caps text-label-caps">在线资产率</span>
+<span class="text-outline font-data-label text-data-label">持平</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-accent font-data-display text-[36px] font-bold">71</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Middle Area -->
+<div class="grid grid-cols-12 gap-4 flex-1 min-h-0 mt-4">
+<!-- Left Panel -->
+<div class="col-span-3 side-panel pointer-events-auto h-full">
+<div class="glass-panel h-full flex flex-col overflow-hidden">
+<div class="border-b border-border-subtle p-3 flex items-center justify-between">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">多维态势监控</span>
+</div>
+<div class="p-3 space-y-6 overflow-y-auto">
+<!-- Security Sector -->
+<section>
+<div class="flex items-center gap-2 mb-2">
+<div class="w-1 h-3 bg-accent"></div>
+<h3 class="font-label-caps text-label-caps text-on-surface">安全态势</h3>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<div class="bg-surface-container-low/50 p-2 rounded">
+<p class="text-outline text-[10px]">高危事件</p>
+<p class="text-danger-crimson font-data-label">4 起</p>
+</div>
+<div class="bg-surface-container-low/50 p-2 rounded">
+<p class="text-outline text-[10px]">高风险用户</p>
+<p class="text-warning-amber font-data-label">12 人</p>
+</div>
+<div class="bg-surface-container-low/50 p-2 rounded">
+<p class="text-outline text-[10px]">异常行为</p>
+<p class="text-accent font-data-label">37 条</p>
+</div>
+</div>
+</section>
+<!-- Business Sector -->
+<section>
+<div class="flex items-center gap-2 mb-2">
+<div class="w-1 h-3 bg-success-emerald"></div>
+<h3 class="font-label-caps text-label-caps text-on-surface">业务态势</h3>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-body-sm">
+<span class="text-outline">密信收发</span>
+<span class="text-accent font-data-label">12.8 万</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-accent h-full" style="width: 65%"></div>
+</div>
+<div class="flex justify-between items-center text-body-sm">
+<span class="text-outline">加解密成功率</span>
+<span class="text-success-emerald font-data-label">99.6%</span>
+</div>
+</div>
+</section>
+<!-- Terminal Sector -->
+<section>
+<div class="flex items-center gap-2 mb-2">
+<div class="w-1 h-3 bg-warning-amber"></div>
+<h3 class="font-label-caps text-label-caps text-on-surface">终端态势</h3>
+</div>
+<div class="flex gap-4">
+<div>
+<p class="text-outline text-[10px]">终端在线率</p>
+<p class="text-accent font-headline-md text-on-surface font-semibold">94.8%</p>
+</div>
+<div class="border-l border-border-subtle pl-4">
+<p class="text-outline text-[10px]">USB Key 失效</p>
+<p class="text-danger-crimson font-headline-md text-on-surface font-semibold">18 次</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+<!-- Center Floating Info -->
+<div class="col-span-6 relative">
+<div class="absolute top-[30%] left-[75%] -translate-x-1/2 pointer-events-auto">
+<div class="group relative flex flex-col items-center">
+<div class="w-4 h-4 bg-accent rounded-full animate-pulse shadow-[0_0_15px_#528dff] mb-2 border-2 border-white"></div>
+<div class="glass-panel p-2 rounded shadow-xl whitespace-nowrap text-center border-accent/50">
+<p class="text-accent font-bold text-body-md tracking-wider">北京机房</p>
+<p class="text-outline text-[10px] mt-1">状态: 运行稳定 | 告警: 0</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Panel -->
+<div class="col-span-3 side-panel pointer-events-auto h-full flex flex-col gap-4">
+<div class="glass-panel flex-[2] flex flex-col overflow-hidden">
+<div class="border-b border-border-subtle p-3 flex items-center justify-between">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">实时事件流</span>
+</div>
+<div class="flex-1 overflow-y-auto p-2 space-y-2">
+<div class="bg-surface-container-lowest/50 border-l-2 border-accent p-2 flex flex-col gap-1 transition-all hover:bg-surface-container-low cursor-pointer">
+<div class="flex justify-between items-center">
+<span class="bg-accent/10 text-accent text-[10px] px-1 rounded">终端</span>
+<span class="text-outline text-[10px] font-data-label">15:29:42</span>
+</div>
+<p class="text-body-sm text-on-surface truncate">新加坡区域终端版本待升级</p>
+</div>
+<div class="bg-surface-container-lowest/50 border-l-2 border-danger-crimson p-2 flex flex-col gap-1 transition-all hover:bg-surface-container-low cursor-pointer">
+<div class="flex justify-between items-center">
+<span class="bg-danger-crimson/10 text-danger-crimson text-[10px] px-1 rounded">安全</span>
+<span class="text-outline text-[10px] font-data-label">15:28:10</span>
+</div>
+<p class="text-body-sm text-on-surface truncate">王芳连续输错证书口令</p>
+</div>
+<div class="bg-surface-container-lowest/50 border-l-2 border-success-emerald p-2 flex flex-col gap-1 transition-all hover:bg-surface-container-low cursor-pointer">
+<div class="flex justify-between items-center">
+<span class="bg-success-emerald/10 text-success-emerald text-[10px] px-1 rounded">审计</span>
+<span class="text-outline text-[10px] font-data-label">15:27:05</span>
+</div>
+<p class="text-body-sm text-on-surface truncate">运维策略变更完成复核</p>
+</div>
+</div>
+</div>
+<div class="glass-panel p-3 flex-[1] flex flex-col justify-center relative">
+<div class="flex justify-between items-center mb-3">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">四域处置进度</span>
+</div>
+<div class="flex items-end justify-around gap-2 h-full">
+<div class="flex-1 flex flex-col items-center">
+<div class="w-full bg-accent/80 h-10 rounded-t flex items-center justify-center">
+<span class="text-[10px] font-bold text-white">76</span>
+</div>
+<span class="text-[8px] text-outline mt-1">异常事件</span>
+</div>
+<div class="flex-1 flex flex-col items-center">
+<div class="w-full bg-accent h-14 rounded-t flex items-center justify-center">
+<span class="text-[10px] font-bold text-white">47</span>
+</div>
+<span class="text-[8px] text-outline mt-1">研判中</span>
+</div>
+<div class="flex-1 flex flex-col items-center">
+<div class="w-full bg-warning-amber h-6 rounded-t flex items-center justify-center">
+<span class="text-[10px] font-bold text-white">29</span>
+</div>
+<span class="text-[8px] text-outline mt-1">已处置</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Row -->
+<div class="grid grid-cols-12 gap-4 h-48 mt-4 pointer-events-auto bottom-row">
+<div class="col-span-5 glass-panel p-3 flex flex-col relative">
+<div class="flex justify-between items-center mb-4 pr-2">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">近七日告警处置趋势</span>
+<div class="flex items-center gap-4">
+<div class="flex gap-4">
+<div class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-accent"></span>
+<span class="text-[10px] text-outline">告警数</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-success-emerald"></span>
+<span class="text-[10px] text-outline">处置数</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex-1 flex items-end gap-1 px-4">
+<div class="flex-1 h-full relative">
+<div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-accent/20 to-transparent h-[40%] rounded-t-sm"></div>
+<div class="absolute bottom-[40%] left-0 w-full h-[2px] bg-accent"></div><span class="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-outline">7/3</span>
+</div>
+<div class="flex-1 h-full relative">
+<div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-accent/20 to-transparent h-[45%] rounded-t-sm"></div>
+<div class="absolute bottom-[45%] left-0 w-full h-[2px] bg-accent"></div><span class="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-outline">7/4</span>
+</div>
+<div class="flex-1 h-full relative">
+<div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-accent/20 to-transparent h-[60%] rounded-t-sm"></div>
+<div class="absolute bottom-[60%] left-0 w-full h-[2px] bg-accent"></div><span class="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-outline">7/5</span>
+</div>
+<div class="flex-1 h-full relative">
+<div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-accent/20 to-transparent h-[55%] rounded-t-sm"></div>
+<div class="absolute bottom-[55%] left-0 w-full h-[2px] bg-accent"></div><span class="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-outline">7/6</span>
+</div>
+<div class="flex-1 h-full relative">
+<div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-accent/20 to-transparent h-[70%] rounded-t-sm"></div>
+<div class="absolute bottom-[70%] left-0 w-full h-[2px] bg-accent"></div><span class="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-outline">7/7</span>
+</div>
+<div class="flex-1 h-full relative">
+<div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-accent/20 to-transparent h-[65%] rounded-t-sm"></div>
+<div class="absolute bottom-[65%] left-0 w-full h-[2px] bg-accent"></div><span class="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-outline">7/8</span>
+</div>
+<div class="flex-1 h-full relative">
+<div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-accent/20 to-transparent h-[50%] rounded-t-sm"></div>
+<div class="absolute bottom-[50%] left-0 w-full h-[2px] bg-accent"></div><span class="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-outline">7/9</span>
+</div>
+</div>
+</div>
+<div class="col-span-4 glass-panel p-3 flex flex-col relative">
+<div class="flex justify-between items-center mb-4">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">异常行为分类统计</span>
+</div>
+<div class="flex-1 space-y-3">
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] text-outline"><span class="">入侵攻击检测</span><span class="">153</span></div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
+<div class="bg-danger-crimson h-full" style="width: 38%"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] text-outline"><span class="">网络应用异常</span><span class="">284</span></div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
+<div class="bg-warning-amber h-full" style="width: 65%"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] text-outline"><span class="">用户行为异常</span><span class="">396</span></div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
+<div class="bg-accent h-full" style="width: 82%"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="col-span-3 glass-panel p-3 flex flex-col relative">
+<div class="flex justify-between items-center mb-4">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">系统资源负载</span>
+</div>
+<div class="flex-1 space-y-4">
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] text-outline"><span class="">CPU 使用率</span><span class="">42%</span></div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden"><div class="bg-accent h-full" style="width: 42%"></div></div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] text-outline"><span class="">内存 使用率</span><span class="">68%</span></div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden"><div class="bg-success-emerald h-full" style="width: 68%"></div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<script>
+    // Micro-interaction: Clock
+    function updateClock() {
+        const now = new Date();
+        const timeString = now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0') + ' ' +
+            now.toLocaleTimeString('zh-CN', { hour12: false });
+        const clockEl = document.getElementById('clock-display');
+        if (clockEl) {
+            clockEl.textContent = timeString;
+        }
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Random data simulation
+    setInterval(() => {
+        const stats = document.querySelectorAll('.font-data-display');
+        if (stats.length > 0) {
+            const target = stats[Math.floor(Math.random() * stats.length)];
+            const current = parseFloat(target.textContent);
+            const delta = (Math.random() - 0.5) * 2;
+            if(!isNaN(current)) {
+                target.textContent = Math.max(0, Math.round(current + delta));
+            }
+        }
+    }, 2000);
+
+    // Toggle Panels (Immersive Mode)
+    function togglePanels() {
+        document.body.classList.toggle('immersive-mode');
+        
+        // Handle native fullscreen if preferred by browser, 
+        // but here we primarily use the UI toggle as requested
+        const btn = document.querySelector('button[onclick="togglePanels()"] span');
+        if (document.body.classList.contains('immersive-mode')) {
+            btn.textContent = 'fullscreen_exit';
+        } else {
+            btn.textContent = 'fullscreen';
+        }
+    }
+</script>
+</body></html>
