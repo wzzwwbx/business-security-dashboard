@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import BaseIcon from '@/components/common/BaseIcon.vue';
-import { MAIN_NAV_ITEMS } from '@/constants/navigation';
+import { MAIN_NAV_ITEMS, VISIBLE_PAGE_CODES } from '@/constants/navigation';
 import { useAuthSession } from '@/composables/useAuthSession';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
@@ -80,8 +80,8 @@ const now = ref('');
 const userMenuOpen = ref(false);
 let timer: number | undefined;
 
-const visibleNavItems = computed(() => MAIN_NAV_ITEMS.filter((item) => auth.canAccessPage(item.code)));
-const systemRoute = computed(() => auth.resolveFirstSystemRoute());
+const visibleNavItems = computed(() => MAIN_NAV_ITEMS.filter((item) => VISIBLE_PAGE_CODES.has(item.code) && auth.canAccessPage(item.code)));
+const systemRoute = computed(() => VISIBLE_PAGE_CODES.has('system') ? auth.resolveFirstSystemRoute() : null);
 const modeTone = computed(() => auth.availability.value === 'enabled' ? 'info' : auth.availability.value === 'demo' ? 'success' : 'warning');
 
 function refreshClock() {

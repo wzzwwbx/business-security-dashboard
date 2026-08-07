@@ -294,6 +294,7 @@ java -jar target/business-security-probe-0.1.0.jar
 - Probe：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/probe/README.md`
 - 终端建模：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/terminal-data-model.md`
 - 业务系统接入台账：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/business-system-integration-ledger.md`
+- 演示态势优化方案：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/demo-situation-optimization-plan.md`
 
 
 ## 灵活接入补充说明

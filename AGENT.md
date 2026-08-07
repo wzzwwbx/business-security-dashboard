@@ -148,4 +148,5 @@ docker compose up --build
 - `docs/design-tokens.md`：全局设计 token 说明
 - `docs/ui-ux-review.md`：前端 UI/UX 评审和后续治理建议
 - `docs/business-system-integration-ledger.md`：业务系统数据接入与态势设计持续台账
+- `docs/demo-situation-optimization-plan.md`：综合态势与业务态势演示优化方案
 - `DESIGN.md`：面向日常设计和开发的前端视觉基线

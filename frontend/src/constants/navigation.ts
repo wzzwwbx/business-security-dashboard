@@ -30,6 +30,13 @@ export const PAGE_PERMISSION_MAP: Record<AppPageCode, string> = {
 
 export const DEFAULT_PAGE_ORDER: AppPageCode[] = ['overview', 'security', 'business', 'terminal', 'ops', 'system'];
 
+const configuredVisiblePages = String(import.meta.env.VITE_VISIBLE_PAGES ?? 'overview,business')
+  .split(',')
+  .map((item) => item.trim())
+  .filter(Boolean) as AppPageCode[];
+
+export const VISIBLE_PAGE_CODES = new Set<AppPageCode>(configuredVisiblePages);
+
 export const MAIN_NAV_ITEMS: MainNavItem[] = [
   { code: 'overview', label: '综合态势', route: '/overview', icon: 'overview', description: '统一展示业务、安全、终端与运维的综合态势。' },
   { code: 'business', label: '业务态势', route: '/business', icon: 'business', description: '关注业务连续性、链路健康与关键系统服务质量。' },

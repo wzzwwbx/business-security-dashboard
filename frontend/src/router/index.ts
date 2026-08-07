@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthSession } from '@/composables/useAuthSession';
 import OpsPageView from '@/views/OpsPageView.vue';
 import SituationPageView from '@/views/SituationPageView.vue';
+import DemoSituationPageView from '@/views/DemoSituationPageView.vue';
 import TerminalPageView from '@/views/TerminalPageView.vue';
 import BootstrapPageView from '@/views/BootstrapPageView.vue';
 import ForbiddenPageView from '@/views/ForbiddenPageView.vue';
@@ -33,7 +34,7 @@ const router = createRouter({
     {
       path: '/overview',
       name: 'overview',
-      component: SituationPageView,
+      component: DemoSituationPageView,
       meta: { pageCode: 'overview' }
     },
     {
@@ -45,7 +46,7 @@ const router = createRouter({
     {
       path: '/business',
       name: 'business',
-      component: SituationPageView,
+      component: DemoSituationPageView,
       meta: { pageCode: 'business' }
     },
     {
