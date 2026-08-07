@@ -303,58 +303,60 @@
     {
       "code": "business",
       "name": "业务态势",
-      "title": "业务运行与链路态势",
-      "subtitle": "service health & traffic",
-      "location": "业务运行中心 · 核心业务链路态势",
-      "lastUpdated": "2026-07-07 19:14",
+      "title": "签阅流转态势",
+      "subtitle": "阅办行为 · 文件流转 · 终端安全操作",
+      "location": "业务运行中心 · 签阅系统初步对接",
+      "lastUpdated": "2026-07-29",
       "dataMode": "planned",
-      "summary": "业务态势页聚焦核心服务健康、业务量、成功率、SLA 与变更恢复节奏，先建立可替换真实来源的工程页面与统一 DTO。",
+      "summary": "当前仅确认签阅终端 APP 可记录九类行为日志，具体字段、结果状态、对象关联和接入方式尚未确定。本页先建立行为目录与数据准备度视图，不展示未经来源证明的业务量、成功率、时延或积压数值。",
       "heroTags": [
-        { "label": "核心服务", "value": "9 个", "tone": "success" },
-        { "label": "成功率", "value": "99.2%", "tone": "success" },
-        { "label": "关注服务", "value": "2 个", "tone": "warning" },
-        { "label": "进行中变更", "value": "1 项", "tone": "info" }
+        { "label": "已知行为", "value": "9 类", "tone": "info" },
+        { "label": "接入状态", "value": "初步对接", "tone": "warning" },
+        { "label": "字段明细", "value": "待确认", "tone": "warning" },
+        { "label": "可设计域", "value": "3 个", "tone": "success" }
       ],
       "actions": [
-        { "label": "本轮重点", "detail": "重点关注签批服务高峰时段延迟抬升与归档服务的恢复窗口。", "tone": "warning" },
-        { "label": "数据建议", "detail": "建议后续对接链路监控、日志中心、SLA 平台与变更系统。", "tone": "info" },
-        { "label": "展示策略", "detail": "以服务卡 + 趋势图 + SLA 表 + 变更时间线构成业务运行主视图。", "tone": "success" }
+        { "label": "本轮重点", "detail": "先建立登录、打开、签批、收发、下载和本地加解密行为的统一目录。", "tone": "info" },
+        { "label": "数据缺口", "detail": "优先确认事件 ID、文件/流程 ID、人员/账号/终端 ID、结果码和发生时间。", "tone": "warning" },
+        { "label": "展示策略", "detail": "业务页先呈现行为范围、流转关系和待确认边界，真实统计接入后再启用趋势与 KPI。", "tone": "success" }
       ],
       "kpis": [
-        { "label": "业务请求量", "value": "126", "unit": "万", "trend": "+8%", "description": "较昨日同期增长", "tone": "info" },
-        { "label": "整体成功率", "value": "99.2", "unit": "%", "trend": "+0.3%", "description": "自动分流后恢复", "tone": "success" },
-        { "label": "95 线时延", "value": "420", "unit": "ms", "trend": "-35ms", "description": "仍高于目标值 350ms", "tone": "warning" },
-        { "label": "SLA 风险服务", "value": "2", "unit": "个", "trend": "持平", "description": "签批 / 归档服务需关注", "tone": "warning" },
-        { "label": "进行中变更", "value": "1", "unit": "项", "trend": "新增", "description": "夜间归档服务优化窗口", "tone": "info" },
-        { "label": "恢复完成", "value": "3", "unit": "次", "trend": "+1", "description": "24 小时内已完成恢复", "tone": "success" }
+        { "label": "已确认行为类型", "value": "9", "unit": "类", "trend": "已登记", "description": "签阅 APP 可记录的行为类别", "tone": "info" },
+        { "label": "正式业务指标", "value": "0", "unit": "项", "trend": "待字段确认", "description": "当前不对日志发生量做推断", "tone": "warning" },
+        { "label": "事件关联标识", "value": "待定", "unit": "", "trend": "待确认", "description": "事件、文件、流程、人员和终端关联方式", "tone": "warning" },
+        { "label": "日志实时性", "value": "待定", "unit": "", "trend": "待确认", "description": "实时、准实时或批量导出尚未确定", "tone": "warning" },
+        { "label": "可设计主题域", "value": "3", "unit": "个", "trend": "业务/安全/终端", "description": "由已知行为可推导的展示方向", "tone": "success" },
+        { "label": "数据来源", "value": "1", "unit": "个", "trend": "签阅 APP", "description": "终端侧日志来源，采集链路待确认", "tone": "info" }
       ],
       "highlights": [
-        { "title": "签批服务高峰波动", "description": "高峰分流后成功率恢复，但用户体感时延仍有抬升。", "metric": "420ms", "meta": "签批链路", "tone": "warning" },
-        { "title": "归档服务恢复完成", "description": "夜间任务恢复后积压已基本清空。", "metric": "98%", "meta": "归档服务", "tone": "success" },
-        { "title": "跨系统接口待落地", "description": "链路日志中心与业务日志标准仍待补齐，暂以统一 DTO 占位。", "metric": "2 缺口", "meta": "工程规划", "tone": "info" },
-        { "title": "复合风险需联动", "description": "业务峰值期间若叠加安全与终端异常，应提前触发跨域联动。", "metric": "协同关注", "meta": "综合态势", "tone": "danger" }
+        { "title": "签阅行为目录已建立", "description": "已知日志覆盖登录、文件访问、签批、收发和本地加解密。", "metric": "9 类", "meta": "签阅 APP", "tone": "info" },
+        { "title": "签批业务指标暂不计算", "description": "尚未确认签批结果、流程实例、处理人和耗时字段。", "metric": "待确认", "meta": "业务态势", "tone": "warning" },
+        { "title": "本地文件操作需要重点审计", "description": "本地导入、下载、加密和解密可形成后续文件安全观察入口。", "metric": "4 类", "meta": "安全联动", "tone": "warning" },
+        { "title": "终端与人员关联待补齐", "description": "需要稳定终端、账号或人员标识，才能形成按人按终端的聚合视图。", "metric": "待确认", "meta": "终端联动", "tone": "danger" }
       ],
       "sections": [
         {
           "kind": "cards",
           "code": "business-services",
-          "title": "核心业务服务健康卡",
-          "description": "用服务卡片快速查看核心业务的当前健康与瓶颈。",
-          "tags": ["业务", "服务健康"],
+          "title": "签阅行为目录",
+          "description": "九类行为均为已确认的日志类别，不代表当前发生量或成功率。",
+          "tags": ["签阅", "行为目录"],
           "colSpan": 5,
           "minHeight": 340,
           "items": [
-            { "name": "签批服务", "summary": "高峰期成功率稳定，但 95 线时延偏高。", "metric": "99.2%", "detail": "建议继续优化热点查询与异步落库策略。", "tone": "warning", "progress": 86 },
-            { "name": "归档服务", "summary": "积压已消化，恢复稳定运行。", "metric": "98.9%", "detail": "观察夜间批处理窗口是否再次抬升。", "tone": "success", "progress": 92 },
-            { "name": "消息总线", "summary": "吞吐正常，但需关注高峰重试率。", "metric": "31 万/小时", "detail": "当前重试率 0.8%，尚在可控范围。", "tone": "info", "progress": 88 },
-            { "name": "查询服务", "summary": "热点查询集中，缓存命中率略有下降。", "metric": "93.1%", "detail": "建议补充热门维度的预热策略。", "tone": "warning", "progress": 83 }
+            { "name": "登录", "summary": "APP 登录行为已确认。", "metric": "日志", "detail": "登录结果、账号、终端和发生时间待确认。", "tone": "info" },
+            { "name": "打开 / 下载", "summary": "记录流转文件打开和下载行为。", "metric": "日志", "detail": "文件标识、来源、目标和结果待确认。", "tone": "warning" },
+            { "name": "签批", "summary": "记录对流转文件执行签批。", "metric": "日志", "detail": "流程实例、节点、处理人、结果和耗时待确认。", "tone": "warning" },
+            { "name": "在线接收 / 发送", "summary": "记录文件在线接收和发送行为。", "metric": "日志", "detail": "传输方向、对象、失败原因和延迟待确认。", "tone": "info" },
+            { "name": "本地导入", "summary": "记录从终端本地导入文件。", "metric": "日志", "detail": "本地来源、文件属性和策略判定待确认。", "tone": "danger" },
+            { "name": "本地加密 / 解密", "summary": "记录本地文件加密和解密行为。", "metric": "日志", "detail": "文件关联、结果码和授权/审批关系待确认。", "tone": "danger" }
           ]
         },
         {
           "kind": "chart",
           "code": "business-trend",
-          "title": "近 24 小时业务量与成功率",
-          "description": "量与成功率必须结合观察，避免只看其中一项。",
+          "title": "签阅日志字段准备度",
+          "description": "当前只展示待确认项，不代表日志发生量或系统运行指标。",
           "tags": ["业务", "趋势"],
           "colSpan": 7,
           "minHeight": 340,
@@ -362,56 +364,56 @@
             "tooltip": { "trigger": "axis" },
             "legend": { "top": 8, "textStyle": { "color": "#d9e8ff" } },
             "grid": { "left": 18, "right": 18, "top": 48, "bottom": 20, "containLabel": true },
-            "xAxis": { "type": "category", "axisLabel": { "color": "#d9e8ff" }, "data": ["00", "04", "08", "12", "16", "20"] },
-            "yAxis": { "type": "value", "axisLabel": { "color": "#d9e8ff" } },
+            "xAxis": { "type": "category", "axisLabel": { "color": "#d9e8ff", "interval": 0 }, "data": ["事件ID", "时间", "结果", "文件/流程", "人员/账号", "终端"] },
+            "yAxis": { "type": "value", "min": 0, "max": 1, "axisLabel": { "color": "#d9e8ff", "formatter": "待确认" } },
             "series": [
-              { "name": "业务量(万)", "type": "bar", "barMaxWidth": 18, "data": [12, 10, 18, 24, 31, 29], "itemStyle": { "color": "#1e88ff", "borderRadius": [8, 8, 0, 0] } },
-              { "name": "成功率(%)", "type": "line", "smooth": true, "data": [99.5, 99.3, 98.9, 99.0, 99.2, 99.1], "lineStyle": { "color": "#2de2e6", "width": 3 }, "areaStyle": { "color": "rgba(45,226,230,0.12)" } }
-            ]
+              { "name": "字段确认状态", "type": "bar", "data": [0, 0, 0, 0, 0, 0], "barMaxWidth": 24, "itemStyle": { "color": "#ffb547", "borderRadius": [6, 6, 0, 0] } }
+            ],
+            "graphic": { "type": "text", "left": "center", "top": "42%", "style": { "text": "字段样例待提供", "fill": "#d9e8ff", "fontSize": 16, "fontWeight": 600 } }
           },
-          "footer": "业务量上升时需同步观察失败率、时延与重试率，而不是只看 TPS。"
+          "footer": "待确认事件 ID、发生时间、结果状态、文件/流程、人员/账号和终端字段。"
         },
         {
           "kind": "table",
           "code": "business-sla",
-          "title": "服务 SLA 观察表",
-          "description": "基于服务视角关注核心 SLA 水位与责任团队。",
+          "title": "签阅数据契约确认表",
+          "description": "将字段确认结果转化为后续指标和详情展示的准入条件。",
           "tags": ["业务", "SLA"],
           "colSpan": 7,
           "minHeight": 320,
           "columns": [
-            { "key": "service", "label": "服务", "tone": false },
-            { "key": "target", "label": "SLA 目标", "tone": false },
-            { "key": "current", "label": "当前值", "tone": false },
-            { "key": "owner", "label": "责任团队", "tone": false },
+            { "key": "service", "label": "确认项", "tone": false },
+            { "key": "target", "label": "用途", "tone": false },
+            { "key": "current", "label": "当前状态", "tone": false },
+            { "key": "owner", "label": "影响主题", "tone": false },
             { "key": "status", "label": "状态", "tone": true }
           ],
           "rows": [
-            { "cells": { "service": "签批服务", "target": "成功率 ≥ 99.5%", "current": "99.2% / 420ms", "owner": "业务运行组", "status": "关注" }, "tones": { "status": "warning" } },
-            { "cells": { "service": "归档服务", "target": "积压 < 10k", "current": "8.2k", "owner": "数据平台组", "status": "稳定" }, "tones": { "status": "success" } },
-            { "cells": { "service": "消息总线", "target": "重试率 < 1%", "current": "0.8%", "owner": "中间件组", "status": "观察" }, "tones": { "status": "info" } },
-            { "cells": { "service": "查询服务", "target": "95 线 < 300ms", "current": "328ms", "owner": "查询服务组", "status": "需优化" }, "tones": { "status": "warning" } }
+            { "cells": { "service": "事件 ID", "target": "去重与追溯", "current": "待确认", "owner": "综合 / 安全", "status": "待确认" }, "tones": { "status": "warning" } },
+            { "cells": { "service": "签批结果与耗时", "target": "签批量、时效、积压", "current": "待确认", "owner": "业务态势", "status": "待确认" }, "tones": { "status": "warning" } },
+            { "cells": { "service": "文件/流程标识", "target": "流转链路关联", "current": "待确认", "owner": "业务 / 安全", "status": "待确认" }, "tones": { "status": "warning" } },
+            { "cells": { "service": "人员/账号/终端标识", "target": "按人按终端聚合", "current": "待确认", "owner": "终端 / 安全", "status": "待确认" }, "tones": { "status": "warning" } }
           ]
         },
         {
           "kind": "signals",
           "code": "business-signals",
-          "title": "业务瓶颈与建议",
-          "description": "帮助值班与研发快速定位问题方向。",
+          "title": "当前数据边界与下一步",
+          "description": "把已知日志能力和待确认字段直接呈现给联调人员。",
           "tags": ["业务", "重点信号"],
           "colSpan": 5,
           "minHeight": 320,
           "items": [
-            { "label": "热点查询", "title": "签批查询热点集中导致峰值时延抬升", "description": "建议优先优化查询缓存与热点维度分页策略。", "meta": "签批服务", "tone": "warning" },
-            { "label": "批处理窗口", "title": "归档批处理窗口接近上限", "description": "如果夜间流量继续上升，应提前拆分归档任务批次。", "meta": "归档服务", "tone": "info" },
-            { "label": "复合风险", "title": "业务高峰若叠加终端/安全异常需提前预案", "description": "建议综合态势在高峰时段自动提升相关跨域信号权重。", "meta": "综合联动", "tone": "danger" }
+            { "label": "字段", "title": "九类日志的详细字段和格式尚未确定", "description": "优先获取一份真实样例，确认事件 ID、时间、结果和对象关联。", "meta": "签阅系统", "tone": "warning" },
+            { "label": "业务", "title": "签批处理量和时效暂不形成正式 KPI", "description": "需要签批结果、流程实例、处理人和耗时字段后再定义口径。", "meta": "业务态势", "tone": "info" },
+            { "label": "安全", "title": "下载、导入和解密可作为后续重点审计行为", "description": "需要文件标识、敏感级别、来源/目标和策略判定结果。", "meta": "安全联动", "tone": "danger" }
           ]
         },
         {
           "kind": "chart",
           "code": "business-compare",
-          "title": "业务类型对比",
-          "description": "用对比图直观看到不同业务类型的负载与成功率差异。",
+          "title": "签阅行为类别目录",
+          "description": "类别登记视图，不代表九类行为的实际发生次数或占比。",
           "tags": ["业务", "对比"],
           "colSpan": 4,
           "minHeight": 320,
@@ -423,31 +425,36 @@
                 "type": "pie",
                 "radius": ["56%", "76%"],
                 "center": ["50%", "44%"],
-                "label": { "color": "#d9e8ff", "formatter": "{b}\n{d}%" },
+                "label": { "color": "#d9e8ff", "formatter": "{b}" },
                 "itemStyle": { "borderColor": "#091425", "borderWidth": 4 },
                 "data": [
-                  { "name": "签批", "value": 38, "itemStyle": { "color": "#2de2e6" } },
-                  { "name": "查询", "value": 27, "itemStyle": { "color": "#1e88ff" } },
-                  { "name": "归档", "value": 19, "itemStyle": { "color": "#ffb547" } },
-                  { "name": "通知", "value": 16, "itemStyle": { "color": "#3ddc97" } }
+                  { "name": "登录", "value": 1, "itemStyle": { "color": "#1e88ff" } },
+                  { "name": "打开", "value": 1, "itemStyle": { "color": "#2de2e6" } },
+                  { "name": "签批", "value": 1, "itemStyle": { "color": "#ffb547" } },
+                  { "name": "在线接收", "value": 1, "itemStyle": { "color": "#3ddc97" } },
+                  { "name": "本地导入", "value": 1, "itemStyle": { "color": "#ff7875" } },
+                  { "name": "发送", "value": 1, "itemStyle": { "color": "#7c9cff" } },
+                  { "name": "下载", "value": 1, "itemStyle": { "color": "#e0aaff" } },
+                  { "name": "本地加密", "value": 1, "itemStyle": { "color": "#00b8d9" } },
+                  { "name": "本地解密", "value": 1, "itemStyle": { "color": "#f59e0b" } }
                 ]
               }
             ]
           },
-          "footer": "签批与查询业务构成主要流量来源，应优先保障其高峰稳定性。"
+          "footer": "图中每个扇区仅表示已登记的一类日志行为，待接入后再切换为真实发生量。"
         },
         {
           "kind": "timeline",
           "code": "business-timeline",
-          "title": "业务变更与恢复时间线",
-          "description": "变更、回滚、恢复都需要在业务态势中直观看到。",
-          "tags": ["业务", "变更闭环"],
+          "title": "签阅接入准备时间线",
+          "description": "记录字段确认、样例获取、接入验证和正式指标启用状态。",
+          "tags": ["签阅", "接入准备"],
           "colSpan": 3,
           "minHeight": 320,
           "items": [
-            { "time": "18:40", "title": "签批服务调整分流策略", "description": "将高峰流量按热点维度拆分到备用通道。", "actor": "业务运行组", "tone": "warning" },
-            { "time": "17:55", "title": "归档积压恢复到可控范围", "description": "自动扩容批处理节点后，积压下降到 8.2k。", "actor": "数据平台组", "tone": "success" },
-            { "time": "16:30", "title": "查询服务缓存命中率下降", "description": "监测到缓存命中率跌到 93.1%，已生成优化建议。", "actor": "查询服务组", "tone": "info" }
+            { "time": "待定", "title": "获取九类日志字段样例", "description": "确认每类日志的字段、类型、枚举、格式和真实示例。", "actor": "签阅系统", "tone": "warning" },
+            { "time": "待定", "title": "确认事件与对象关联", "description": "确认事件、文件、流程、人员、账号和终端的稳定标识。", "actor": "签阅系统 / 安全管理方", "tone": "warning" },
+            { "time": "待定", "title": "启用签阅业务指标", "description": "完成结果状态、时间口径和接入验证后，再启用趋势与 KPI。", "actor": "态势系统", "tone": "info" }
           ]
         }
       ]

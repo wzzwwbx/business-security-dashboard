@@ -147,4 +147,5 @@ docker compose up --build
 - `docs/api-spec.md`：接口、请求体和时间字段约定
 - `docs/design-tokens.md`：全局设计 token 说明
 - `docs/ui-ux-review.md`：前端 UI/UX 评审和后续治理建议
+- `docs/business-system-integration-ledger.md`：业务系统数据接入与态势设计持续台账
 - `DESIGN.md`：面向日常设计和开发的前端视觉基线

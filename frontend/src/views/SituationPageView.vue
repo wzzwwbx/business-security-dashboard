@@ -406,9 +406,9 @@ const topicOptions = computed<TopicFocus[]>(() => {
       ];
     case 'business':
       return [
-        { id: 'message-flow', label: '密信', description: '密信收发、文件传输与离线消费链路。', tone: 'success', centerCode: 'business-flow', centerTitle: '密信业务流转', centerDescription: '消息接收、文件传输、加密、签阅与归档全过程。', bottomCode: 'business-message-trend', bottomTitle: '密信收发与签收趋势', bottomDescription: '密信收发量、文件字节数与签收完成情况。' },
-        { id: 'sign-flow', label: '签阅', description: '签批待办、停留时长和归档流程瓶颈。', tone: 'warning', centerCode: 'business-sign-flow', centerTitle: '签阅流程与状态分布', centerDescription: '发起、待签、会签、办结和归档的流转关系。', bottomCode: 'business-sign-stay', bottomTitle: '签阅节点平均停留时长', bottomDescription: '定位会签与领导签批环节的流程瓶颈。' },
-        { id: 'envelope', label: '数字信封', description: '加解密、PIN 校验、证书交换与密钥状态。', tone: 'info', centerCode: 'business-envelope-flow', centerTitle: '数字信封加解密链路', centerDescription: '文件加密、PIN 校验、证书交换和安全归档。', bottomCode: 'business-envelope-metrics', bottomTitle: '加解密与证书状态', bottomDescription: '加解密次数、一次一密执行和证书有效性。' }
+        { id: 'behavior', label: '行为目录', description: '九类已知日志行为及其后续统计方向。', tone: 'info', centerCode: 'business-compare', centerTitle: '签阅行为类别目录', centerDescription: '当前仅表示已确认的日志类别，不代表发生量。', bottomCode: 'business-trend', bottomTitle: '签阅日志字段准备度', bottomDescription: '字段样例、结果状态和对象关联待来源系统确认。' },
+        { id: 'sign-flow', label: '签批链路', description: '签批流程、结果、处理人和耗时字段待确认。', tone: 'warning', centerCode: 'business-compare', centerTitle: '签批链路设计视图', centerDescription: '字段确认后用于呈现签批节点、结果和流转关系。', bottomCode: 'business-trend', bottomTitle: '签阅日志字段准备度', bottomDescription: '确认项决定后续业务 KPI、详情和审计能力。' },
+        { id: 'file-security', label: '文件安全', description: '下载、导入、加密和解密行为的安全观察入口。', tone: 'danger', centerCode: 'business-compare', centerTitle: '文件操作到安全态势映射', centerDescription: '字段确认后关联文件、终端、人员和策略结果。', bottomCode: 'business-trend', bottomTitle: '本地文件操作字段边界', bottomDescription: '当前不计算加解密次数，先确认日志字段和授权关系。' }
       ];
     case 'terminal':
       return [
@@ -483,9 +483,9 @@ const dashboardLayout = computed<DashboardLayout>(() => {
       return {
         layoutClass: 'board-grid--business',
         left: [
-          { key: 'leftTop', code: 'business-message-trend', title: '密信业务量趋势', description: '密信业务量变化。', accent: 'success' },
-          { key: 'leftMini', code: 'business-success-ring', title: '密信与签阅成功率', description: '密信和签阅成功率结构。', accent: 'info' },
-          { key: 'leftBottom', code: 'business-sign-trend', title: '签阅处理趋势', description: '签阅业务流转趋势。', accent: 'warning' }
+          { key: 'leftTop', code: 'business-compare', title: '签阅行为类别目录', description: '九类已确认日志行为，不代表实际发生量。', accent: 'info' },
+          { key: 'leftMini', code: 'business-trend', title: '字段准备度', description: '事件 ID、时间、结果和对象关联待确认。', accent: 'warning' },
+          { key: 'leftBottom', code: 'business-compare', title: '签批链路设计视图', description: '字段确认后启用流程节点和处理时效。', accent: 'warning' }
         ].map(resolvePanel),
         centerTop: resolvePanel({
           key: 'centerTop',
@@ -496,16 +496,16 @@ const dashboardLayout = computed<DashboardLayout>(() => {
         }),
         bottomCenter: resolvePanel({
           key: 'bottomCenter',
-          code: activeTopic.value?.bottomCode ?? 'business-message-trend',
-          title: activeTopic.value?.bottomTitle ?? '密信收发与签收趋势',
+          code: activeTopic.value?.bottomCode ?? 'business-trend',
+          title: activeTopic.value?.bottomTitle ?? '签阅日志字段准备度',
           description: activeTopic.value?.bottomDescription,
-          accent: activeTopic.value?.tone ?? 'success'
+          accent: activeTopic.value?.tone ?? 'info'
         }),
         right: [
-          { key: 'rightTop', code: 'business-latency', title: '链路时延排行', description: '业务链路时延对比。', accent: 'warning' },
-          { key: 'rightMini', code: 'business-queue-funnel', title: '积压队列处置情况', description: '业务积压队列处理进度。', accent: 'info' }
+          { key: 'rightTop', code: 'business-compare', title: '签批链路设计视图', description: '字段确认后启用流程节点和处理时效。', accent: 'warning' },
+          { key: 'rightMini', code: 'business-trend', title: '文件安全字段边界', description: '本地导入、下载、加密和解密待确认。', accent: 'danger' }
         ].map(resolvePanel),
-        eventPanel: buildEventPanel('rightBottom', '业务事件流', '密信、签阅、网关和数据库事件滚动呈现。', 'danger', eventItems.value)
+        eventPanel: buildEventPanel('rightBottom', '签阅日志事件流', '当前展示设计方向；真实事件需待签阅日志接入后呈现。', 'warning', eventItems.value)
       };
     case 'terminal':
       return {

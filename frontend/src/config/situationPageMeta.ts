@@ -22,9 +22,9 @@ export const SITUATION_PAGE_META: Record<SituationPageCode, SituationPageMetaCon
   },
   business: {
     name: '业务态势',
-    title: '业务态势',
-    subtitle: '服务依赖、链路健康与恢复建议',
-    location: '业务运行中心'
+    title: '签阅流转态势',
+    subtitle: '阅办行为、文件流转与数据准备度',
+    location: '业务运行中心 · 签阅系统初步对接'
   },
   terminal: {
     name: '终端态势',

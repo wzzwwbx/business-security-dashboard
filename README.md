@@ -29,7 +29,7 @@
 ├── backend/                  # Spring Boot 后端
 ├── probe/                    # Linux ARM Java Probe
 ├── database/mysql/           # MySQL 初始化脚本
-├── docs/                     # 架构 / API / 部署文档
+├── docs/                     # 架构 / API / 部署 / 业务系统接入台账
 ├── compose.yml               # mysql + backend 编排
 └── README.md
 ```
@@ -293,6 +293,7 @@ java -jar target/business-security-probe-0.1.0.jar
 - 部署：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/deployment.md`
 - Probe：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/probe/README.md`
 - 终端建模：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/terminal-data-model.md`
+- 业务系统接入台账：`/Users/bingham/Documents/Project/业务安全态势系统_项目资料/docs/business-system-integration-ledger.md`
 
 
 ## 灵活接入补充说明
