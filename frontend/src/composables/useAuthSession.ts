@@ -50,6 +50,12 @@ async function hydrateSession(force = false) {
       ready.value = false;
     }
 
+    // 演示预览模式：跳过登录与后端 IAM，直接使用内置演示账户。
+    if (import.meta.env.VITE_PREVIEW_AUTH === 'preview') {
+      applyDemoFallback('演示预览模式，已跳过登录。');
+      return;
+    }
+
     try {
       const status = await fetchBootstrapStatus();
       availability.value = 'enabled';

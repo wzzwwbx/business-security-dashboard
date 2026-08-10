@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'blackzh';
+  src: url('./fonts/blackzh.otf') format('opentype');
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
 
@@ -102,7 +110,8 @@
   --sys-color-skeleton-highlight: rgba(79, 121, 181, 0.26);
 
   /* Typography */
-  --font-family-base: 'PingFang SC', 'Microsoft YaHei', Inter, sans-serif;
+  --font-family-base: 'Microsoft YaHei', sans-serif;
+  --font-family-display: 'blackzh', 'Microsoft YaHei', sans-serif;
   --font-size-12: 12px;
   --font-size-13: 13px;
   --font-size-14: 14px;
@@ -207,8 +216,9 @@
 
 /* Obsidian command visual baseline. */
 :root {
-  --font-family-base: Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-family-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  --font-family-base: 'Microsoft YaHei', sans-serif;
+  --font-family-display: 'blackzh', 'Microsoft YaHei', sans-serif;
+  --font-family-mono: 'Microsoft YaHei', sans-serif;
   --sys-color-bg-page: #0a0f1d;
   --sys-color-bg-page-top: #0b0e16;
   --sys-color-bg-page-bottom: #10131b;

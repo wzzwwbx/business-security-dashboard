@@ -1,8 +1,8 @@
 <template>
   <Teleport to="body">
     <Transition name="drawer-fade">
-      <div v-if="open" class="drawer-backdrop" @click.self="emit('close')">
-        <aside class="drawer-panel glass-card" role="dialog" aria-modal="true" :aria-label="title">
+      <div v-if="open" class="drawer-backdrop" :class="{ centered }" @click.self="emit('close')">
+        <aside class="drawer-panel glass-card" :class="{ centered }" role="dialog" aria-modal="true" :aria-label="title">
           <header class="drawer-header">
             <div class="drawer-title-block">
               <div v-if="subtitle" class="drawer-subtitle">{{ subtitle }}</div>
@@ -56,6 +56,7 @@ defineProps<{
   badges?: VisualBadgeItem[];
   tabs?: DrawerTabItem[];
   activeTab?: string;
+  centered?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -76,6 +77,12 @@ const emit = defineEmits<{
   backdrop-filter: blur(4px);
 }
 
+.drawer-backdrop.centered {
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh 24px 24px;
+}
+
 .drawer-panel {
   width: min(440px, 34vw);
   min-width: 360px;
@@ -85,6 +92,16 @@ const emit = defineEmits<{
   overflow: hidden;
 }
 
+.drawer-panel.centered {
+  width: min(1060px, 86vw);
+  min-width: 0;
+  height: auto;
+  max-height: 78vh;
+  border: 1px solid rgba(122, 164, 255, .4);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(2, 10, 26, .6);
+}
+
 .drawer-header {
   padding: 18px 18px 14px;
   border-bottom: 1px solid var(--sys-color-border-secondary);
@@ -92,7 +109,7 @@ const emit = defineEmits<{
 
 .drawer-subtitle {
   color: var(--sys-color-text-secondary);
-  font-size: var(--font-size-12);
+  font-size: 14px;
   letter-spacing: 0.04em;
 }
 
@@ -106,7 +123,7 @@ const emit = defineEmits<{
 
 .drawer-title-row h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 24px;
 }
 
 .drawer-close {
@@ -138,12 +155,13 @@ const emit = defineEmits<{
 
 .drawer-tab {
   flex: 0 0 auto;
-  min-height: 34px;
-  padding: 0 12px;
+  min-height: 38px;
+  padding: 0 14px;
   border-radius: 999px;
   border: 1px solid var(--sys-color-border-secondary);
   background: transparent;
   color: var(--sys-color-text-secondary);
+  font-size: 15px;
   cursor: pointer;
 }
 

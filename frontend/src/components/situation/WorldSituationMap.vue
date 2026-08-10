@@ -47,7 +47,7 @@ const toneColor = {
 const siteSeries = computed(() => props.data.sites.map((site) => ({
   name: site.name,
   value: [site.longitude, site.latitude, site.deviceCount],
-  symbolSize: Math.max(13, Math.min(25, 10 + site.deviceCount / 8)),
+  symbolSize: Math.max(15, Math.min(28, 12 + site.deviceCount / 8)),
   itemStyle: { color: toneColor[site.status] },
   payload: site
 })));
@@ -55,7 +55,7 @@ const siteSeries = computed(() => props.data.sites.map((site) => ({
 const terminalSeries = computed(() => props.data.terminalRegions.map((region) => ({
   name: region.countryName,
   value: [region.longitude, region.latitude, region.total],
-  symbolSize: Math.max(18, Math.min(38, 14 + Math.sqrt(region.total))),
+  symbolSize: Math.max(21, Math.min(42, 17 + Math.sqrt(region.total))),
   itemStyle: { color: toneColor[region.status] },
   payload: region
 })));
@@ -92,14 +92,14 @@ const chartOption = computed(() => ({
       borderColor: 'rgba(58, 203, 255, 0.78)',
       borderWidth: 0.55
     },
-    emphasis: { itemStyle: { areaColor: 'rgba(22, 151, 215, 0.92)', borderColor: '#6be7ff', borderWidth: 1 }, label: { show: true, color: '#e9fbff', fontSize: 10 } },
+    emphasis: { itemStyle: { areaColor: 'rgba(22, 151, 215, 0.92)', borderColor: '#6be7ff', borderWidth: 1 }, label: { show: true, color: '#e9fbff', fontSize: 13 } },
     select: { itemStyle: { areaColor: 'rgba(19, 129, 192, 0.9)' }, label: { color: '#ffffff' } },
     silent: false
   },
   series: [
     ...(showLinks.value ? [{ type: 'lines', coordinateSystem: 'geo', zlevel: 1, silent: true, effect: { show: true, period: 6, trailLength: 0.22, symbolSize: 3 }, lineStyle: { width: 1, opacity: 0.35, curveness: 0.2 }, data: linkSeries.value }] : []),
-    ...(showSites.value ? [{ name: '机房', type: 'effectScatter', coordinateSystem: 'geo', zlevel: 3, rippleEffect: { scale: 2.6, brushType: 'stroke' }, label: { show: true, position: 'right', formatter: '{b}', color: '#dff9ff', fontSize: 10 }, data: siteSeries.value }] : []),
-    ...(showTerminals.value ? [{ name: '终端区域', type: 'scatter', coordinateSystem: 'geo', zlevel: 2, symbol: 'pin', label: { show: true, position: 'inside', formatter: (params: any) => String(params.value?.[2] ?? ''), color: '#06101d', fontWeight: 800, fontSize: 10 }, data: terminalSeries.value }] : [])
+    ...(showSites.value ? [{ name: '机房', type: 'effectScatter', coordinateSystem: 'geo', zlevel: 3, rippleEffect: { scale: 2.6, brushType: 'stroke' }, label: { show: true, position: 'right', formatter: '{b}', color: '#dff9ff', fontSize: 14 }, data: siteSeries.value }] : []),
+    ...(showTerminals.value ? [{ name: '终端区域', type: 'scatter', coordinateSystem: 'geo', zlevel: 2, symbol: 'pin', label: { show: true, position: 'inside', formatter: (params: any) => String(params.value?.[2] ?? ''), color: '#06101d', fontWeight: 800, fontSize: 13 }, data: terminalSeries.value }] : [])
   ]
 }));
 

@@ -1,7 +1,7 @@
 import type { SituationTone } from '@/types/situation';
 
 export type DemoSuiteStatus = 'healthy' | 'degraded' | 'offline';
-export type DemoEquipmentType = 'pad' | 'crypto-box' | 'message-app' | 'signing-app' | 'satellite';
+export type DemoEquipmentType = 'pad' | 'crypto-box' | 'key' | 'message-app' | 'signing-app' | 'satellite';
 
 export interface DemoActivity {
   id: string;
@@ -10,6 +10,8 @@ export interface DemoActivity {
   detail: string;
   minutesAgo: number;
   tone: SituationTone;
+  /** 关联人员编号，用于安全事件与人员联动。 */
+  personId?: string;
 }
 
 export interface DemoEquipment {
@@ -70,6 +72,16 @@ export interface DemoRegion {
   downlinkMbps: number;
 }
 
+export interface DemoBusinessTrend {
+  times: string[];
+  messageSent: number[];
+  messageReceived: number[];
+  fileCount: number[];
+  signingReceived: number[];
+  signingProcessed: number[];
+  signingPending: number[];
+}
+
 export interface DemoLinkSnapshot {
   capacityMbps: number;
   uplinkMbps: number;
@@ -89,4 +101,6 @@ export interface DemoSituationScenario {
   people: DemoPerson[];
   regions: DemoRegion[];
   link: DemoLinkSnapshot;
+  businessTrend: DemoBusinessTrend;
+  securityEvents: DemoActivity[];
 }

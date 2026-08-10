@@ -32,12 +32,11 @@ onMounted(async () => {
   };
 });
 
-function regionTone(region: DemoRegion) {
-  const offline = region.people.filter((person) => person.suiteStatus === 'offline').length;
-  const degraded = region.people.filter((person) => person.suiteStatus === 'degraded').length;
-  if (offline > 0) return '#ff657a';
-  if (degraded > 0) return '#f4bd4f';
-  return '#43d7a2';
+function regionStatus(region: DemoRegion) {
+  const online = region.people.filter((person) => person.online).length;
+  if (online === 0) return { color: '#778397', label: '全员离线' };
+  if (online === region.people.length) return { color: '#43d7a2', label: '全员在线' };
+  return { color: '#e9b949', label: '部分在线' };
 }
 
 const beijing = computed(() => props.regions.find((region) => region.countryCode === 'CN'));
@@ -48,9 +47,9 @@ const chartOption = computed(() => {
   const points = props.regions.map((region) => ({
     name: region.countryCode === 'CN' ? '北京' : region.countryName,
     value: [region.longitude, region.latitude, region.people.length],
-    symbolSize: region.countryCode === 'CN' ? 25 : 22 + region.people.length * 2,
+    symbolSize: region.countryCode === 'CN' ? 26 : 20,
     itemStyle: {
-      color: regionTone(region),
+      color: regionStatus(region).color,
       borderColor: props.selectedCountryCode === region.countryCode ? '#ffffff' : 'rgba(255,255,255,.55)',
       borderWidth: props.selectedCountryCode === region.countryCode ? 2 : 1
     },
@@ -61,7 +60,7 @@ const chartOption = computed(() => {
     coords: [[center.longitude, center.latitude], [region.longitude, region.latitude]],
     value: region.downlinkMbps,
     lineStyle: {
-      color: regionTone(region),
+      color: regionStatus(region).color,
       width: 1 + region.downlinkMbps / 3,
       opacity: 0.48
     }
@@ -72,13 +71,13 @@ const chartOption = computed(() => {
       trigger: 'item',
       backgroundColor: 'rgba(10, 16, 29, .96)',
       borderColor: 'rgba(105, 151, 255, .55)',
-      textStyle: { color: '#e9edfa' },
+      textStyle: { color: '#e9edfa', fontSize: 14 },
       formatter: (params: any) => {
         const region = params.data?.payload as DemoRegion | undefined;
         if (!region) return params.name ?? '';
         const online = region.people.filter((person) => person.online).length;
         const healthy = region.people.filter((person) => person.suiteStatus === 'healthy').length;
-        return `<strong>${region.countryCode === 'CN' ? '北京' : region.countryName}</strong><br/>配发人员 ${region.people.length} 人 · 在线 ${online} 人<br/>完整套件 ${healthy} 套 · 今日流量 ${region.trafficGb.toFixed(1)} GB`;
+        return `<strong>${region.countryCode === 'CN' ? '北京' : region.countryName}</strong><br/>配发人员 ${region.people.length} 人 · 在线 ${online} 人 · ${regionStatus(region).label}<br/>完整套件 ${healthy} 套 · 今日流量 ${region.trafficGb.toFixed(1)} GB`;
       }
     },
     geo: {
@@ -88,22 +87,21 @@ const chartOption = computed(() => {
       center: [18, 17],
       scaleLimit: { min: 0.85, max: 6 },
       itemStyle: { areaColor: '#17243b', borderColor: '#46617f', borderWidth: 0.6 },
-      emphasis: { itemStyle: { areaColor: '#243b5d', borderColor: '#8eb1db' }, label: { show: true, color: '#eef4ff', fontSize: 10 } },
+      emphasis: { itemStyle: { areaColor: '#243b5d', borderColor: '#8eb1db' }, label: { show: true, color: '#eef4ff', fontSize: 16 } },
       select: { disabled: true }
     },
     series: [
       { type: 'lines', coordinateSystem: 'geo', zlevel: 1, silent: true, effect: { show: true, period: 7, trailLength: 0.15, symbolSize: 3 }, data: lines },
       {
-        name: '配发人员',
-        type: 'effectScatter',
+        name: '人员在线状态',
+        type: 'scatter',
         coordinateSystem: 'geo',
         zlevel: 3,
-        rippleEffect: { scale: 2.2, brushType: 'stroke' },
         label: {
           show: true,
           position: 'right',
           color: '#f1f5ff',
-          fontSize: 11,
+          fontSize: 16,
           formatter: (params: any) => {
             const region = params.data?.payload as DemoRegion;
             const online = region.people.filter((person) => person.online).length;
