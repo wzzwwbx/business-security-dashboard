@@ -2,7 +2,29 @@
   <div class="app-grid app-shell">
     <header class="topbar">
       <div class="brand-block">
-        <div class="brand-mark" aria-hidden="true"><i class="brand-ring"></i><i class="brand-core"></i></div>
+        <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+          <defs>
+            <linearGradient id="sdt-bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#1d3254" />
+              <stop offset="1" stop-color="#0c1930" />
+            </linearGradient>
+            <linearGradient id="sdt-stroke" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#7fb0ff" />
+              <stop offset="1" stop-color="#43d7c5" />
+            </linearGradient>
+          </defs>
+          <path d="M24 2.4 L42 12.2 V35.8 L24 45.6 L6 35.8 V12.2 Z" fill="url(#sdt-bg)" stroke="url(#sdt-stroke)" stroke-width="1.5" />
+          <text x="24" y="14" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="800" letter-spacing="0.4" fill="#e8f2ff">SDT</text>
+          <g stroke-linecap="round" fill="none">
+            <path d="M16 33 A8 8 0 0 1 32 33" stroke="#5a95ff" stroke-width="1.1" opacity=".95" />
+            <path d="M12 33 A12 12 0 0 1 36 33" stroke="#5a95ff" stroke-width="1.1" opacity=".8" />
+            <path d="M8 33 A16 16 0 0 1 40 33" stroke="#43d7c5" stroke-width="1.1" opacity=".85" />
+          </g>
+          <line x1="24" y1="33" x2="38" y2="21" stroke="#43d7c5" stroke-width="1.4" opacity=".85" />
+          <circle cx="24" cy="33" r="4" fill="#43d7c5" opacity=".18" />
+          <circle cx="24" cy="33" r="1.8" fill="#aee6ff" />
+          <path d="M13.5 40.5 L34.5 40.5" stroke="#43d7c5" stroke-width="1" opacity=".5" />
+        </svg>
         <div class="brand-copy">
           <strong class="brand-title">业务安全态势系统</strong>
         </div>
@@ -145,23 +167,12 @@ onBeforeUnmount(() => {
 
 .brand-block { gap: 12px; min-width: 400px; }
 .brand-mark {
-  position: relative;
   width: 48px;
   height: 48px;
-  overflow: hidden;
-  border: 1px solid rgba(130, 174, 255, .76);
-  border-radius: 4px;
-  background: #111a2c;
-  box-shadow: inset 0 0 18px rgba(82, 141, 255, .16);
+  display: block;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 6px rgba(82, 141, 255, .35));
 }
-.brand-mark::before,
-.brand-mark::after,
-.brand-ring,
-.brand-core { position: absolute; display: block; content: ''; }
-.brand-mark::before { width: 31px; height: 31px; top: 7px; left: 7px; border: 1px solid #78a9ff; transform: rotate(45deg); }
-.brand-mark::after { width: 6px; height: 6px; top: 6px; left: 6px; background: #63d7c5; box-shadow: 30px 0 #63d7c5, 0 30px #63d7c5, 30px 30px #63d7c5; }
-.brand-ring { width: 19px; height: 19px; top: 14px; left: 14px; border: 1px solid rgba(175, 198, 255, .88); border-radius: 50%; }
-.brand-core { width: 8px; height: 8px; top: 19px; left: 19px; border-radius: 50%; background: #dff1ff; box-shadow: 0 0 10px rgba(99, 215, 197, .85); }
 .brand-copy { display: grid; min-width: 0; }
 .brand-title { color: #f0f4ff; font-family: var(--font-family-display); font-size: 38px; font-weight: 700; line-height: 1; white-space: nowrap; }
 .brand-subtitle { color: #8c96a8; font-size: 12px; }
