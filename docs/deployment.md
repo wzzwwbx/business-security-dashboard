@@ -191,3 +191,21 @@ X-Ingest-Token: manual-dev-token
 
 - 当前宿主机若缺少 `mvn`，建议继续使用容器 Maven 或具备 Maven 的环境执行 backend / probe 单测
 - 若本地桌面沙箱直接请求 `127.0.0.1:8080` 失败，而前端代理联调正常，通常是沙箱网络限制，不代表 backend 异常
+
+## 8. Windows 原生部署（无 Docker）
+
+如需在 **Windows 上不使用 Docker** 部署（纯演示或离线开发），请直接阅读：
+
+- **`deploy/windows/README.md`** — 完整指南（两种场景）
+- `deploy/windows/start-demo.bat` — 一键演示：MySQL + 后端 + nginx
+- `deploy/windows/init-mysql.bat` / `start-mysql.bat` — 便携版 MySQL 初始化/启动
+- `deploy/windows/start-backend.bat` — 启动后端 jar（`mysql` profile）
+- `deploy/windows/nginx-windows.conf` — nginx 配置模板（前端静态 + `/api` 反向代理）
+- `deploy/windows/prepare-offline.ps1` — 联网机打包离线依赖（node_modules / `~/.m2` / 构建产物）
+
+要点：
+
+- 运行只需 JRE 17 + MySQL 8 + nginx；`backend/target/*.jar` 与 `frontend/dist` 均为已构建产物，直接使用。
+- 前端 dist 构建时带 `VITE_PREVIEW_AUTH=preview`，**演示预览模式免登录**。
+- 后端以 `mysql` profile 启动时自动建表并灌入 `/ops` 演示数据（`OpsDemoDataSeeder`），无需手工执行 SQL。
+- `backend/target/`、`frontend/dist/`、`frontend/node_modules/` 均在 `.gitignore` 中，离线环境需通过 `prepare-offline.ps1` 将产物与依赖一并携带。

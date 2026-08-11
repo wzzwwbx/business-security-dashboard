@@ -50,7 +50,15 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   chartClick: [payload: Record<string, any>];
+  chartMouseover: [payload: Record<string, any>];
+  chartMouseout: [payload: Record<string, any>];
+  rendered: [];
 }>();
+
+defineExpose({
+  /** 供父组件获取 ECharts 实例（如 convertToPixel 计算地理投影坐标）。 */
+  getChart: () => chart
+});
 
 type EChartsModule = {
   init: typeof echartsCore.init;
@@ -87,6 +95,7 @@ echartsCore.use([
   echartsComponents.GeoComponent,
   echartsComponents.VisualMapComponent,
   echartsComponents.AriaComponent,
+  echartsComponents.GraphicComponent,
   echartsRenderers.CanvasRenderer
 ]);
 
@@ -318,11 +327,14 @@ const renderChart = async () => {
     if (!chart) {
       chart = echarts.init(chartRef.value);
       chart.on('click', (payload) => emit('chartClick', payload as Record<string, any>));
+      chart.on('mouseover', (payload) => emit('chartMouseover', payload as Record<string, any>));
+      chart.on('mouseout', (payload) => emit('chartMouseout', payload as Record<string, any>));
     }
 
     chart.setOption(themedOption.value, true);
     chart.resize();
     chartReady.value = true;
+    emit('rendered');
   } catch (error) {
     disposeChart();
     chartError.value = error instanceof Error ? error.message : '图表模块加载异常，请稍后重试。';

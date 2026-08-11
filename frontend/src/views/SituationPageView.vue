@@ -983,7 +983,7 @@ function closeDrawer() {
   display: grid;
   grid-template-rows: 54px 102px 38px minmax(0, 1fr);
   gap: 8px;
-  height: calc(100dvh - var(--layout-page-padding) * 2);
+  height: calc(100dvh - var(--topbar-height) - var(--layout-page-padding) * 2);
   min-height: 680px;
   overflow: hidden;
   color: #eaf7ff;

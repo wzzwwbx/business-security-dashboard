@@ -1,46 +1,10 @@
 <template>
   <div class="app-grid app-shell">
     <header class="topbar">
+      <div class="topbar-spacer" aria-hidden="true" />
       <div class="brand-block">
-        <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
-          <defs>
-            <linearGradient id="sdt-bg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#1d3254" />
-              <stop offset="1" stop-color="#0c1930" />
-            </linearGradient>
-            <linearGradient id="sdt-stroke" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#7fb0ff" />
-              <stop offset="1" stop-color="#43d7c5" />
-            </linearGradient>
-          </defs>
-          <path d="M24 2.4 L42 12.2 V35.8 L24 45.6 L6 35.8 V12.2 Z" fill="url(#sdt-bg)" stroke="url(#sdt-stroke)" stroke-width="1.5" />
-          <text x="24" y="14" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="800" letter-spacing="0.4" fill="#e8f2ff">SDT</text>
-          <g stroke-linecap="round" fill="none">
-            <path d="M16 33 A8 8 0 0 1 32 33" stroke="#5a95ff" stroke-width="1.1" opacity=".95" />
-            <path d="M12 33 A12 12 0 0 1 36 33" stroke="#5a95ff" stroke-width="1.1" opacity=".8" />
-            <path d="M8 33 A16 16 0 0 1 40 33" stroke="#43d7c5" stroke-width="1.1" opacity=".85" />
-          </g>
-          <line x1="24" y1="33" x2="38" y2="21" stroke="#43d7c5" stroke-width="1.4" opacity=".85" />
-          <circle cx="24" cy="33" r="4" fill="#43d7c5" opacity=".18" />
-          <circle cx="24" cy="33" r="1.8" fill="#aee6ff" />
-          <path d="M13.5 40.5 L34.5 40.5" stroke="#43d7c5" stroke-width="1" opacity=".5" />
-        </svg>
-        <div class="brand-copy">
-          <strong class="brand-title">业务安全态势系统</strong>
-        </div>
+        <strong class="brand-title">业务安全态势系统</strong>
       </div>
-
-      <nav class="topbar-nav" aria-label="主导航">
-        <RouterLink
-          v-for="item in visibleNavItems"
-          :key="item.code"
-          :to="item.route"
-          class="topbar-nav-item"
-          active-class="active"
-        >
-          <span>{{ item.label }}</span>
-        </RouterLink>
-      </nav>
 
       <div class="topbar-actions">
         <span class="topbar-clock">{{ now }}</span>
@@ -85,7 +49,6 @@
 
 <script setup lang="ts">
 import BaseIcon from '@/components/common/BaseIcon.vue';
-import { MAIN_NAV_ITEMS, VISIBLE_PAGE_CODES } from '@/constants/navigation';
 import { useAuthSession } from '@/composables/useAuthSession';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
@@ -98,8 +61,7 @@ const userMenuOpen = ref(false);
 let timer: number | undefined;
 
 const isPreviewAuth = import.meta.env.VITE_PREVIEW_AUTH === 'preview';
-const visibleNavItems = computed(() => MAIN_NAV_ITEMS.filter((item) => VISIBLE_PAGE_CODES.has(item.code) && auth.canAccessPage(item.code)));
-const systemRoute = computed(() => VISIBLE_PAGE_CODES.has('system') && !isPreviewAuth ? auth.resolveFirstSystemRoute() : null);
+const systemRoute = computed(() => !isPreviewAuth ? auth.resolveFirstSystemRoute() : null);
 function refreshClock() {
   now.value = new Intl.DateTimeFormat('zh-CN', {
     year: 'numeric', month: '2-digit', day: '2-digit',
@@ -147,11 +109,13 @@ onBeforeUnmount(() => {
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  min-height: 76px;
-  padding: 0 28px;
-  gap: 28px;
+  min-height: var(--topbar-height);
+  height: var(--topbar-height);
+  padding: 0 20px;
+  gap: 12px;
   border-bottom: 1px solid var(--sys-color-border-primary);
   background: rgba(10, 13, 22, 0.96);
   backdrop-filter: blur(18px);
@@ -165,43 +129,25 @@ onBeforeUnmount(() => {
   align-items: center;
 }
 
-.brand-block { gap: 12px; min-width: 400px; }
-.brand-mark {
-  width: 48px;
-  height: 48px;
-  display: block;
-  flex: 0 0 auto;
-  filter: drop-shadow(0 0 6px rgba(82, 141, 255, .35));
+.brand-block {
+  justify-self: center;
+  gap: 10px;
+  min-width: 0;
 }
-.brand-copy { display: grid; min-width: 0; }
-.brand-title { color: #f0f4ff; font-family: var(--font-family-display); font-size: 38px; font-weight: 700; line-height: 1; white-space: nowrap; }
-.brand-subtitle { color: #8c96a8; font-size: 12px; }
-
-.topbar-nav { display: flex; align-items: stretch; gap: 10px; height: 76px; }
-.topbar-nav-item {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 16px;
-  color: #8c96a8;
-  font-size: 25px;
+.brand-title {
+  color: #f0f4ff;
+  font-family: var(--font-family-display);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 2px;
   white-space: nowrap;
-  transition: color 160ms ease;
-}
-.topbar-nav-item:hover,
-.topbar-nav-item.active { color: #afc6ff; }
-.topbar-nav-item.active::after {
-  position: absolute;
-  right: 12px;
-  bottom: 0;
-  left: 12px;
-  height: 2px;
-  content: '';
-  background: #afc6ff;
-  box-shadow: 0 0 8px rgba(175, 198, 255, .45);
 }
 
-.topbar-actions { margin-left: auto; gap: 14px; }
+.topbar-actions {
+  justify-self: end;
+  gap: 12px;
+}
 .live-status {
   gap: 8px;
   padding: 6px 10px;
@@ -214,7 +160,7 @@ onBeforeUnmount(() => {
 .live-status .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #52c41a; box-shadow: 0 0 8px rgba(82,196,26,.55); }
 .live-status.warning .status-dot { background: #faad14; }
 .live-status.info .status-dot { background: #528dff; }
-.topbar-clock { color: #dce5f2; font: 24px var(--font-family-base); white-space: nowrap; }
+.topbar-clock { color: #dce5f2; font: 18px var(--font-family-base); white-space: nowrap; }
 .icon-button,
 .user-trigger {
   border: 0;
@@ -222,11 +168,11 @@ onBeforeUnmount(() => {
   background: transparent;
   cursor: pointer;
 }
-.icon-button { width: 32px; height: 32px; display: grid; place-items: center; font-size: 18px; }
+.icon-button { width: 30px; height: 30px; display: grid; place-items: center; font-size: 16px; }
 .icon-button:hover,
 .user-trigger:hover { color: #afc6ff; }
-.user-trigger { gap: 8px; padding: 4px 0; font-size: 18px; }
-.account-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; color: #afc6ff; background: #1c1f28; }
+.user-trigger { gap: 8px; padding: 2px 0; font-size: 15px; }
+.account-avatar { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; color: #afc6ff; background: #1c1f28; }
 .user-trigger > .base-icon { font-size: 12px; }
 .user-menu-wrapper { position: relative; }
 .user-menu {
@@ -245,22 +191,16 @@ onBeforeUnmount(() => {
 .user-menu-item { display: flex; align-items: center; gap: 9px; width: 100%; padding: 10px; border: 0; color: #c1c6d7; background: transparent; text-align: left; cursor: pointer; }
 .user-menu-item:hover { color: #e0e2ed; background: #272a32; }
 .user-menu-item .base-icon { width: 16px; height: 16px; }
-.content-shell { width: 100%; max-width: none; min-width: 0; margin: 0; padding: 18px 22px 24px; }
+.content-shell { width: 100%; max-width: none; min-width: 0; margin: 0; padding: 10px 14px 12px; }
 
 @media (max-width: 1100px) {
-  .topbar { gap: 12px; padding-inline: 16px; }
-  .brand-block { min-width: auto; }
+  .topbar { gap: 8px; padding-inline: 12px; }
   .topbar-clock { display: none; }
-  .topbar-nav { gap: 0; }
-  .topbar-nav-item { padding-inline: 8px; }
 }
 
 @media (max-width: 760px) {
-  .topbar { min-height: 64px; }
-  .brand-title { font-size: 26px; }
-  .topbar-nav { flex: 1; min-width: 0; gap: 0; height: 64px; overflow-x: auto; }
-  .topbar-nav-item { min-height: 64px; padding-inline: 10px; }
-  .topbar-nav-item.active::after { right: 10px; bottom: 0; left: 10px; }
+  .topbar { min-height: 56px; }
+  .brand-title { font-size: 20px; }
   .topbar-actions { gap: 8px; }
   .live-status, .user-name { display: none; }
   .content-shell { padding: 12px; }

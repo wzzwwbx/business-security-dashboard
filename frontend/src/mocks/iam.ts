@@ -18,7 +18,7 @@ const demoBootstrapStatus: BootstrapStatusDto = {
 const demoUser: CurrentUserDto = {
   id: 1,
   username: 'demo-admin',
-  displayName: '演示管理员',
+  displayName: '管理员',
   forcePasswordChange: false,
   roleCodes: ['sys_admin', 'sec_admin', 'audit_admin'],
   roleNames: ['系统管理员', '安全管理员', '审计管理员'],

@@ -30,7 +30,7 @@ export const PAGE_PERMISSION_MAP: Record<AppPageCode, string> = {
 
 export const DEFAULT_PAGE_ORDER: AppPageCode[] = ['overview', 'security', 'business', 'terminal', 'ops', 'system'];
 
-const configuredVisiblePages = String(import.meta.env.VITE_VISIBLE_PAGES ?? 'overview,business')
+const configuredVisiblePages = String(import.meta.env.VITE_VISIBLE_PAGES ?? 'overview')
   .split(',')
   .map((item) => item.trim())
   .filter(Boolean) as AppPageCode[];

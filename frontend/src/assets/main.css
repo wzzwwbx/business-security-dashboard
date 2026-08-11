@@ -54,13 +54,27 @@ textarea {
 }
 
 ::-webkit-scrollbar {
-  width: var(--space-2);
-  height: var(--space-2);
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--sys-color-scrollbar);
   border-radius: var(--radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sys-color-border-secondary);
+}
+
+/* Firefox / 其他平台细滚动条：避免 Windows 默认过宽滚动条破坏大屏观感。 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sys-color-scrollbar) transparent;
 }
 
 .app-grid {

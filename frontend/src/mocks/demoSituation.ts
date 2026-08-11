@@ -3,12 +3,15 @@ import { reactive } from 'vue';
 import type {
   DemoActivity,
   DemoEquipment,
+  DemoLinkType,
   DemoMessageMetrics,
   DemoPerson,
   DemoRegion,
-  DemoSigningMetrics,
+  DemoSatellite,
   DemoSituationScenario,
-  DemoSuiteStatus
+  DemoSigningMetrics,
+  DemoSuiteStatus,
+  DemoSystemTrafficItem
 } from '@/types/demoSituation';
 
 interface RegionSeed {
@@ -25,6 +28,8 @@ interface RegionSeed {
   trafficGb: number;
   uplinkMbps: number;
   downlinkMbps: number;
+  linkType: DemoLinkType;
+  satelliteId?: string;
   message: DemoMessageMetrics;
   signing: DemoSigningMetrics;
 }
@@ -36,23 +41,25 @@ const names = [
 ];
 
 const regionSeeds: RegionSeed[] = [
-  { countryCode: 'CN', countryName: '中国', city: '北京', longitude: 116.4, latitude: 39.9, people: 1, online: 1, healthy: 1, degraded: 0, department: '北京通信保障中心', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, message: { login: 1, logout: 0, sentMessages: 8, receivedMessages: 10, sentFiles: 2, receivedFiles: 3 }, signing: { received: 4, processed: 4, pending: 0, exception: 0 } },
-  { countryCode: 'AE', countryName: '阿联酋', city: '阿布扎比', longitude: 54.4, latitude: 24.3, people: 5, online: 4, healthy: 3, degraded: 1, department: '西亚业务保障组', trafficGb: 3.2, uplinkMbps: 3.6, downlinkMbps: 5.1, message: { login: 5, logout: 1, sentMessages: 34, receivedMessages: 38, sentFiles: 11, receivedFiles: 13 }, signing: { received: 18, processed: 14, pending: 3, exception: 1 } },
-  { countryCode: 'SG', countryName: '新加坡', city: '新加坡', longitude: 103.8, latitude: 1.3, people: 4, online: 4, healthy: 4, degraded: 0, department: '东南亚业务保障组', trafficGb: 2.4, uplinkMbps: 2.8, downlinkMbps: 4.0, message: { login: 5, logout: 1, sentMessages: 27, receivedMessages: 31, sentFiles: 8, receivedFiles: 9 }, signing: { received: 14, processed: 11, pending: 3, exception: 0 } },
-  { countryCode: 'DE', countryName: '德国', city: '柏林', longitude: 10.4, latitude: 51.1, people: 4, online: 3, healthy: 3, degraded: 1, department: '欧洲业务保障组', trafficGb: 2.3, uplinkMbps: 2.5, downlinkMbps: 3.8, message: { login: 4, logout: 1, sentMessages: 25, receivedMessages: 27, sentFiles: 7, receivedFiles: 8 }, signing: { received: 13, processed: 10, pending: 2, exception: 1 } },
-  { countryCode: 'KE', countryName: '肯尼亚', city: '内罗毕', longitude: 37.9, latitude: 0.2, people: 3, online: 3, healthy: 3, degraded: 0, department: '非洲业务保障组', trafficGb: 1.8, uplinkMbps: 2.1, downlinkMbps: 3.0, message: { login: 3, logout: 0, sentMessages: 17, receivedMessages: 20, sentFiles: 5, receivedFiles: 7 }, signing: { received: 10, processed: 8, pending: 2, exception: 0 } },
-  { countryCode: 'BR', countryName: '巴西', city: '巴西利亚', longitude: -51.9, latitude: -14.2, people: 3, online: 2, healthy: 2, degraded: 1, department: '南美业务保障组', trafficGb: 1.8, uplinkMbps: 1.8, downlinkMbps: 2.7, message: { login: 2, logout: 0, sentMessages: 15, receivedMessages: 16, sentFiles: 4, receivedFiles: 5 }, signing: { received: 9, processed: 7, pending: 1, exception: 1 } },
-  { countryCode: 'GB', countryName: '英国', city: '伦敦', longitude: -0.1, latitude: 51.5, people: 2, online: 0, healthy: 0, degraded: 0, department: '欧洲备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } },
-  { countryCode: 'AU', countryName: '澳大利亚', city: '悉尼', longitude: 151.2, latitude: -33.9, people: 2, online: 0, healthy: 0, degraded: 0, department: '大洋洲备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } },
-  { countryCode: 'US', countryName: '美国', city: '洛杉矶', longitude: -118.2, latitude: 34.1, people: 2, online: 0, healthy: 0, degraded: 0, department: '北美备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } }
+  { countryCode: 'CN', countryName: '中国', city: '北京', longitude: 116.4, latitude: 39.9, people: 1, online: 1, healthy: 1, degraded: 0, department: '北京通信保障中心', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 1, logout: 0, sentMessages: 8, receivedMessages: 10, sentFiles: 2, receivedFiles: 3 }, signing: { received: 4, processed: 4, pending: 0, exception: 0 } },
+  { countryCode: 'AE', countryName: '阿联酋', city: '阿布扎比', longitude: 54.4, latitude: 24.3, people: 5, online: 4, healthy: 3, degraded: 1, department: '西亚业务保障组', trafficGb: 3.2, uplinkMbps: 3.6, downlinkMbps: 5.1, linkType: 'satellite', satelliteId: 'sat-1', message: { login: 5, logout: 1, sentMessages: 34, receivedMessages: 38, sentFiles: 11, receivedFiles: 13 }, signing: { received: 18, processed: 14, pending: 3, exception: 1 } },
+  { countryCode: 'SG', countryName: '新加坡', city: '新加坡', longitude: 103.8, latitude: 1.3, people: 4, online: 4, healthy: 4, degraded: 0, department: '东南亚业务保障组', trafficGb: 2.4, uplinkMbps: 2.8, downlinkMbps: 4.0, linkType: 'ground', message: { login: 5, logout: 1, sentMessages: 27, receivedMessages: 31, sentFiles: 8, receivedFiles: 9 }, signing: { received: 14, processed: 11, pending: 3, exception: 0 } },
+  { countryCode: 'DE', countryName: '德国', city: '柏林', longitude: 10.4, latitude: 51.1, people: 4, online: 3, healthy: 3, degraded: 1, department: '欧洲业务保障组', trafficGb: 2.3, uplinkMbps: 2.5, downlinkMbps: 3.8, linkType: 'ground', message: { login: 4, logout: 1, sentMessages: 25, receivedMessages: 27, sentFiles: 7, receivedFiles: 8 }, signing: { received: 13, processed: 10, pending: 2, exception: 1 } },
+  { countryCode: 'KE', countryName: '肯尼亚', city: '内罗毕', longitude: 37.9, latitude: 0.2, people: 3, online: 3, healthy: 3, degraded: 0, department: '非洲业务保障组', trafficGb: 1.8, uplinkMbps: 2.1, downlinkMbps: 3.0, linkType: 'satellite', satelliteId: 'sat-1', message: { login: 3, logout: 0, sentMessages: 17, receivedMessages: 20, sentFiles: 5, receivedFiles: 7 }, signing: { received: 10, processed: 8, pending: 2, exception: 0 } },
+  { countryCode: 'BR', countryName: '巴西', city: '巴西利亚', longitude: -51.9, latitude: -14.2, people: 3, online: 2, healthy: 2, degraded: 1, department: '南美业务保障组', trafficGb: 1.8, uplinkMbps: 1.8, downlinkMbps: 2.7, linkType: 'satellite', satelliteId: 'sat-2', message: { login: 2, logout: 0, sentMessages: 15, receivedMessages: 16, sentFiles: 4, receivedFiles: 5 }, signing: { received: 9, processed: 7, pending: 1, exception: 1 } },
+  { countryCode: 'CA', countryName: '加拿大', city: '多伦多', longitude: -79.4, latitude: 43.7, people: 2, online: 0, healthy: 0, degraded: 0, department: '北美备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } },
+  { countryCode: 'AU', countryName: '澳大利亚', city: '悉尼', longitude: 151.2, latitude: -33.9, people: 2, online: 0, healthy: 0, degraded: 0, department: '大洋洲备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } },
+  { countryCode: 'US', countryName: '美国', city: '洛杉矶', longitude: -118.2, latitude: 34.1, people: 2, online: 0, healthy: 0, degraded: 0, department: '北美备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } }
 ];
 
+const securityEventTime = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60000).toISOString();
+
 const securityEvents: DemoActivity[] = [
-  { id: 'sec-001', type: 'security', title: '境外地址异常登录尝试', detail: '阿布扎比节点连续 5 次登录失败，已触发锁定策略', minutesAgo: 6, tone: 'danger' },
-  { id: 'sec-002', type: 'security', title: '高危文件被拦截隔离', detail: '密信附件命中未知哈希，已隔离并上报', minutesAgo: 15, tone: 'danger' },
-  { id: 'sec-003', type: 'security', title: '密盒证书即将到期', detail: '密盒证书有效期不足 30 天，建议尽快更换', minutesAgo: 28, tone: 'warning' },
-  { id: 'sec-004', type: 'security', title: '身份密钥认证异常', detail: '身份密钥介质未响应，已转人工核验', minutesAgo: 41, tone: 'warning' },
-  { id: 'sec-005', type: 'security', title: '境外链路流量异常', detail: '下行速率接近告警基线，持续观察中', minutesAgo: 55, tone: 'info' }
+  { id: 'sec-001', type: 'security', title: '境外地址异常登录尝试', detail: '阿布扎比节点连续 5 次登录失败，已触发锁定策略', minutesAgo: 6, occurredAt: securityEventTime(6), securityLevel: 'high', tone: 'danger' },
+  { id: 'sec-002', type: 'security', title: '高危文件被拦截隔离', detail: '密信附件命中未知哈希，已隔离并上报', minutesAgo: 15, occurredAt: securityEventTime(15), securityLevel: 'high', tone: 'danger' },
+  { id: 'sec-003', type: 'security', title: '密盒证书即将到期', detail: '密盒证书有效期不足 30 天，建议尽快更换', minutesAgo: 28, occurredAt: securityEventTime(28), securityLevel: 'medium', tone: 'warning' },
+  { id: 'sec-004', type: 'security', title: '身份密钥认证异常', detail: '身份密钥介质未响应，已转人工核验', minutesAgo: 41, occurredAt: securityEventTime(41), securityLevel: 'medium', tone: 'warning' },
+  { id: 'sec-005', type: 'security', title: '境外链路流量异常', detail: '下行速率接近告警基线，持续观察中', minutesAgo: 55, occurredAt: securityEventTime(55), securityLevel: 'notice', tone: 'info' }
 ];
 
 function allocate(total: number, count: number, index: number) {
@@ -154,11 +161,46 @@ const regions: DemoRegion[] = regionSeeds.map((seed) => {
     people,
     trafficGb: seed.trafficGb,
     uplinkMbps: seed.uplinkMbps,
-    downlinkMbps: seed.downlinkMbps
+    downlinkMbps: seed.downlinkMbps,
+    linkType: seed.linkType,
+    satelliteId: seed.satelliteId
   };
 });
 
 const people = regions.flatMap((region) => region.people);
+
+// 生成“A 发送给 B”的收发关系：每人按发送量在近地/同区域人员中分配主要接收对象。
+// 接收来源按收到的消息量在全体人员中分配，保证发送与接收关系可互相印证。
+function pickWeighted(count: number, pool: DemoPerson[]): DemoPerson[] {
+  const result: DemoPerson[] = [];
+  const weighted = [...pool];
+  while (result.length < count && weighted.length) {
+    const slice = weighted.slice(0, Math.max(1, Math.ceil(weighted.length / 2)));
+    const index = Math.floor(Math.random() * slice.length);
+    const picked = slice[index];
+    if (!result.includes(picked)) result.push(picked);
+    weighted.splice(weighted.indexOf(picked), 1);
+  }
+  return result;
+}
+
+people.forEach((person) => {
+  const sameRegion = people.filter((item) => item.id !== person.id && item.countryCode === person.countryCode);
+  const nearby = people.filter((item) => item.id !== person.id && item.countryCode !== person.countryCode);
+  const recipientPool = [...sameRegion, ...nearby];
+  const recipients = pickWeighted(Math.min(3, Math.max(1, recipientPool.length)), recipientPool);
+  const senderPool = people.filter((item) => item.id !== person.id);
+  const senders = pickWeighted(Math.min(3, senderPool.length), senderPool);
+
+  person.message.topRecipients = recipients.map((target, index) => ({
+    personId: target.id,
+    count: Math.max(1, Math.round(person.message.sentMessages / recipients.length) + (index === 0 ? person.message.sentMessages % recipients.length : 0))
+  })).filter((item) => item.count > 0);
+  person.message.topSenders = senders.map((target, index) => ({
+    personId: target.id,
+    count: Math.max(1, Math.round(person.message.receivedMessages / senders.length) + (index === 0 ? person.message.receivedMessages % senders.length : 0))
+  })).filter((item) => item.count > 0);
+});
 
 // 将初始安全事件关联到对应人员：异常登录→阿联酋、证书到期→新加坡、密钥异常→阿联酋等。
 const initialEventPersonIndexes = [1, 7, 9, 4, 13];
@@ -175,6 +217,23 @@ const scenarioData: DemoSituationScenario = {
   people,
   regions,
   securityEvents,
+  satellites: [
+    { id: 'sat-1', name: '卫-1 印度洋中继星', longitude: 75, latitude: 0, status: 'warning', bandwidthMbps: 20, utilization: 68, note: '服务西亚、非洲区域接入' },
+    { id: 'sat-2', name: '卫-2 大西洋中继星', longitude: -45, latitude: 0, status: 'success', bandwidthMbps: 10, utilization: 42, note: '服务南美区域接入' }
+  ],
+  systemTraffic: {
+    times: [...initialTimes],
+    series: [
+      { code: 'msg', name: '密信服务', data: [8.2, 9.1, 10.6, 12.4, 14.1, 13.2, 12.8] },
+      { code: 'sign', name: '签阅服务', data: [5.4, 6.1, 7.2, 8.0, 9.4, 8.8, 8.6] },
+      { code: 'crypto', name: '密盒服务', data: [3.8, 4.2, 5.1, 5.6, 6.8, 6.4, 6.2] }
+    ],
+    snapshot: [
+      { code: 'msg', name: '密信服务', throughputMbps: 12.8, trafficGb: 4.6, peakMbps: 18.9, successRate: 99.6, tone: 'success' },
+      { code: 'sign', name: '签阅服务', throughputMbps: 8.6, trafficGb: 2.9, peakMbps: 12.4, successRate: 99.2, tone: 'success' },
+      { code: 'crypto', name: '密盒服务', throughputMbps: 6.2, trafficGb: 2.1, peakMbps: 9.6, successRate: 99.8, tone: 'success' }
+    ]
+  },
   businessTrend: {
     times: [...initialTimes],
     messageSent: [3, 5, 9, 14, 20, 18, 13],
@@ -218,8 +277,10 @@ const totalsData = {
     sentMessages: total.sentMessages + person.message.sentMessages,
     receivedMessages: total.receivedMessages + person.message.receivedMessages,
     sentFiles: total.sentFiles + person.message.sentFiles,
-    receivedFiles: total.receivedFiles + person.message.receivedFiles
-  }), { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }),
+    receivedFiles: total.receivedFiles + person.message.receivedFiles,
+    topRecipients: [],
+    topSenders: []
+  }), { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0, topRecipients: [], topSenders: [] }),
   signing: people.reduce<DemoSigningMetrics>((total, person) => ({
     received: total.received + person.signing.received,
     processed: total.processed + person.signing.processed,
@@ -242,13 +303,13 @@ const timeLabel = () => new Date().toLocaleTimeString('zh-CN', { hour: '2-digit'
 let tickCount = 0;
 let securitySeq = securityEvents.length + 100;
 
-const securityEventPool: Array<{ title: string; detail: (person: DemoPerson) => string; tone: DemoActivity['tone'] }> = [
-  { title: '境外地址异常登录尝试', detail: (person) => `${person.countryName} ${person.city} 节点连续登录失败，已触发锁定策略`, tone: 'danger' },
-  { title: '高危文件被拦截隔离', detail: () => '密信附件命中未知哈希，已隔离并上报', tone: 'danger' },
-  { title: '密盒证书即将到期', detail: (person) => `${person.name} 的密盒证书有效期不足 30 天，建议尽快更换`, tone: 'warning' },
-  { title: '身份密钥认证异常', detail: (person) => `${person.name} 的身份密钥介质未响应，已转人工核验`, tone: 'warning' },
-  { title: '境外链路流量波动', detail: (person) => `${person.countryName} 方向下行速率出现波动，持续观察中`, tone: 'info' },
-  { title: '密信会话异地登录', detail: (person) => `${person.name} 的密信会话在非常用终端登录`, tone: 'warning' }
+const securityEventPool: Array<{ title: string; detail: (person: DemoPerson) => string; tone: DemoActivity['tone']; level: NonNullable<DemoActivity['securityLevel']> }> = [
+  { title: '境外地址异常登录尝试', detail: (person) => `${person.countryName} ${person.city} 节点连续登录失败，已触发锁定策略`, tone: 'danger', level: 'high' },
+  { title: '高危文件被拦截隔离', detail: () => '密信附件命中未知哈希，已隔离并上报', tone: 'danger', level: 'high' },
+  { title: '密盒证书即将到期', detail: (person) => `${person.name} 的密盒证书有效期不足 30 天，建议尽快更换`, tone: 'warning', level: 'medium' },
+  { title: '身份密钥认证异常', detail: (person) => `${person.name} 的身份密钥介质未响应，已转人工核验`, tone: 'warning', level: 'medium' },
+  { title: '境外链路流量波动', detail: (person) => `${person.countryName} 方向下行速率出现波动，持续观察中`, tone: 'info', level: 'notice' },
+  { title: '密信会话异地登录', detail: (person) => `${person.name} 的密信会话在非常用终端登录`, tone: 'warning', level: 'medium' }
 ];
 
 function pushActivity(person: DemoPerson, activity: DemoActivity) {
@@ -286,14 +347,29 @@ function bumpBusiness() {
   const onlinePeople = demoSituationScenario.people.filter((person) => person.online);
   if (!onlinePeople.length) return;
   const person = randomPick(onlinePeople);
-  person.message.sentMessages += Math.floor(Math.random() * 3);
-  person.message.receivedMessages += Math.floor(Math.random() * 3);
-  if (Math.random() < 0.3) person.message.sentFiles += 1;
-  if (Math.random() < 0.3) person.message.receivedFiles += 1;
+  const sentMessages = Math.floor(Math.random() * 3);
+  const receivedMessages = Math.floor(Math.random() * 3);
+  const sentFiles = Math.random() < 0.3 ? 1 : 0;
+  const receivedFiles = Math.random() < 0.3 ? 1 : 0;
+  person.message.sentMessages += sentMessages;
+  person.message.receivedMessages += receivedMessages;
+  person.message.sentFiles += sentFiles;
+  person.message.receivedFiles += receivedFiles;
+  if (sentMessages > 0 || receivedMessages > 0) {
+    const direction = sentMessages >= receivedMessages ? '发送密信消息' : '接收密信消息';
+    pushActivity(person, { id: `act-${Date.now()}-message`, type: 'message', title: direction, detail: `今日收发 ${person.message.sentMessages + person.message.receivedMessages} 条消息`, minutesAgo: 0, tone: 'info' });
+  } else if (sentFiles > 0 || receivedFiles > 0) {
+    pushActivity(person, { id: `act-${Date.now()}-file`, type: 'file', title: '密信文件收发', detail: `今日发送 ${person.message.sentFiles} / 接收 ${person.message.receivedFiles} 份`, minutesAgo: 0, tone: 'info' });
+  }
   if (Math.random() < 0.5) {
     person.signing.received += 1;
-    if (Math.random() < 0.7) person.signing.processed += 1;
-    else person.signing.pending += 1;
+    if (Math.random() < 0.7) {
+      person.signing.processed += 1;
+      pushActivity(person, { id: `act-${Date.now()}-signing`, type: 'signing', title: '完成文件签阅', detail: `今日已处理 ${person.signing.processed} 份文件`, minutesAgo: 0, tone: 'success' });
+    } else {
+      person.signing.pending += 1;
+      pushActivity(person, { id: `act-${Date.now()}-pending`, type: 'signing', title: '新增待签阅文件', detail: `当前待处理 ${person.signing.pending} 份`, minutesAgo: 0, tone: 'warning' });
+    }
   }
 }
 
@@ -307,6 +383,8 @@ function maybeAddSecurityEvent() {
     title: template.title,
     detail: template.detail(person),
     minutesAgo: 0,
+    occurredAt: new Date().toISOString(),
+    securityLevel: template.level,
     tone: template.tone,
     personId: person.id
   });
@@ -334,8 +412,10 @@ function refreshTotals() {
       sentMessages: total.sentMessages + person.message.sentMessages,
       receivedMessages: total.receivedMessages + person.message.receivedMessages,
       sentFiles: total.sentFiles + person.message.sentFiles,
-      receivedFiles: total.receivedFiles + person.message.receivedFiles
-    }), { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }),
+      receivedFiles: total.receivedFiles + person.message.receivedFiles,
+      topRecipients: [],
+      topSenders: []
+    }), { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0, topRecipients: [], topSenders: [] }),
     signing: peopleAll.reduce<DemoSigningMetrics>((total, person) => ({
       received: total.received + person.signing.received,
       processed: total.processed + person.signing.processed,
@@ -389,6 +469,36 @@ function tick() {
     trend.signingPending.shift();
   }
 
+  // 各业务系统流量滚动：吞吐量随业务量波动，快照同步更新。
+  const systemTraffic = demoSituationScenario.systemTraffic;
+  systemTraffic.times.push(timeLabel());
+  if (systemTraffic.times.length > 7) systemTraffic.times.shift();
+  const driftMap: Record<string, number> = { msg: 0.9, sign: 0.7, crypto: 0.5 };
+  systemTraffic.series.forEach((item) => {
+    const prev = item.data[item.data.length - 1] ?? 1;
+    const drift = driftMap[item.code] ?? 0.6;
+    const next = round1(clamp(prev + (Math.random() - 0.45) * drift, 0.8, 49.5));
+    item.data.push(next);
+    if (item.data.length > 7) item.data.shift();
+  });
+  systemTraffic.snapshot.forEach((item) => {
+    const series = systemTraffic.series.find((entry) => entry.code === item.code);
+    const current = series?.data[series.data.length - 1] ?? item.throughputMbps;
+    item.throughputMbps = current;
+    item.trafficGb = round1(item.trafficGb + (current * TICK_SECONDS) / 3600);
+    item.peakMbps = Math.max(item.peakMbps, current);
+    if (current > item.peakMbps * 0.82 && item.tone === 'success') item.tone = 'warning';
+    if (current < item.peakMbps * 0.6 && item.tone === 'warning') item.tone = 'success';
+  });
+
+  // 卫星中继负载随共享链路利用率联动并叠加轻微漂移。
+  demoSituationScenario.satellites.forEach((satellite) => {
+    const base = satellite.id === 'sat-1' ? 1.5 : 0.9;
+    const next = Math.round(clamp(link.utilization * base + (Math.random() - 0.5) * 8, 8, 98));
+    satellite.utilization = next;
+    satellite.status = next >= 75 ? 'warning' : 'success';
+  });
+
   // 安全事件刷新放慢：约每 40 秒才有机会新增一条。
   if (tickCount % 4 === 0) maybeAddSecurityEvent();
 
@@ -441,6 +551,10 @@ export function validateDemoSituationScenario() {
   assertDemoValue('签阅状态闭合', demoTotals.signing.processed + demoTotals.signing.pending + demoTotals.signing.exception, demoTotals.signing.received);
   assertDemoValue('人员装备数量', people.reduce((total, person) => total + person.equipment.length, 0), 156);
   assertDemoValue('区域累计流量', Math.round(regions.reduce((total, region) => total + region.trafficGb, 0) * 10), Math.round(demoSituationScenario.link.trafficGb * 10));
+  assertDemoValue('卫星数量', demoSituationScenario.satellites.length, 2);
+  assertDemoValue('业务系统数量', demoSituationScenario.systemTraffic.snapshot.length, 3);
+  const messageRelations = people.every((person) => person.message.topRecipients.length >= 0 && person.message.topSenders.length >= 0);
+  if (!messageRelations) throw new Error('演示场景数据不一致：收发关系未初始化');
   return true;
 }
 
