@@ -107,6 +107,64 @@ export interface DemoSatellite {
   note: string;
 }
 
+/** 路由跳的安全状态。 */
+export type DemoHopStatus = 'normal' | 'degraded' | 'blocked';
+
+/** 路由整体状态（含切换状态机）。 */
+export type DemoRouteStatus = 'normal' | 'attacked' | 'switching' | 'switched';
+
+/** 中继节点类型。 */
+export type DemoHopType = 'ground' | 'satellite' | 'submarine' | 'terrestrial' | 'gateway';
+
+/** 通信线路中的一跳（中继节点间的一段链路）。 */
+export interface DemoRouteHop {
+  id: string;
+  /** 中继节点名称，如“华南中继 R1”“卫-1 印度洋中继星”。 */
+  name: string;
+  type: DemoHopType;
+  /** 本跳终点坐标（起点为上一跳终点 / 北京接入中心）。 */
+  longitude: number;
+  latitude: number;
+  latencyMs: number;
+  packetLossPct: number;
+  throughputMbps: number;
+  status: DemoHopStatus;
+  note: string;
+}
+
+/** 一条完整业务路由：北京接入中心 → 多跳中继 → 站点。 */
+export interface DemoRoute {
+  id: string;
+  /** 目标站点国家代码。 */
+  countryCode: string;
+  /** 路由名称，如“北京 → 阿布扎比”。 */
+  name: string;
+  /** 主路由 / 备用路由。 */
+  kind: 'primary' | 'backup';
+  /** 多跳序列（不含北京起点）。 */
+  hops: DemoRouteHop[];
+  /** 总时延（ms）。 */
+  latencyMs: number;
+  status: DemoRouteStatus;
+  /** 最近一次攻击检测说明（attacked 时）。 */
+  attackNote?: string;
+}
+
+/** 智能分析生成的线路切换策略（已下发）。 */
+export interface DemoRouteSwitch {
+  id: string;
+  countryCode: string;
+  /** 切换原因（智能分析结论）。 */
+  reason: string;
+  /** 原路由。 */
+  fromRouteId: string;
+  /** 切换后的目标路由。 */
+  toRouteId: string;
+  /** 策略下发时间（固定 ISO）。 */
+  issuedAt: string;
+  status: 'issued' | 'applied';
+}
+
 /** 业务系统流量快照：各业务系统当前吞吐、累计流量与成功率。 */
 export interface DemoSystemTrafficItem {
   code: string;
@@ -157,4 +215,8 @@ export interface DemoSituationScenario {
     series: Array<{ code: string; name: string; data: number[] }>;
     snapshot: DemoSystemTrafficItem[];
   };
+  /** 多跳业务路由（主路由 + 备用路由）。 */
+  routes: DemoRoute[];
+  /** 智能分析下发的线路切换策略记录。 */
+  routeSwitches: DemoRouteSwitch[];
 }

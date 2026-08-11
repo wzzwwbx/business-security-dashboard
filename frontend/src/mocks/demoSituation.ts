@@ -3,10 +3,14 @@ import { reactive } from 'vue';
 import type {
   DemoActivity,
   DemoEquipment,
+  DemoHopType,
   DemoLinkType,
   DemoMessageMetrics,
   DemoPerson,
   DemoRegion,
+  DemoRoute,
+  DemoRouteHop,
+  DemoRouteSwitch,
   DemoSatellite,
   DemoSituationScenario,
   DemoSigningMetrics,
@@ -212,6 +216,150 @@ const initialTimes = Array.from({ length: 7 }, (_, i) =>
   new Date(Date.now() - (6 - i) * 60000).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })
 );
 
+// —— 多跳业务路由 ——
+// 每条路由：北京接入中心 → 多跳中继 → 站点。主路由为当前生效线路，备用路由待命，
+// 遭受攻击时由智能分析生成切换策略下发。
+type RouteHopSeed = { name: string; type: DemoHopType; coord: [number, number]; latencyMs: number; packetLossPct: number; throughputMbps: number; note: string };
+type RouteSeed = { countryCode: string; name: string; kind: 'primary' | 'backup'; hops: RouteHopSeed[] };
+
+const routeSeeds: RouteSeed[] = [
+  // 阿联酋：卫星主路由 + 海底光缆备路由
+  {
+    countryCode: 'AE',
+    name: '北京 → 阿布扎比（卫星主路由）',
+    kind: 'primary',
+    hops: [
+      { name: '北京信关站 G1', type: 'gateway', coord: [117.5, 39.8], latencyMs: 3, packetLossPct: 0.1, throughputMbps: 14.5, note: '北京信关站上行业务接入' },
+      { name: '卫-1 印度洋中继星', type: 'satellite', coord: [40, 95], latencyMs: 118, packetLossPct: 1.8, throughputMbps: 11.2, note: '卫星中继：北京 ↔ 西亚' },
+      { name: '阿布扎比信关站 G2', type: 'gateway', coord: [54.6, 23.8], latencyMs: 42, packetLossPct: 0.4, throughputMbps: 12.6, note: '阿布扎比信关站下行接入' }
+    ]
+  },
+  {
+    countryCode: 'AE',
+    name: '北京 → 阿布扎比（海底光缆备路由）',
+    kind: 'backup',
+    hops: [
+      { name: '华南中继 R1', type: 'terrestrial', coord: [112, 22], latencyMs: 12, packetLossPct: 0.2, throughputMbps: 13.8, note: '华南陆缆骨干' },
+      { name: '马六甲海缆中继', type: 'submarine', coord: [99, 4], latencyMs: 58, packetLossPct: 0.5, throughputMbps: 12.4, note: '南海—马六甲海缆' },
+      { name: '印度洋海缆中继', type: 'submarine', coord: [72, -5], latencyMs: 96, packetLossPct: 0.6, throughputMbps: 11.8, note: '印度洋海缆主干' },
+      { name: '迪拜陆缆站', type: 'terrestrial', coord: [55.2, 25.2], latencyMs: 38, packetLossPct: 0.3, throughputMbps: 13.1, note: '波斯湾陆缆接入' }
+    ]
+  },
+  // 新加坡：陆缆主路由 + 海底光缆备路由
+  {
+    countryCode: 'SG',
+    name: '北京 → 新加坡（陆缆主路由）',
+    kind: 'primary',
+    hops: [
+      { name: '华南中继 R1', type: 'terrestrial', coord: [112, 22], latencyMs: 12, packetLossPct: 0.2, throughputMbps: 13.8, note: '华南陆缆骨干' },
+      { name: '马六甲中继 R3', type: 'terrestrial', coord: [99, 4], latencyMs: 55, packetLossPct: 0.4, throughputMbps: 12.6, note: '中南半岛—马六甲陆缆' }
+    ]
+  },
+  {
+    countryCode: 'SG',
+    name: '北京 → 新加坡（海底光缆备路由）',
+    kind: 'backup',
+    hops: [
+      { name: '上海中继', type: 'terrestrial', coord: [121.5, 31.2], latencyMs: 8, packetLossPct: 0.1, throughputMbps: 14.2, note: '华东陆缆骨干' },
+      { name: '南海海缆中继', type: 'submarine', coord: [114, 8], latencyMs: 42, packetLossPct: 0.6, throughputMbps: 11.9, note: '南海海底光缆' },
+      { name: '新加坡海缆登陆站', type: 'submarine', coord: [103.7, 1.25], latencyMs: 18, packetLossPct: 0.2, throughputMbps: 13.4, note: '海缆登陆接入' }
+    ]
+  },
+  // 德国：中亚陆缆主路由 + 海缆备路由
+  {
+    countryCode: 'DE',
+    name: '北京 → 柏林（中亚陆缆主路由）',
+    kind: 'primary',
+    hops: [
+      { name: '中亚中继 R7', type: 'terrestrial', coord: [76, 43], latencyMs: 68, packetLossPct: 0.5, throughputMbps: 12.1, note: '中亚陆缆骨干' },
+      { name: '欧洲中继 R8', type: 'terrestrial', coord: [18, 49], latencyMs: 96, packetLossPct: 0.4, throughputMbps: 11.7, note: '东欧陆缆接入' }
+    ]
+  },
+  {
+    countryCode: 'DE',
+    name: '北京 → 柏林（海缆备路由）',
+    kind: 'backup',
+    hops: [
+      { name: '马六甲海缆中继', type: 'submarine', coord: [99, 4], latencyMs: 58, packetLossPct: 0.5, throughputMbps: 12.4, note: '南海—马六甲海缆' },
+      { name: '红海中继', type: 'submarine', coord: [38, 22], latencyMs: 88, packetLossPct: 0.6, throughputMbps: 11.6, note: '红海海底光缆' },
+      { name: '地中海中继', type: 'submarine', coord: [18, 35], latencyMs: 74, packetLossPct: 0.5, throughputMbps: 12.0, note: '地中海海底光缆' },
+      { name: '柏林陆缆站', type: 'terrestrial', coord: [13.4, 52.5], latencyMs: 12, packetLossPct: 0.2, throughputMbps: 13.6, note: '欧洲陆缆接入' }
+    ]
+  },
+  // 肯尼亚：卫星主路由 + 海缆备路由
+  {
+    countryCode: 'KE',
+    name: '北京 → 内罗毕（卫星主路由）',
+    kind: 'primary',
+    hops: [
+      { name: '华南中继 R1', type: 'terrestrial', coord: [112, 22], latencyMs: 12, packetLossPct: 0.2, throughputMbps: 13.8, note: '华南陆缆骨干' },
+      { name: '卫-1 印度洋中继星', type: 'satellite', coord: [40, 95], latencyMs: 124, packetLossPct: 1.6, throughputMbps: 10.8, note: '卫星中继：北京 ↔ 非洲' },
+      { name: '内罗毕信关站', type: 'gateway', coord: [38.2, 0.4], latencyMs: 46, packetLossPct: 0.5, throughputMbps: 12.2, note: '内罗毕信关站下行接入' }
+    ]
+  },
+  {
+    countryCode: 'KE',
+    name: '北京 → 内罗毕（海缆备路由）',
+    kind: 'backup',
+    hops: [
+      { name: '印度洋海缆中继', type: 'submarine', coord: [72, -5], latencyMs: 96, packetLossPct: 0.6, throughputMbps: 11.8, note: '印度洋海缆主干' },
+      { name: '蒙巴萨海缆站', type: 'submarine', coord: [40.2, -3.5], latencyMs: 62, packetLossPct: 0.5, throughputMbps: 12.3, note: '东非海缆登陆' },
+      { name: '内罗毕陆缆', type: 'terrestrial', coord: [36.8, -1.3], latencyMs: 28, packetLossPct: 0.3, throughputMbps: 13.0, note: '东非陆缆接入' }
+    ]
+  },
+  // 巴西：卫星主路由 + 太平洋海缆备路由
+  {
+    countryCode: 'BR',
+    name: '北京 → 巴西利亚（卫星主路由）',
+    kind: 'primary',
+    hops: [
+      { name: '北京信关站 G1', type: 'gateway', coord: [117.5, 39.8], latencyMs: 3, packetLossPct: 0.1, throughputMbps: 14.5, note: '北京信关站上行业务接入' },
+      { name: '卫-2 大西洋中继星', type: 'satellite', coord: [-55, 95], latencyMs: 142, packetLossPct: 1.9, throughputMbps: 10.4, note: '卫星中继：北京 ↔ 南美' },
+      { name: '巴西利亚信关站', type: 'gateway', coord: [-52.2, -15.6], latencyMs: 34, packetLossPct: 0.4, throughputMbps: 12.8, note: '巴西利亚信关站下行接入' }
+    ]
+  },
+  {
+    countryCode: 'BR',
+    name: '北京 → 巴西利亚（太平洋海缆备路由）',
+    kind: 'backup',
+    hops: [
+      { name: '太平洋海缆中继', type: 'submarine', coord: [150, -10], latencyMs: 88, packetLossPct: 0.5, throughputMbps: 12.2, note: '西太平洋海底光缆' },
+      { name: '东太平洋中继', type: 'submarine', coord: [-140, 30], latencyMs: 132, packetLossPct: 0.7, throughputMbps: 11.4, note: '东太平洋海底光缆' },
+      { name: '圣地亚哥登陆站', type: 'submarine', coord: [-70, -20], latencyMs: 96, packetLossPct: 0.6, throughputMbps: 11.9, note: '南美西岸海缆登陆' },
+      { name: '巴西利亚陆缆', type: 'terrestrial', coord: [-47.9, -15.8], latencyMs: 42, packetLossPct: 0.3, throughputMbps: 13.2, note: '南美陆缆骨干' }
+    ]
+  }
+];
+
+const BEIJING_COORD: [number, number] = [116.4, 39.9];
+
+function buildRoutes(): DemoRoute[] {
+  return routeSeeds.map((seed) => {
+    const hops: DemoRouteHop[] = seed.hops.map((hop, hopIndex) => ({
+      id: `hop-${seed.countryCode}-${seed.kind}-${hopIndex + 1}`,
+      name: hop.name,
+      type: hop.type,
+      longitude: hop.coord[0],
+      latitude: hop.coord[1],
+      latencyMs: hop.latencyMs,
+      packetLossPct: hop.packetLossPct,
+      throughputMbps: hop.throughputMbps,
+      status: 'normal',
+      note: hop.note
+    }));
+    return {
+      id: `route-${seed.countryCode}-${seed.kind}`,
+      countryCode: seed.countryCode,
+      name: seed.name,
+      kind: seed.kind,
+      hops,
+      latencyMs: hops.reduce((sum, hop) => sum + hop.latencyMs, 0),
+      status: seed.kind === 'primary' ? 'normal' : 'standby'
+    };
+  });
+}
+
+
 const scenarioData: DemoSituationScenario = {
   generatedAt: new Date().toISOString(),
   people,
@@ -243,6 +391,8 @@ const scenarioData: DemoSituationScenario = {
     signingProcessed: [2, 4, 7, 10, 13, 11, 7],
     signingPending: [1, 2, 4, 6, 9, 12, 11]
   },
+  routes: buildRoutes(),
+  routeSwitches: [],
   link: {
     capacityMbps: 50,
     uplinkMbps: 12.8,
@@ -391,6 +541,112 @@ function maybeAddSecurityEvent() {
   if (demoSituationScenario.securityEvents.length > 6) demoSituationScenario.securityEvents.pop();
 }
 
+// —— 多跳线路安全检测与智能切换 ——
+interface RouteIncident {
+  routeId: string;
+  hopIndex: number;
+  stage: 'attacked' | 'switching';
+}
+let routeIncident: RouteIncident | null = null;
+let routeSwitchSeq = 0;
+
+const routeAttackTemplates = [
+  (hop: DemoRouteHop) => `${hop.name} 链路丢包率骤升至 ${hop.packetLossPct.toFixed(1)}%，疑似境外节点流量注入攻击`,
+  (hop: DemoRouteHop) => `${hop.name} 检测到异常重传与吞吐骤降，疑似拥塞攻击`,
+  (hop: DemoRouteHop) => `${hop.name} 连续握手失败，疑似中间人探测攻击`
+];
+
+// 智能分析：攻击发生后由“线路安全智能分析引擎”生成切换策略并下发。
+function issueRouteSwitchPolicy(primary: DemoRoute, backup: DemoRoute, hopIndex: number) {
+  const hop = primary.hops[hopIndex];
+  demoSituationScenario.routeSwitches.unshift({
+    id: `switch-${++routeSwitchSeq}`,
+    countryCode: primary.countryCode,
+    reason: `线路安全智能分析：主路由第 ${hopIndex + 1} 跳（${hop.name}）${primary.attackNote ?? '检测到链路攻击'}；综合比对各用线路健康度、时延与带宽余量，生成切换策略并下发：业务路由由「${primary.name}」切换至「${backup.name}」`,
+    fromRouteId: primary.id,
+    toRouteId: backup.id,
+    issuedAt: new Date().toISOString(),
+    status: 'issued'
+  });
+}
+
+// 随机检测到一次攻击：将某主路由的一跳置为阻断并进入 attacked 阶段。
+function attackRoute(route: DemoRoute, hopIndex: number) {
+  const hop = route.hops[hopIndex];
+  hop.status = 'blocked';
+  hop.packetLossPct = 16 + Math.floor(Math.random() * 9);
+  hop.throughputMbps = Math.max(0.4, Math.round(hop.throughputMbps * 0.22 * 10) / 10);
+  hop.note = '遭受攻击，链路阻断';
+  route.status = 'attacked';
+  route.attackNote = routeAttackTemplates[Math.floor(Math.random() * routeAttackTemplates.length)](hop);
+  routeIncident = { routeId: route.id, hopIndex, stage: 'attacked' };
+}
+
+// 攻击解除后回切：主路由恢复 normal，备用路由回到待命，链路参数复位。
+function maybeRestoreRoute() {
+  const switched = demoSituationScenario.routes.filter((route) => route.kind === 'primary' && route.status === 'switched');
+  if (!switched.length || Math.random() > 0.14) return;
+  const route = randomPick(switched);
+  route.hops.forEach((hop) => {
+    hop.status = 'normal';
+    hop.packetLossPct = Math.max(0.1, Math.round((hop.packetLossPct * 0.05 + 0.2) * 10) / 10);
+    hop.throughputMbps = Math.round((Math.min(14.5, hop.throughputMbps * 3.2)) * 10) / 10;
+    hop.note = hop.note === '遭受攻击，链路阻断' ? '链路恢复正常' : hop.note;
+  });
+  route.status = 'normal';
+  route.attackNote = undefined;
+  const backup = demoSituationScenario.routes.find((item) => item.countryCode === route.countryCode && item.kind === 'backup');
+  if (backup) backup.status = 'standby';
+}
+
+function maybeAttackRoute() {
+  if (routeIncident) return;
+  if (Math.random() > 0.16) return;
+  const primaries = demoSituationScenario.routes.filter((route) => route.kind === 'primary' && route.status === 'normal');
+  if (!primaries.length) return;
+  const route = randomPick(primaries);
+  attackRoute(route, Math.floor(Math.random() * route.hops.length));
+}
+
+// 每个 tick 推进一阶段：attacked → 生成策略切换（switching）→ 切换完成（switched / active）。
+// 首个 tick 强制触发一次攻击，确保演示加载后立即呈现多跳攻击与切换效果。
+let routeTickCount = 0;
+function routeSecurityTick() {
+  routeTickCount += 1;
+  if (!routeIncident) {
+    if (routeTickCount === 1) {
+      const primaries = demoSituationScenario.routes.filter((route) => route.kind === 'primary' && route.status === 'normal');
+      if (primaries.length) {
+        const route = randomPick(primaries);
+        attackRoute(route, Math.floor(Math.random() * route.hops.length));
+      }
+    } else {
+      maybeAttackRoute();
+      maybeRestoreRoute();
+    }
+    return;
+  }
+  const primary = demoSituationScenario.routes.find((route) => route.id === routeIncident!.routeId);
+  const backup = primary
+    ? demoSituationScenario.routes.find((route) => route.countryCode === primary.countryCode && route.kind === 'backup')
+    : undefined;
+  if (!primary || !backup) {
+    routeIncident = null;
+    return;
+  }
+  if (routeIncident.stage === 'attacked') {
+    primary.status = 'switching';
+    issueRouteSwitchPolicy(primary, backup, routeIncident.hopIndex);
+    routeIncident.stage = 'switching';
+  } else if (routeIncident.stage === 'switching') {
+    primary.status = 'switched';
+    backup.status = 'active';
+    const policy = demoSituationScenario.routeSwitches[0];
+    if (policy) policy.status = 'applied';
+    routeIncident = null;
+  }
+}
+
 function refreshTotals() {
   const peopleAll = demoSituationScenario.people;
   Object.assign(demoTotals, {
@@ -449,6 +705,7 @@ function tick() {
 
   maybeFlipSessions();
   bumpBusiness();
+  routeSecurityTick();
 
   // 业务趋势滚动：实时时间轴 + 每周期新增业务量。
   const trend = demoSituationScenario.businessTrend;
@@ -524,6 +781,16 @@ function assertDemoValue(label: string, actual: number, expected: number) {
   if (actual !== expected) {
     throw new Error(`演示场景数据不一致：${label} 应为 ${expected}，实际为 ${actual}`);
   }
+}
+
+// 演示 / 测试钩子：强制触发一次线路攻击（无进行中事件时）。
+export function demoTriggerRouteAttack() {
+  if (routeIncident) return;
+  const primaries = demoSituationScenario.routes.filter((route) => route.kind === 'primary' && route.status === 'normal');
+  if (!primaries.length) return;
+  const route = randomPick(primaries);
+  const hopIndex = Math.floor(Math.random() * route.hops.length);
+  attackRoute(route, hopIndex);
 }
 
 export function validateDemoSituationScenario() {

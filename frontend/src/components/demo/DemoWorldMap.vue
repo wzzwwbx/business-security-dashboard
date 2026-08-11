@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import BaseSkeleton from '@/components/common/BaseSkeleton.vue';
 import EChartWidget from '@/components/widgets/EChartWidget.vue';
+import RouteTopologyPanel from '@/components/demo/RouteTopologyPanel.vue';
 import { demoSituationScenario } from '@/mocks/demoSituation';
 import type { DemoRegion } from '@/types/demoSituation';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 
 const props = defineProps<{
   regions: DemoRegion[];
@@ -16,8 +17,6 @@ const emit = defineEmits<{
 
 const worldGeoJson = ref<Record<string, unknown> | null>(null);
 const mapChart = ref<InstanceType<typeof EChartWidget> | null>(null);
-let highlightedSatelliteRoute: number[] = [];
-let highlightedSatelliteSeriesIndex: number | null = null;
 
 onMounted(async () => {
   const response = await fetch('/maps/world-110m.json');
@@ -108,34 +107,53 @@ const chartOption = computed(() => {
 
   const overseas = props.regions.filter((region) => region.countryCode !== 'CN');
 
-  // 地面链路：统一蓝色实线，与图例一致。
-  const groundLines = center ? overseas.filter((region) => region.linkType === 'ground').map((region) => ({
+  // 注册命中几何（geo 端点 + curveness），供自定义点击/悬浮判定使用。
+  geoRouteLines.length = 0;
+
+  // 地面链路：统一蓝色实线，与图例一致；线路点击/悬浮由自定义命中处理。
+  const groundSegments = center ? overseas.filter((region) => region.linkType === 'ground').map((region) => ({
     coords: [[center.longitude, center.latitude], [region.longitude, region.latitude]],
     value: region.downlinkMbps,
+    routeId: demoSituationScenario.routes.find((route) => route.countryCode === region.countryCode && route.kind === 'primary')?.id,
+    countryCode: region.countryCode,
     lineStyle: {
       color: '#5a95ff',
       width: 1 + region.downlinkMbps / 3,
       opacity: 0.5
     }
   })) : [];
+  groundSegments.forEach((segment, dataIndex) => {
+    if (!segment.routeId) return; // 离线站点无路由数据，不提供拓扑命中。
+    const coords = segment.coords as [[number, number], [number, number]];
+    geoRouteLines.push({ countryCode: segment.countryCode, routeId: segment.routeId, seriesIndex: 0, dataIndex, from: coords[0], to: coords[1] });
+  });
 
-  // 卫星链路：北京 → 卫星 与 卫星 → 站点 拆分为两段弧线。
-  // 不同站点使用不同弧度：避免北京→卫星共用上行段完全重合（如阿联酋与肯尼亚同经卫-1），且弧线更明显。
-  const satelliteLines = center ? overseas.filter((region) => region.linkType === 'satellite').flatMap((region, index) => {
+  // 卫星链路：北京 → 卫星 与 卫星 → 站点 拆分为两段弧线；点击任一段查看多跳拓扑。
+  const satelliteSegments = center ? overseas.filter((region) => region.linkType === 'satellite').flatMap((region, index) => {
     const satGeo = SAT_GEO[region.satelliteId ?? ''] ?? SAT_GEO['sat-1'];
     const color = SATELLITE_COLORS[index % SATELLITE_COLORS.length];
     const arcs = { AE: [-0.52, -0.3], KE: [-0.16, -0.6], BR: [-0.42, -0.45] }[region.countryCode] ?? [-0.35, -0.35];
     return [
       {
         coords: [[center.longitude, center.latitude], satGeo],
+        routeId: demoSituationScenario.routes.find((route) => route.countryCode === region.countryCode && route.kind === 'primary')?.id,
+        countryCode: region.countryCode,
         lineStyle: { color, width: 1.5, opacity: 0.38, type: 'dashed', curveness: arcs[0] }
       },
       {
         coords: [satGeo, [region.longitude, region.latitude]],
+        routeId: demoSituationScenario.routes.find((route) => route.countryCode === region.countryCode && route.kind === 'primary')?.id,
+        countryCode: region.countryCode,
         lineStyle: { color, width: 1.5, opacity: 0.38, type: 'dashed', curveness: arcs[1] }
       }
     ];
   }) : [];
+  satelliteSegments.forEach((segment, dataIndex) => {
+    if (!segment.routeId) return;
+    const coords = segment.coords as [[number, number], [number, number]];
+    const curveness = (segment.lineStyle as { curveness?: number })?.curveness;
+    geoRouteLines.push({ countryCode: segment.countryCode, routeId: segment.routeId, seriesIndex: 2, dataIndex, from: coords[0], to: coords[1], curveness });
+  });
 
   // 通信卫星：真实卫星矢量图，位于地图上方“天空”区域（高纬度海洋上空）。
   const satellitePoints = demoSituationScenario.satellites.map((sat) => {
@@ -190,15 +208,24 @@ const chartOption = computed(() => {
       select: { disabled: true }
     },
     series: [
-      { type: 'lines', coordinateSystem: 'geo', zlevel: 1, silent: true, effect: { show: true, period: 7, trailLength: 0.15, symbolSize: 3 }, data: groundLines },
+      {
+        name: '地面链路',
+        type: 'lines',
+        coordinateSystem: 'geo',
+        zlevel: 1,
+        silent: true,
+        emphasis: { lineStyle: { width: 3, opacity: 1 } },
+        effect: { show: true, period: 7, trailLength: 0.15, symbolSize: 3 },
+        data: groundSegments
+      },
       {
         name: '卫星链路',
         type: 'lines',
         coordinateSystem: 'geo',
         zlevel: 2,
-        silent: false,
+        silent: true,
         emphasis: { lineStyle: { width: 2.8, opacity: 1 } },
-        data: satelliteLines
+        data: satelliteSegments
       },
       {
         name: '通信卫星',
@@ -230,38 +257,195 @@ const chartOption = computed(() => {
   };
 });
 
-function setSatelliteRouteHighlight(seriesIndex: number, dataIndex: number, active: boolean) {
+// —— 线路命中：复刻 ECharts 渲染（端点投影 + 屏幕空间控制点公式）做自定义命中 ——
+// ECharts lines 的贝塞尔命中退化为包围盒（大弧线会误吞其他线路），且元素不带业务数据，
+// 因此用 convertToPixel 投影 geo 端点后按屏幕公式离散弧线，以点到折线距离判定命中。
+interface GeoRouteLine {
+  countryCode: string;
+  routeId?: string;
+  seriesIndex: number;
+  dataIndex: number;
+  from: [number, number];
+  to: [number, number];
+  curveness?: number;
+}
+
+const geoRouteLines: GeoRouteLine[] = [];
+let highlightedRoute: Array<{ seriesIndex: number; dataIndex: number }> = [];
+const HIT_THRESHOLD_PX = 8;
+
+function discretizeLine(x1: number, y1: number, x2: number, y2: number, cpx?: number, cpy?: number): Array<[number, number]> {
+  const pts: Array<[number, number]> = [];
+  const count = 24;
+  for (let i = 0; i <= count; i += 1) {
+    const t = i / count;
+    const inv = 1 - t;
+    if (cpx == null || cpy == null) {
+      pts.push([x1 + (x2 - x1) * t, y1 + (y2 - y1) * t]);
+    } else {
+      pts.push([inv * inv * x1 + 2 * inv * t * cpx + t * t * x2, inv * inv * y1 + 2 * inv * t * cpy + t * t * y2]);
+    }
+  }
+  return pts;
+}
+
+function pointToSegmentDist(px: number, py: number, a: [number, number], b: [number, number]) {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const len2 = dx * dx + dy * dy;
+  let t = len2 ? ((px - a[0]) * dx + (py - a[1]) * dy) / len2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  const qx = a[0] + t * dx;
+  const qy = a[1] + t * dy;
+  return Math.hypot(px - qx, py - qy);
+}
+
+function findRouteAt(px: number, py: number) {
+  const chart = mapChart.value?.getChart();
+  if (!chart) return null;
+  let best: GeoRouteLine | null = null;
+  let bestDist = Infinity;
+  for (const line of geoRouteLines) {
+    const s0 = chart.convertToPixel({ geoIndex: 0 }, line.from);
+    const s1 = chart.convertToPixel({ geoIndex: 0 }, line.to);
+    if (!s0 || !s1) continue;
+    const c = line.curveness ?? 0;
+    const pts = discretizeLine(s0[0], s0[1], s1[0], s1[1], c ? s0[0] + (s1[0] - s0[0]) / 2 + (s1[1] - s0[1]) * c : undefined, c ? s0[1] + (s1[1] - s0[1]) / 2 - (s1[0] - s0[0]) * c : undefined);
+    for (let i = 0; i < pts.length - 1; i += 1) {
+      const dist = pointToSegmentDist(px, py, pts[i], pts[i + 1]);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = line;
+      }
+    }
+  }
+  return bestDist <= HIT_THRESHOLD_PX ? best : null;
+}
+
+function highlightRoute(routeId: string | undefined) {
   const chart = mapChart.value?.getChart();
   if (!chart) return;
+  const zr = chart.getZr();
+  zr.storage.getDisplayList().forEach((el) => {
+    const element = el as { type?: string; __bssRouteId?: string; __bssBase?: { w: number; o: number }; style?: { lineWidth?: number; opacity?: number; stroke?: string }; setStyle?: (style: Record<string, unknown>) => void };
+    if (element.type !== 'ec-line') return;
+    if (routeId && element.__bssRouteId === routeId) {
+      element.setStyle?.({ lineWidth: 3, opacity: 1, shadowBlur: 10, shadowColor: element.style?.stroke });
+    } else if (element.__bssBase) {
+      element.setStyle?.({ lineWidth: element.__bssBase.w, opacity: element.__bssBase.o, shadowBlur: 0 });
+    }
+  });
+  zr.refresh();
+}
 
-  if (highlightedSatelliteRoute.length && highlightedSatelliteSeriesIndex !== null) {
-    highlightedSatelliteRoute.forEach((index) => chart.dispatchAction({ type: 'downplay', seriesIndex: highlightedSatelliteSeriesIndex, dataIndex: index }));
-    highlightedSatelliteRoute = [];
-    highlightedSatelliteSeriesIndex = null;
+// 为每个线路元素标记所属路由与基础样式（元素级高亮，不依赖 ECharts emphasis）。
+function tagLineElements() {
+  const chart = mapChart.value?.getChart();
+  if (!chart) return;
+  const zr = chart.getZr();
+  zr.storage.getDisplayList().forEach((el) => {
+    const element = el as { type?: string; __bssRouteId?: string; __bssBase?: { w: number; o: number }; style?: { lineWidth?: number; opacity?: number }; shape?: { x1: number; y1: number; x2: number; y2: number } };
+    if (element.type !== 'ec-line' || element.__bssRouteId) return;
+    const shape = element.shape;
+    if (!shape) return;
+    for (const line of geoRouteLines) {
+      const a = chart.convertToPixel({ geoIndex: 0 }, line.from);
+      const b = chart.convertToPixel({ geoIndex: 0 }, line.to);
+      if (a && b && Math.abs(shape.x1 - a[0]) < 1.5 && Math.abs(shape.y1 - a[1]) < 1.5 && Math.abs(shape.x2 - b[0]) < 1.5 && Math.abs(shape.y2 - b[1]) < 1.5) {
+        element.__bssRouteId = line.routeId;
+        element.__bssBase = { w: element.style?.lineWidth ?? 1.5, o: element.style?.opacity ?? 0.5 };
+        return;
+      }
+    }
+  });
+}
+
+function isScatterTarget(target: unknown) {
+  // scatter（区域点 / 卫星图标）元素带 __ecData.seriesIndex；地图区域 / 其他元素则继续线路判定。
+  const el = target as { __ecData?: { seriesIndex?: number } } | null;
+  const seriesIndex = el?.__ecData?.seriesIndex;
+  return typeof seriesIndex === 'number' && (seriesIndex === 2 || seriesIndex === 3);
+}
+
+function handleZrClick(event: { zrX?: number; zrY?: number; offsetX?: number; offsetY?: number; target?: unknown }) {
+  // 命中 scatter（区域点 / 卫星图标）时由 ECharts click 处理区域选择，这里跳过线路判定；
+  // 命中地图区域等非 scatter 元素时继续判定线路（线路本身为 silent，target 会落到地图区域）。
+  if (event.target && isScatterTarget(event.target)) return;
+  const x = event.zrX ?? event.offsetX ?? 0;
+  const y = event.zrY ?? event.offsetY ?? 0;
+  const hit = findRouteAt(x, y);
+  if (hit) topologyCountry.value = hit.countryCode;
+}
+
+function handleZrMove(event: { zrX?: number; zrY?: number; offsetX?: number; offsetY?: number }) {
+  const x = event.zrX ?? event.offsetX ?? 0;
+  const y = event.zrY ?? event.offsetY ?? 0;
+  const hit = findRouteAt(x, y);
+  highlightRoute(hit?.routeId);
+}
+
+function handleZrGlobalOut() {
+  highlightRoute(undefined);
+}
+
+function onChartRendered() {
+  const chart = mapChart.value?.getChart();
+  if (!chart) return;
+  tagLineElements();
+  const zr = chart.getZr();
+  zr.off('click', handleZrClick as never);
+  zr.off('mousemove', handleZrMove as never);
+  zr.off('globalout', handleZrGlobalOut as never);
+  zr.on('click', handleZrClick as never);
+  zr.on('mousemove', handleZrMove as never);
+  zr.on('globalout', handleZrGlobalOut as never);
+}
+
+onBeforeUnmount(() => {
+  const chart = mapChart.value?.getChart();
+  if (chart) {
+    chart.getZr().off('click', handleZrClick as never);
+    chart.getZr().off('mousemove', handleZrMove as never);
+    chart.getZr().off('globalout', handleZrGlobalOut as never);
   }
+});
 
-  if (!active) return;
-  const routeStart = Math.floor(dataIndex / 2) * 2;
-  highlightedSatelliteRoute = [routeStart, routeStart + 1];
-  highlightedSatelliteSeriesIndex = seriesIndex;
-  highlightedSatelliteRoute.forEach((index) => chart.dispatchAction({ type: 'highlight', seriesIndex, dataIndex: index }));
-}
-
-function handleMouseover(payload: Record<string, any>) {
-  if (payload.seriesName !== '卫星链路' || typeof payload.seriesIndex !== 'number' || typeof payload.dataIndex !== 'number') return;
-  setSatelliteRouteHighlight(payload.seriesIndex, payload.dataIndex, true);
-}
-
-function handleMouseout(payload: Record<string, any>) {
-  if (payload.seriesName !== '卫星链路' || typeof payload.seriesIndex !== 'number') return;
-  setSatelliteRouteHighlight(payload.seriesIndex, 0, false);
-}
+// —— 点击线路：打开多跳拓扑面板 ——
+const topologyCountry = ref<string | null>(null);
 
 function handleClick(payload: Record<string, any>) {
-  const region = payload.data?.payload as DemoRegion | undefined;
-  // 卫星节点与链路不触发区域选择。
+  // 仅 scatter（区域点 / 卫星图标）点击参与区域选择并关闭线路面板；
+  // 地图区域等非 scatter 点击交由 zr 自定义线路命中处理，不能清空拓扑面板。
+  if (payload.seriesType !== 'scatter') return;
+  topologyCountry.value = null;
+  const data = payload.data as { payload?: (DemoRegion & { kind?: string }) | undefined } | undefined;
+  const payloadData = data?.payload;
+  // 卫星图标：打开该卫星服务的第一条路由拓扑（卫-1 → 阿布扎比、卫-2 → 巴西利亚）。
+  if (payloadData?.kind === 'satellite') {
+    const satelliteId = payloadData.id;
+    const route = demoSituationScenario.routes.find((item) => item.kind === 'primary' && (item.hops.some((hop) => hop.type === 'satellite') && (satelliteId === 'sat-1' ? item.countryCode === 'AE' : item.countryCode === 'BR')));
+    if (route) topologyCountry.value = route.countryCode;
+    return;
+  }
+  const region = payloadData as DemoRegion | undefined;
   if (region && 'countryCode' in region) emit('selectCountry', region.countryCode);
 }
+
+// —— 切换策略下发提示 ——
+const switchToast = ref<string | null>(null);
+let toastTimer: number | undefined;
+let lastToastSwitchId = '';
+// 空数组时访问 [0] 不会收集依赖，改为监听 length 并用策略 id 去重。
+watch(() => demoSituationScenario.routeSwitches.length, () => {
+  const policy = demoSituationScenario.routeSwitches[0];
+  if (!policy || policy.id === lastToastSwitchId) return;
+  lastToastSwitchId = policy.id;
+  const region = demoSituationScenario.regions.find((item) => item.countryCode === policy.countryCode);
+  const name = region ? (region.countryCode === 'CN' ? '北京' : region.countryName) : policy.countryCode;
+  switchToast.value = `线路安全智能分析：${name} 主路由遭攻击，已生成并下发切换策略，点击线路查看多跳拓扑与切换路径`;
+  if (toastTimer) window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => { switchToast.value = null; }, 8000);
+});
 </script>
 
 <template>
@@ -273,14 +457,24 @@ function handleClick(payload: Record<string, any>) {
       <span><i class="status warning" />部分在线</span>
       <span><i class="status offline" />全员离线</span>
     </div>
+
+    <Transition name="route-toast">
+      <div v-if="switchToast" class="route-switch-toast" role="status">
+        <i />{{ switchToast }}
+      </div>
+    </Transition>
+
+    <Transition name="route-panel">
+      <RouteTopologyPanel v-if="topologyCountry" :country-code="topologyCountry" @close="topologyCountry = null" />
+    </Transition>
+
     <EChartWidget
       v-if="worldGeoJson"
       ref="mapChart"
       :option="chartOption"
       :map-definition="{ name: 'demo-world-countries', geoJson: worldGeoJson }"
       @chart-click="handleClick"
-      @chart-mouseover="handleMouseover"
-      @chart-mouseout="handleMouseout"
+      @rendered="onChartRendered"
     />
     <BaseSkeleton v-else width="100%" height="100%" />
   </div>
@@ -297,4 +491,13 @@ function handleClick(payload: Record<string, any>) {
 .map-legend-overlay i.status.success { background: #43d7a2; }
 .map-legend-overlay i.status.warning { background: #e9b949; }
 .map-legend-overlay i.status.offline { background: #778397; }
+
+/* 切换策略下发提示 */
+.route-switch-toast { position: absolute; z-index: 8; top: 56px; right: 12px; max-width: 420px; display: flex; align-items: flex-start; gap: 8px; padding: 10px 14px; border: 1px solid rgba(239, 101, 121, .6); border-left: 3px solid #ef6579; background: rgba(28, 16, 26, .94); backdrop-filter: blur(4px); color: #ffd9de; font-size: 13px; line-height: 1.5; box-shadow: 0 6px 24px rgba(0, 0, 0, .45); }
+.route-switch-toast i { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: #ef6579; box-shadow: 0 0 8px #ef6579; }
+
+.route-panel-enter-active, .route-panel-leave-active { transition: opacity .22s ease, transform .22s ease; }
+.route-panel-enter-from, .route-panel-leave-to { opacity: 0; transform: translateX(-12px); }
+.route-toast-enter-active, .route-toast-leave-active { transition: opacity .25s ease, transform .25s ease; }
+.route-toast-enter-from, .route-toast-leave-to { opacity: 0; transform: translateY(-8px); }
 </style>
