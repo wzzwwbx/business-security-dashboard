@@ -89,6 +89,16 @@ function satelliteSvg(accent: string) {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
+// 站点国旗（emoji 渲染为 SVG data URI，作为 scatter symbol）。
+const FLAG_EMOJI: Record<string, string> = {
+  AE: '🇦🇪', SG: '🇸🇬', DE: '🇩🇪', KE: '🇰🇪', BR: '🇧🇷', CA: '🇨🇦', AU: '🇦🇺', US: '🇺🇸'
+};
+
+function flagSvg(emoji: string) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text x="12" y="17" font-size="17" text-anchor="middle">${emoji}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 const chartOption = computed(() => {
   const center = beijing.value;
   const points = props.regions.map((region) => {
@@ -96,8 +106,8 @@ const chartOption = computed(() => {
     return {
       name: region.countryCode === 'CN' ? '北京' : region.countryName,
       value: [region.longitude, region.latitude, region.people.length],
-      symbol: isBeijing ? `path://${STAR_PATH}` : 'circle',
-      symbolSize: isBeijing ? 30 : 20,
+      symbol: isBeijing ? `path://${STAR_PATH}` : `image://${flagSvg(FLAG_EMOJI[region.countryCode] ?? '🌐')}`,
+      symbolSize: isBeijing ? 30 : 26,
       itemStyle: isBeijing
         ? { color: '#ff4d5e', shadowColor: 'rgba(255,77,94,.85)', shadowBlur: 16, borderColor: '#ffd7dc', borderWidth: 1 }
         : { color: regionStatus(region).color, borderColor: props.selectedCountryCode === region.countryCode ? '#ffffff' : 'rgba(255,255,255,.55)', borderWidth: props.selectedCountryCode === region.countryCode ? 2 : 1 },
@@ -123,7 +133,6 @@ const chartOption = computed(() => {
     }
   })) : [];
   groundSegments.forEach((segment, dataIndex) => {
-    if (!segment.routeId) return; // 离线站点无路由数据，不提供拓扑命中。
     const coords = segment.coords as [[number, number], [number, number]];
     geoRouteLines.push({ countryCode: segment.countryCode, routeId: segment.routeId, seriesIndex: 0, dataIndex, from: coords[0], to: coords[1] });
   });
@@ -149,7 +158,6 @@ const chartOption = computed(() => {
     ];
   }) : [];
   satelliteSegments.forEach((segment, dataIndex) => {
-    if (!segment.routeId) return;
     const coords = segment.coords as [[number, number], [number, number]];
     const curveness = (segment.lineStyle as { curveness?: number })?.curveness;
     geoRouteLines.push({ countryCode: segment.countryCode, routeId: segment.routeId, seriesIndex: 2, dataIndex, from: coords[0], to: coords[1], curveness });
@@ -339,25 +347,33 @@ function highlightRoute(routeId: string | undefined) {
 }
 
 // 为每个线路元素标记所属路由与基础样式（元素级高亮，不依赖 ECharts emphasis）。
+// 重合线段（如 AE/KE 共用北京→卫-1 上行段）按“每条路由占用一个未标记元素”分配，
+// 避免两条重合线都被标成同一条路由导致高亮错位。
 function tagLineElements() {
   const chart = mapChart.value?.getChart();
   if (!chart) return;
   const zr = chart.getZr();
-  zr.storage.getDisplayList().forEach((el) => {
-    const element = el as { type?: string; __bssRouteId?: string; __bssBase?: { w: number; o: number }; style?: { lineWidth?: number; opacity?: number }; shape?: { x1: number; y1: number; x2: number; y2: number } };
-    if (element.type !== 'ec-line' || element.__bssRouteId) return;
-    const shape = element.shape;
-    if (!shape) return;
-    for (const line of geoRouteLines) {
-      const a = chart.convertToPixel({ geoIndex: 0 }, line.from);
-      const b = chart.convertToPixel({ geoIndex: 0 }, line.to);
-      if (a && b && Math.abs(shape.x1 - a[0]) < 1.5 && Math.abs(shape.y1 - a[1]) < 1.5 && Math.abs(shape.x2 - b[0]) < 1.5 && Math.abs(shape.y2 - b[1]) < 1.5) {
-        element.__bssRouteId = line.routeId;
-        element.__bssBase = { w: element.style?.lineWidth ?? 1.5, o: element.style?.opacity ?? 0.5 };
-        return;
+  const elements = zr.storage.getDisplayList().filter((el) => {
+    const element = el as { type?: string; __bssRouteId?: string };
+    return element.type === 'ec-line' && !element.__bssRouteId;
+  });
+  const used = new Set<object>();
+  for (const line of geoRouteLines) {
+    const a = chart.convertToPixel({ geoIndex: 0 }, line.from);
+    const b = chart.convertToPixel({ geoIndex: 0 }, line.to);
+    if (!a || !b) continue;
+    for (const el of elements) {
+      if (used.has(el)) continue;
+      const element = el as { type?: string; shape?: { x1: number; y1: number; x2: number; y2: number }; style?: { lineWidth?: number; opacity?: number } };
+      const shape = element.shape;
+      if (shape && Math.abs(shape.x1 - a[0]) < 1.5 && Math.abs(shape.y1 - a[1]) < 1.5 && Math.abs(shape.x2 - b[0]) < 1.5 && Math.abs(shape.y2 - b[1]) < 1.5) {
+        (el as { __bssRouteId?: string }).__bssRouteId = line.routeId;
+        (el as { __bssBase?: { w: number; o: number } }).__bssBase = { w: element.style?.lineWidth ?? 1.5, o: element.style?.opacity ?? 0.5 };
+        used.add(el);
+        break;
       }
     }
-  });
+  }
 }
 
 function isScatterTarget(target: unknown) {

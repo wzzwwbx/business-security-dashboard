@@ -328,6 +328,69 @@ const routeSeeds: RouteSeed[] = [
       { name: '圣地亚哥登陆站', type: 'submarine', coord: [-70, -20], latencyMs: 96, packetLossPct: 0.6, throughputMbps: 11.9, note: '南美西岸海缆登陆' },
       { name: '巴西利亚陆缆', type: 'terrestrial', coord: [-47.9, -15.8], latencyMs: 42, packetLossPct: 0.3, throughputMbps: 13.2, note: '南美陆缆骨干' }
     ]
+  },
+  // 加拿大：北太平洋海缆主路由 + 北极光缆备路由
+  {
+    countryCode: 'CA',
+    name: '北京 → 多伦多（北太平洋海缆主路由）',
+    kind: 'primary',
+    hops: [
+      { name: '北太平洋海缆中继', type: 'submarine', coord: [-145, 45], latencyMs: 124, packetLossPct: 0.6, throughputMbps: 11.8, note: '北太平洋海底光缆' },
+      { name: '温哥华登陆站', type: 'submarine', coord: [-123, 49.2], latencyMs: 28, packetLossPct: 0.3, throughputMbps: 13.4, note: '北美西岸海缆登陆' },
+      { name: '多伦多陆缆', type: 'terrestrial', coord: [-79.5, 43.6], latencyMs: 36, packetLossPct: 0.2, throughputMbps: 13.8, note: '北美陆缆骨干' }
+    ]
+  },
+  {
+    countryCode: 'CA',
+    name: '北京 → 多伦多（北极光缆备路由）',
+    kind: 'backup',
+    hops: [
+      { name: '白令海中继', type: 'submarine', coord: [170, 60], latencyMs: 96, packetLossPct: 0.5, throughputMbps: 12.1, note: '白令海海底光缆' },
+      { name: '北极光缆中继', type: 'submarine', coord: [-45, 78], latencyMs: 148, packetLossPct: 0.8, throughputMbps: 10.9, note: '北极圈海底光缆' },
+      { name: '多伦多陆缆', type: 'terrestrial', coord: [-79.5, 43.6], latencyMs: 36, packetLossPct: 0.2, throughputMbps: 13.8, note: '北美陆缆骨干' }
+    ]
+  },
+  // 澳大利亚：南海海缆主路由 + 西太平洋海缆备路由
+  {
+    countryCode: 'AU',
+    name: '北京 → 悉尼（南海海缆主路由）',
+    kind: 'primary',
+    hops: [
+      { name: '南海海缆中继', type: 'submarine', coord: [114, 8], latencyMs: 42, packetLossPct: 0.6, throughputMbps: 11.9, note: '南海海底光缆' },
+      { name: '珊瑚海中继', type: 'submarine', coord: [150, -18], latencyMs: 88, packetLossPct: 0.5, throughputMbps: 12.2, note: '珊瑚海海底光缆' },
+      { name: '悉尼登陆站', type: 'submarine', coord: [151.2, -33.6], latencyMs: 18, packetLossPct: 0.2, throughputMbps: 13.6, note: '悉尼海缆登陆' }
+    ]
+  },
+  {
+    countryCode: 'AU',
+    name: '北京 → 悉尼（西太平洋海缆备路由）',
+    kind: 'backup',
+    hops: [
+      { name: '菲律宾海中继', type: 'submarine', coord: [135, 15], latencyMs: 62, packetLossPct: 0.5, throughputMbps: 12.3, note: '菲律宾海海底光缆' },
+      { name: '关岛中继', type: 'submarine', coord: [144.8, 13.4], latencyMs: 34, packetLossPct: 0.4, throughputMbps: 12.8, note: '关岛海缆枢纽' },
+      { name: '悉尼登陆站', type: 'submarine', coord: [151.2, -33.6], latencyMs: 18, packetLossPct: 0.2, throughputMbps: 13.6, note: '悉尼海缆登陆' }
+    ]
+  },
+  // 美国：北太平洋海缆主路由 + 中太平洋海缆备路由
+  {
+    countryCode: 'US',
+    name: '北京 → 洛杉矶（北太平洋海缆主路由）',
+    kind: 'primary',
+    hops: [
+      { name: '北太平洋海缆中继', type: 'submarine', coord: [170, 40], latencyMs: 118, packetLossPct: 0.6, throughputMbps: 11.9, note: '北太平洋海底光缆' },
+      { name: '东太平洋中继', type: 'submarine', coord: [-150, 38], latencyMs: 96, packetLossPct: 0.5, throughputMbps: 12.4, note: '东太平洋海底光缆' },
+      { name: '洛杉矶登陆站', type: 'submarine', coord: [-118.5, 33.9], latencyMs: 14, packetLossPct: 0.2, throughputMbps: 13.7, note: '美国西岸海缆登陆' }
+    ]
+  },
+  {
+    countryCode: 'US',
+    name: '北京 → 洛杉矶（中太平洋海缆备路由）',
+    kind: 'backup',
+    hops: [
+      { name: '日本中继', type: 'submarine', coord: [140, 32], latencyMs: 48, packetLossPct: 0.4, throughputMbps: 12.9, note: '日本海缆枢纽' },
+      { name: '中途岛中继', type: 'submarine', coord: [-177, 28], latencyMs: 108, packetLossPct: 0.6, throughputMbps: 12.0, note: '中太平洋海底光缆' },
+      { name: '洛杉矶登陆站', type: 'submarine', coord: [-118.5, 33.9], latencyMs: 14, packetLossPct: 0.2, throughputMbps: 13.7, note: '美国西岸海缆登陆' }
+    ]
   }
 ];
 
