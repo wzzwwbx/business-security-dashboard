@@ -209,3 +209,42 @@ X-Ingest-Token: manual-dev-token
 - 前端 dist 构建时带 `VITE_PREVIEW_AUTH=preview`，**演示预览模式免登录**。
 - 后端以 `mysql` profile 启动时自动建表并灌入 `/ops` 演示数据（`OpsDemoDataSeeder`），无需手工执行 SQL。
 - `backend/target/`、`frontend/dist/`、`frontend/node_modules/` 均在 `.gitignore` 中，离线环境需通过 `prepare-offline.ps1` 将产物与依赖一并携带。
+
+## 9. 前端单机部署（仅更新前端 + 重建 Nginx）
+
+仓库提供 `deploy/deploy-frontend.sh`，用于把本地 `frontend/dist` 部署到任意一台服务器，**只更新前端、重建 Nginx，不重启后端 / MySQL**，并保留上一版供快速回滚。
+
+前置条件：
+
+1. 本地已完成构建：`cd frontend && npm run build`；
+2. 可免密 SSH 登录目标服务器（root）；
+3. 服务器部署目录为 `/opt/business-security-dashboard`，使用 `docker-compose`（`/usr/local/bin/docker-compose` 或 `docker-compose`）。
+
+用法：
+
+```bash
+# 192.168.50.15（使用 ed25519 部署密钥）
+./deploy/deploy-frontend.sh 192.168.50.15 ~/.ssh/id_ed25519_bss_deploy
+
+# 192.168.50.12（使用 id_rsa，需 IdentitiesOnly）
+./deploy/deploy-frontend.sh 192.168.50.12 ~/.ssh/id_rsa -o IdentitiesOnly=yes
+```
+
+脚本流程：
+
+1. 上传 `frontend/dist` 到服务器 `frontend/dist.new`；
+2. 原子替换：旧版 `dist` → `dist.previous`，`dist.new` → `dist`；
+3. `docker-compose up -d --no-deps --force-recreate nginx`（仅重建 Nginx，`--force-recreate` 让 bind mount 指向新目录 inode）；
+4. 健康检查 + HTML 缓存头检查 + 远端/本地 SHA-256 逐一核对。
+
+回滚：
+
+```bash
+ssh root@<host> 'cd /opt/business-security-dashboard/frontend && rm -rf dist && mv dist.previous dist && \
+  (test -x /usr/local/bin/docker-compose && /usr/local/bin/docker-compose || docker-compose) -f /opt/business-security-dashboard/deploy/compose.offline.yml up -d --no-deps --force-recreate nginx'
+```
+
+要点：
+
+- 服务器 `deploy/nginx.conf` 需为含缓存头的版本（SPA HTML `no-store`，`/assets/` 一年 immutable）；
+- 只更新前端时**不要**运行 `deploy/update-offline.sh`（那个会 force-recreate backend 与 nginx）。
