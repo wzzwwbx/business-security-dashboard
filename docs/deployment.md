@@ -230,12 +230,14 @@ X-Ingest-Token: manual-dev-token
 ./deploy/deploy-frontend.sh 192.168.50.12 ~/.ssh/id_rsa -o IdentitiesOnly=yes
 ```
 
-脚本流程：
+脚本流程（**就地覆盖，nginx 无需重启**）：
 
-1. 上传 `frontend/dist` 到服务器 `frontend/dist.new`；
-2. 原子替换：旧版 `dist` → `dist.previous`，`dist.new` → `dist`；
-3. `docker-compose up -d --no-deps --force-recreate nginx`（仅重建 Nginx，`--force-recreate` 让 bind mount 指向新目录 inode）；
-4. 健康检查 + HTML 缓存头检查 + 远端/本地 SHA-256 逐一核对。
+1. 清空服务器 `dist/assets/*`、`dist/maps/*`（保留 `dist` 目录本身不变）；
+2. `scp` 覆盖 `index.html`、`assets/`、`maps/` 到 `dist/`；
+3. 因为 nginx 以目录 bind mount 挂载 `dist`，目录 inode 未变，容器内实时读到新文件，**无需重启 nginx**；
+4. 健康检查 + 远端/本地 SHA-256 逐一核对。
+
+注意：HTML 入口为 `no-store`（每次请求读最新 index.html），静态资源带内容哈希文件名且旧文件被清空，因此替换后刷新即拿到新版本，不会出现“旧入口引用旧 js”的缓存问题。
 
 回滚：
 

@@ -6,7 +6,7 @@
 #   ./deploy/deploy-frontend.sh 192.168.50.15 ~/.ssh/id_ed25519_bss_deploy
 #   ./deploy/deploy-frontend.sh 192.168.50.12 ~/.ssh/id_rsa -o IdentitiesOnly=yes
 #
-# 流程：上传 dist → 原子替换（旧版保留为 dist.previous）→ 仅重建 nginx → 健康检查。
+# 流程：就地覆盖 dist（目录 inode 不变 → nginx 无需重启）→ 健康检查。
 set -euo pipefail
 
 HOST="${1:?用法: $0 <host> <ssh-key> [extra-ssh-args...]}"
@@ -25,39 +25,20 @@ SCP=(scp -o BatchMode=yes -o ConnectTimeout=10 -i "$KEY" "${SSH_ARGS[@]}")
 TS=$(date +%Y%m%d%H%M%S)
 echo "== 部署标识: ${TS} =="
 
-# 1) 上传新构建产物
-echo "== 上传 dist -> dist.new =="
-"${SSH[@]}" "root@${HOST}" "rm -rf ${DEPLOY_DIR}/frontend/dist.new && mkdir -p ${DEPLOY_DIR}/frontend/dist.new"
+# 1) 清空旧资源并覆盖新文件（保持 dist 目录本身不变，nginx bind mount 即时生效）
+echo "== 就地覆盖 dist（nginx 无需重启） =="
+"${SSH[@]}" "root@${HOST}" "rm -rf ${DEPLOY_DIR}/frontend/dist/assets/* ${DEPLOY_DIR}/frontend/dist/maps/*"
 "${SCP[@]}" -r \
   "${LOCAL_DIST}/index.html" \
   "${LOCAL_DIST}/assets" \
   "${LOCAL_DIST}/maps" \
-  "root@${HOST}:${DEPLOY_DIR}/frontend/dist.new/"
+  "root@${HOST}:${DEPLOY_DIR}/frontend/dist/"
 
-# 2) 原子替换（旧版保留为 dist.previous 供快速回滚）
-echo "== 原子替换 dist（旧版 -> dist.previous） =="
-"${SSH[@]}" "root@${HOST}" "
-set -e
-cd ${DEPLOY_DIR}/frontend
-rm -rf dist.previous
-mv dist dist.previous
-mv dist.new dist
-chown -R root:root dist
-"
+# 2) 健康检查（后端不受影响，仅确认服务正常）
+echo "== 健康检查 =="
+"${SSH[@]}" "root@${HOST}" "echo \"HEALTH: \$(curl -fsS http://127.0.0.1/actuator/health)\""
 
-# 3) 仅重建 nginx（--force-recreate 让 bind mount 指向新 dist 目录 inode）
-echo "== 重建 Nginx =="
-"${SSH[@]}" "root@${HOST}" "
-set -e
-cd ${DEPLOY_DIR}
-if [ -x /usr/local/bin/docker-compose ]; then DC=/usr/local/bin/docker-compose; else DC=docker-compose; fi
-\$DC -f deploy/compose.offline.yml up -d --no-deps --force-recreate nginx >/dev/null 2>&1
-sleep 3
-echo \"HEALTH: \$(curl -fsS http://127.0.0.1/actuator/health)\"
-echo \"HTML-CACHE: \$(curl -sI http://127.0.0.1/ | grep -i cache-control | tail -1)\"
-"
-
-# 4) 远端 SHA-256 核对
+# 3) 远端 SHA-256 核对
 echo "== SHA-256 核对 =="
 LOCAL_SHA="$(cd "${LOCAL_DIST}" && shasum -a 256 $(find . -type f | sort))"
 REMOTE_SHA="$("${SSH[@]}" "root@${HOST}" "cd ${DEPLOY_DIR}/frontend/dist && shasum -a 256 \$(find . -type f | sort)")"
@@ -69,4 +50,4 @@ else
   exit 1
 fi
 
-echo "== 部署完成，标识 ${TS} =="
+echo "== 部署完成，标识 ${TS}（nginx 无需重启） =="
