@@ -17,6 +17,7 @@ tmp-screens/
 
 # offline deployment bundle
 dist-offline-arm64/
+dist-offline-win64/
 rpm-out/
 
 # deployment secrets and large offline runtime binaries

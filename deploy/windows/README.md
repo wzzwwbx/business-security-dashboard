@@ -205,7 +205,9 @@ powershell -ExecutionPolicy Bypass -File deploy\windows\prepare-offline.ps1 -Out
 3. 拷贝 `~/.m2\repository`（离线 Maven 仓库）；
 4. 拷贝脚本、SQL、文档，并输出一张**需要手动携带的安装包清单**（JDK17 / Node20 / MySQL8 / nginx）。
 
-> 不联网的 Linux/Mac 也可以当"联网机"：本仓库 `deploy/prepare-arm64.sh` 是 Docker 版打包脚本；Windows 原生版用上面的 ps1。产物与目标 Windows 架构无关（jar 与 dist 跨平台）。
+> 不联网的 Linux/Mac 也可以当"联网机"：本仓库 `deploy/prepare-arm64.sh` 是 Docker 版打包脚本；Windows 原生版用上面的 ps1。
+> **注意**：jar 与 dist 跨平台，但 `node_modules` 不是——Vite 依赖 esbuild/rollup，二者都含平台原生二进制（`@esbuild/<platform>`、`@rollup/rollup-<platform>`）。
+> Windows 上生成的 `node_modules` 拷到 Windows 没问题；若在 macOS/Linux 上生成，必须先按目标平台重装，见 4.4 方式 A 的"从 macOS/Linux 生成 win64 版"。
 
 ### 4.3 离线机安装清单
 
@@ -226,18 +228,28 @@ cd frontend
 npm run dev:integration        :: Vite dev，5173 端口，/api 代理到 8080
 ```
 
-> 依赖是纯 JS 包（vue/echarts/axios/vite），无原生编译产物，跨机器拷贝安全。**两端 Node 大版本需一致**（都装 Node 20）。
+> **重要**：依赖并非纯 JS——Vite 依赖 esbuild、rollup，二者都带平台原生二进制（如 `@esbuild/darwin-arm64`、`@rollup/rollup-darwin-arm64`），
+> 所以**跨机器直接拷贝只在"同为 Windows"时安全**。
+> - 从联网 Windows 生成（最稳）：`prepare-offline.ps1` 里 `npm ci` 装出的就是 win32 版，直接拷即可。
+> - 从 macOS/Linux 生成 win64 版：npm ≥ 10.5 支持 `--os/--cpu`，用 `deploy/prepare-node-modules-win64.sh` 一键打包（产物 `dist-offline-win64/node_modules-win64.tar.gz`），
+>   拷到离线 Windows 仓库 `frontend/` 下用 `tar -xzf` 解压即可（Windows 10+ 自带 tar）。
+> - **两端 Node 大版本需一致**（都装 Node 20）。
 
-方式 B（规范）：把 `prepare-offline.ps1` 生成的 npm 缓存（`npm cache` 目录）带到离线机，然后：
+方式 B（规范）：npm 离线缓存。在**联网 Windows** 上先 `npm ci --cache <缓存目录>` 把缓存灌满，再把缓存目录 + `package-lock.json` 带到离线机，然后：
 
 ```bat
 npm ci --offline --cache C:\offline\npm-cache
 ```
 
+> 缓存同样含平台二进制：必须在目标同平台（Windows）机器上灌缓存，否则离线机 `npm ci --offline` 找不到 `@esbuild/win32-x64` 会报错。
+
 ### 4.5 离线后端开发
 
+> macOS/Linux 侧可直接用 `deploy/prepare-m2-offline.sh` 生成离线仓库（产物 `dist-offline-win64/offline-deps/m2-repository.tar.gz` + 后端 jar），无需联网 Windows 机器。
+> 注意：不要用 `mvn dependency:go-offline` 生成，它有缺陷会漏依赖；该脚本用"完整在线构建灌满干净仓库"的方式，已实测 `mvn -o package` 全离线可用。
+
 1. 安装 JDK 17 + Maven 3.9。
-2. 把离线包 `offline-deps\m2-repository` 拷贝到 `%USERPROFILE%\.m2\repository`（合并/覆盖）。
+2. 解压 `offline-deps\m2-repository.tar.gz`，把解压出的 `m2-repository` 内容合并到 `%USERPROFILE%\.m2\repository`（覆盖）。
 3. 一切 Maven 命令加 `-o`（offline）：
 
 ```bat
