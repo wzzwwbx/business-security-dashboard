@@ -324,8 +324,25 @@ function relativeTime(minutes: number) {
   .metric-strip strong { font-size: 28px; }
   .demo-business { grid-template-rows: auto auto minmax(0,1fr) 158px; }
 }
-/* 自适应：高度不足或宽度偏窄时切换为可滚动整页，保证内容完整不被裁切。 */
-@media (max-width: 1499px), (max-height: 819px) {
+/* 自适应：中等尺寸屏（≥1280 宽）压缩字号/间距满屏显示；仅窄屏或极矮屏才整页滚动。 */
+@media (min-width: 1280px) and (max-height: 819px) {
+  .demo-business { grid-template-rows: auto auto minmax(0,1fr) 138px; gap: 8px; }
+  .topic-switch button { min-height: 40px; }
+  .topic-switch strong { font-size: 18px; }
+  .topic-switch span { font-size: 14px; }
+  .metric-strip article { min-height: 60px; padding: 8px 12px; }
+  .metric-strip span { font-size: 14px; }
+  .metric-strip strong { font-size: 20px; margin-top: 3px; }
+  .metric-strip p { font-size: 12px; margin-top: 2px; }
+  .business-workspace { grid-template-columns: 215px minmax(0,1fr) 235px; gap: 8px; }
+  .ops-panel > header { height: 40px; }
+  .status-panel,.chart-panel { grid-template-rows: 40px minmax(0,1fr); }
+  .ranking-panel, .topic-rank-panel { grid-template-rows: 40px minmax(0,1fr); }
+  .fact-list div { min-height: 48px; padding: 7px 10px; }
+  .region-rows > div { min-height: 42px; padding: 5px 10px; }
+  .event-rows > div:not(.empty-events) { padding: 6px 0; }
+}
+@media (max-width: 1279px), (max-height: 719px) {
   .demo-business {
     height: auto;
     min-height: 0;
@@ -334,7 +351,6 @@ function relativeTime(minutes: number) {
   }
   .business-workspace { min-height: 500px; }
 }
-@media (max-height: 820px) and (min-width: 1051px) and (min-width: 1500px) { .demo-heading { min-height: 38px; }.demo-heading h1 { font-size: 19px; }.topic-switch button { min-height: 40px; }.metric-strip article { min-height: 80px; padding: 10px 14px 12px; }.metric-strip strong { font-size: 26px; }.left-column { grid-template-rows: .92fr 1.08fr; }.center-column { grid-template-rows: 1.35fr 1fr; }.right-column { grid-template-rows: 1.35fr .65fr; }.ops-panel > header { height: 38px; }.status-panel,.chart-panel { grid-template-rows: 38px minmax(0,1fr); }.fact-list div { min-height: 48px; padding: 7px 10px; }.region-rows > div { min-height: 42px; padding: 5px 10px; }.event-rows > div:not(.empty-events) { padding: 6px 0; } }
 @media (max-width: 1050px) { .demo-business { height: auto; grid-template-rows: auto auto auto auto; }.business-workspace { grid-template-columns: 1fr 1.8fr; }.right-column { grid-column: 1/-1; grid-template-columns: 1fr 1fr; grid-template-rows: 330px; }.metric-strip { grid-template-columns: repeat(2,1fr); }.metric-strip article:nth-child(2) { border-right: 0; } }
 @media (max-width: 720px) { .heading-status span,.topic-switch span { display: none; }.topic-switch button { min-height: 42px; }.metric-strip,.business-workspace { grid-template-columns: 1fr; }.metric-strip article { border-right: 0; border-bottom: 1px solid #28344a; }.left-column,.right-column { grid-column: auto; grid-template-columns: 1fr; grid-template-rows: auto; }.center-column { grid-template-rows: 360px 280px; }.ranking-strip { grid-template-columns: 1fr; } }
 
