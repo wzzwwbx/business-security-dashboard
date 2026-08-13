@@ -90,21 +90,33 @@ bullets(s, 0.6, 1.15, 8.8, [
     '事件与处置：安全事件滚动更新（高危 2 / 中危 2），签阅处置 54/68、处理率 79.4%、待处理 11 份。'])
 shot(s, 'overview-main', 0.6, 2.35, 8.8)
 
-# ---------------------------------------------------------------- slide 3 弹出交互
+# ---------------------------------------------------------------- slide 3 人员详情抽屉（四标签）
 s = prs.slides.add_slide(BLANK); bg(s)
-header(s, '弹出交互', '点击即达：人员详情抽屉、线路安全智能分析提示、线路拓扑面板')
+header(s, '人员详情抽屉 · 四标签', '点击安全事件或人员排名弹出，覆盖人员概况 / 装备套件 / 安全事件 / 业务活动')
+w2 = 4.3; h2 = w2 * 9 / 16; gx = 0.2
+colX = [0.6, 0.6 + w2 + gx]
+rowY = [1.5, 1.5 + h2 + 0.2]
+grid = [
+    ('overview-drawer-tab-person', '人员概况：在线状态、套件/密信/卫星、部门与收发关系'),
+    ('overview-drawer-tab-equipment', '装备套件：各终端设备状态与健康度'),
+    ('overview-drawer-tab-security', '安全事件：该人员关联的安全事件列表'),
+    ('overview-drawer-tab-activity', '业务活动：最近收发与签阅活动记录')]
+for idx, (img, cap) in enumerate(grid):
+    x = colX[idx % 2]; y = rowY[idx // 2]
+    shot(s, img, x, y, w2, h2)
+    caption(s, cap, x, y + h2 + 0.05, w2)
+
+# ---------------------------------------------------------------- slide 4 弹出交互：线路安全分析 + 拓扑面板
+s = prs.slides.add_slide(BLANK); bg(s)
+header(s, '弹出交互 · 线路安全分析', '线路遭攻击自动弹出智能分析提示，点击进入线路拓扑面板')
 bullets(s, 0.6, 1.15, 8.8, [
-    '安全事件条目点击后弹出人员详情抽屉（人员概况 / 装备套件 / 安全事件 / 业务活动四标签）；',
-    '线路遭受攻击时弹出"线路安全智能分析"toast，提示分段绕行策略已下发；',
-    '点击 toast 打开对应线路拓扑面板，查看各跳节点状态与绕行路径。'])
-w3 = 2.9; g3 = 0.15; x0 = 0.6; y3 = 2.4; h3 = w3 * 9 / 16
-for i, (img, cap) in enumerate([
-    ('overview-drawer-person', '安全事件 → 人员详情抽屉'),
-    ('overview-route-toast', '线路安全智能分析 toast'),
-    ('overview-topology-panel', '点击 toast → 线路拓扑面板')]):
-    x = x0 + i * (w3 + g3)
-    shot(s, img, x, y3, w3, h3)
-    caption(s, cap, x, y3 + h3 + 0.08, w3)
+    '线路遭受攻击时弹出"线路安全智能分析"toast，提示分段绕行策略已生成并下发；',
+    '点击 toast 打开对应线路拓扑面板，查看各跳节点状态、攻击链路与绕行路径。'])
+w2 = 4.3; xA = 0.6; xB = 5.1; y4 = 2.0; h4 = w2 * 9 / 16
+shot(s, 'overview-route-toast', xA, y4, w2, h4)
+shot(s, 'overview-topology-panel', xB, y4, w2, h4)
+caption(s, '线路安全智能分析 toast（自动弹出）', xA, y4 + h4 + 0.08, w2)
+caption(s, '点击 toast → 线路拓扑面板', xB, y4 + h4 + 0.08, w2)
 
 # ---------------------------------------------------------------- slide 4 业务态势（下钻明细）
 s = prs.slides.add_slide(BLANK); bg(s)
