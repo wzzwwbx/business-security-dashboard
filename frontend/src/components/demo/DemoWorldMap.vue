@@ -520,8 +520,8 @@ watch(() => demoSituationScenario.routeSwitches.length, () => {
 .route-switch-toast .toast-close { flex: 0 0 auto; width: 22px; height: 22px; padding: 0; border: 1px solid rgba(239, 101, 121, .5); color: #ffb9c2; background: transparent; font-size: 15px; line-height: 1; cursor: pointer; }
 .route-switch-toast .toast-close:hover { color: #fff; background: rgba(239, 101, 121, .2); }
 
-.route-panel-enter-active, .route-panel-leave-active { transition: opacity .22s ease, transform .22s ease; }
-.route-panel-enter-from, .route-panel-leave-to { opacity: 0; transform: translateX(-12px); }
+.route-panel-enter-active, .route-panel-leave-active { transition: opacity .22s ease; }
+.route-panel-enter-from, .route-panel-leave-to { opacity: 0; }
 .route-toast-enter-active, .route-toast-leave-active { transition: opacity .25s ease, transform .25s ease; }
 .route-toast-enter-from, .route-toast-leave-to { opacity: 0; transform: translateY(-8px); }
 </style>

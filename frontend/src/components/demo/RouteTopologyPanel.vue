@@ -182,8 +182,8 @@ function edgeClass(chain: TopoNode[], index: number) {
           />
         </g>
 
-        <!-- 备用路径边（切换后绿色点亮） -->
-        <g v-if="backupActive && backupChain.length">
+        <!-- 备用路径边：待命灰色虚线，切换生效后绿色点亮 -->
+        <g v-if="backupChain.length">
           <line
             v-for="(node, index) in backupChain.slice(0, -1)"
             :key="`be-${index}`"
@@ -191,7 +191,7 @@ function edgeClass(chain: TopoNode[], index: number) {
             :y1="ROW_BOTTOM"
             :x2="rowPositions(backupChain.length, ROW_BOTTOM)[index + 1].x"
             :y2="ROW_BOTTOM"
-            class="tp-edge tp-edge-backup"
+            :class="backupActive ? 'tp-edge tp-edge-backup' : 'tp-edge tp-edge-standby'"
           />
         </g>
 
@@ -201,23 +201,23 @@ function edgeClass(chain: TopoNode[], index: number) {
           <g class="tp-node-icon" :class="[nodeStatusClass(node.status), { 'tp-dim': switched }]" transform="translate(-12,-12)">
             <g v-html="ICONS[node.type]" />
           </g>
-          <text class="tp-node-label" y="38" text-anchor="middle">{{ node.name }}</text>
-          <text class="tp-node-sub" y="54" text-anchor="middle">{{ node.type === 'site' || node.type === 'origin' ? TYPE_LABELS[node.type] : `${TYPE_LABELS[node.type]} · ${hopDetail(node.hop)}` }}</text>
+          <text class="tp-node-label" :class="{ 'tp-text-dim': switched }" y="38" text-anchor="middle">{{ node.name }}</text>
+          <text class="tp-node-sub" :class="{ 'tp-text-dim': switched }" y="54" text-anchor="middle">{{ node.type === 'site' || node.type === 'origin' ? TYPE_LABELS[node.type] : `${TYPE_LABELS[node.type]} · ${hopDetail(node.hop)}` }}</text>
         </g>
 
-        <!-- 备用路径节点（切换后） -->
-        <g v-if="backupActive && backupChain.length" v-for="(node, index) in backupChain" :key="`bn-${node.id}`" :transform="`translate(${rowPositions(backupChain.length, ROW_BOTTOM)[index].x}, ${ROW_BOTTOM})`">
-          <circle r="20" class="tp-node-bg" :class="nodeStatusClass(node.status)" />
-          <g class="tp-node-icon" :class="nodeStatusClass(node.status)" transform="translate(-12,-12)">
+        <!-- 备用路径节点：待命灰色，切换生效后绿色点亮 -->
+        <g v-if="backupChain.length" v-for="(node, index) in backupChain" :key="`bn-${node.id}`" :transform="`translate(${rowPositions(backupChain.length, ROW_BOTTOM)[index].x}, ${ROW_BOTTOM})`">
+          <circle r="20" class="tp-node-bg" :class="backupActive ? nodeStatusClass(node.status) : 'st-standby'" />
+          <g class="tp-node-icon" :class="backupActive ? nodeStatusClass(node.status) : 'st-standby'" transform="translate(-12,-12)">
             <g v-html="ICONS[node.type]" />
           </g>
-          <text class="tp-node-label" y="38" text-anchor="middle">{{ node.name }}</text>
-          <text class="tp-node-sub" y="54" text-anchor="middle">{{ node.type === 'site' || node.type === 'origin' ? TYPE_LABELS[node.type] : `${TYPE_LABELS[node.type]} · ${hopDetail(node.hop)}` }}</text>
+          <text class="tp-node-label" :class="{ 'tp-text-dim': !backupActive }" y="38" text-anchor="middle">{{ node.name }}</text>
+          <text class="tp-node-sub" :class="{ 'tp-text-dim': !backupActive }" y="54" text-anchor="middle">{{ node.type === 'site' || node.type === 'origin' ? TYPE_LABELS[node.type] : `${TYPE_LABELS[node.type]} · ${hopDetail(node.hop)}` }}</text>
         </g>
 
-        <!-- 行标签 -->
-        <text x="10" :y="ROW_TOP + 4" class="tp-row-label">主线路</text>
-        <text v-if="backupActive" x="10" :y="ROW_BOTTOM + 4" class="tp-row-label tp-row-backup">备线路（已切换）</text>
+        <!-- 行标签：主线路（当前 / 已切换停用）、备线路（待命 / 已切换生效） -->
+        <text x="10" :y="ROW_TOP + 4" class="tp-row-label" :class="{ 'tp-row-dim': switched }">主线路{{ switched ? '（已切换停用）' : '' }}</text>
+        <text v-if="backupChain.length" x="10" :y="ROW_BOTTOM + 4" class="tp-row-label" :class="{ 'tp-row-backup': backupActive }">{{ backupActive ? '备线路（已切换生效）' : '备线路（待命）' }}</text>
       </svg>
 
       <!-- 攻击告警横幅 -->
@@ -248,7 +248,7 @@ function edgeClass(chain: TopoNode[], index: number) {
 </template>
 
 <style scoped>
-.topology-panel { position: absolute; z-index: 10; top: 12px; left: 12px; width: 620px; max-width: calc(100% - 24px); display: flex; flex-direction: column; border: 1px solid rgba(70, 97, 127, .55); background: rgba(9, 15, 27, .9); backdrop-filter: blur(6px); box-shadow: 0 12px 38px rgba(0, 0, 0, .55); }
+.topology-panel { position: absolute; z-index: 10; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 620px; max-width: calc(100% - 24px); display: flex; flex-direction: column; border: 1px solid rgba(70, 97, 127, .55); background: rgba(9, 15, 27, .9); backdrop-filter: blur(6px); box-shadow: 0 12px 38px rgba(0, 0, 0, .55); }
 .tp-header { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid #263147; }
 .tp-title { min-width: 0; flex: 1 1 auto; }
 .tp-title strong { display: block; overflow: hidden; color: #eef4ff; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
@@ -272,16 +272,21 @@ function edgeClass(chain: TopoNode[], index: number) {
 .tp-node-bg.st-degraded { stroke: #e9b949; fill: rgba(48, 40, 18, .92); }
 .tp-node-bg.st-blocked { stroke: #ef6579; fill: rgba(52, 18, 26, .95); animation: tp-pulse 1.1s ease-in-out infinite; }
 .tp-node-bg.st-active { stroke: #43d7a2; }
+.tp-node-bg.st-standby { stroke: #3d4c63; fill: rgba(26, 34, 48, .8); }
 .tp-node-bg.tp-dim { stroke: #4a5a72; fill: rgba(24, 31, 44, .8); }
 .tp-node-icon { color: #8fb2e4; }
 .tp-node-icon.st-degraded { color: #e9b949; }
 .tp-node-icon.st-blocked { color: #ff8798; }
+.tp-node-icon.st-standby { color: #5c6b82; }
 .tp-node-icon.tp-dim { color: #5c6b82; }
+.tp-text-dim { fill: #5c6b82 !important; }
+.tp-row-dim { fill: #4a5a72 !important; }
 .tp-node-label { fill: #d5deec; font-size: 11px; }
 .tp-node-sub { fill: #7d8ba2; font-size: 10px; }
 .tp-edge { stroke-width: 2; stroke: #5a95ff; }
 .tp-edge-dim { stroke: #4a5a72; stroke-dasharray: 5 4; opacity: .6; }
 .tp-edge-degraded { stroke: #e9b949; stroke-width: 2.4; }
+.tp-edge-standby { stroke: #3d4c63; stroke-width: 1.8; stroke-dasharray: 4 4; opacity: .6; }
 .tp-edge-backup { stroke: #43d7a2; stroke-width: 2.4; marker-end: url(#tp-arrow); }
 .tp-edge-attacked { stroke: #ef6579; stroke-width: 2.6; animation: tp-edge-blink 1s ease-in-out infinite; }
 .tp-row-label { fill: #6d7c93; font-size: 10px; }
