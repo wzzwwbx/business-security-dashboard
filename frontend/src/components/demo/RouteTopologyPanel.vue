@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { demoSituationScenario } from '@/mocks/demoSituation';
-import type { DemoRoute, DemoRouteHop, DemoRouteStatus } from '@/types/demoSituation';
+import type { DemoBypassNode, DemoRoute, DemoRouteHop, DemoRouteStatus } from '@/types/demoSituation';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -12,8 +12,6 @@ const emit = defineEmits<{
 }>();
 
 const primary = computed(() => demoSituationScenario.routes.find((route) => route.countryCode === props.countryCode && route.kind === 'primary'));
-const backup = computed(() => demoSituationScenario.routes.find((route) => route.countryCode === props.countryCode && route.kind === 'backup'));
-const active = computed(() => (primary.value && primary.value.status !== 'switched' ? primary.value : backup.value));
 const policy = computed(() => demoSituationScenario.routeSwitches.find((item) => item.countryCode === props.countryCode));
 
 const regionName = computed(() => {
@@ -21,19 +19,23 @@ const regionName = computed(() => {
   return region ? (region.countryCode === 'CN' ? '北京' : region.countryName) : props.countryCode;
 });
 
-const routeName = computed(() => active.value?.name ?? '');
+const routeName = computed(() => primary.value?.name ?? '');
 const underAttack = computed(() => primary.value?.status === 'attacked' || primary.value?.status === 'switching');
 const switched = computed(() => primary.value?.status === 'switched');
-const backupActive = computed(() => backup.value?.status === 'active');
+const restoring = computed(() => primary.value?.status === 'restoring');
+const bypassedHopIndex = computed(() => primary.value?.bypassedHopIndex);
+const bypassNodes = computed<DemoBypassNode[]>(() => {
+  if (bypassedHopIndex.value == null || !primary.value) return [];
+  return primary.value.hops[bypassedHopIndex.value]?.bypass ?? [];
+});
 
 function statusLabel(route: DemoRoute | undefined) {
   if (!route) return '';
-  if (route.kind === 'backup') return route.status === 'active' ? '备用生效' : '备用待命';
   const labels: Record<DemoRouteStatus, string> = {
     normal: '运行正常',
     attacked: '遭受攻击',
     switching: '策略切换中',
-    switched: '已切换停用',
+    switched: '已绕行',
     restoring: '回切中'
   };
   return labels[route.status];
@@ -41,7 +43,6 @@ function statusLabel(route: DemoRoute | undefined) {
 
 function statusClass(route: DemoRoute | undefined) {
   if (!route) return 'st-normal';
-  if (route.kind === 'backup') return route.status === 'active' ? 'st-active' : 'st-standby';
   return `st-${route.status}`;
 }
 
@@ -61,7 +62,7 @@ interface TopoNode {
   hop?: DemoRouteHop;
 }
 
-function nodeTypeOf(hop: DemoRouteHop | undefined): TopoNodeType {
+function nodeTypeOf(hop: DemoRouteHop | DemoBypassNode | undefined): TopoNodeType {
   switch (hop?.type) {
     case 'satellite': return 'satellite';
     case 'gateway': return 'gateway';
@@ -74,7 +75,7 @@ function nodeChain(route: DemoRoute | undefined): TopoNode[] {
   if (!route) return [];
   return [
     { id: `${route.id}-origin`, name: '北京接入中心', type: 'origin', status: 'normal' },
-    ...route.hops.map((hop, index) => ({
+    ...route.hops.map((hop) => ({
       id: hop.id,
       name: hop.name,
       type: nodeTypeOf(hop),
@@ -86,7 +87,6 @@ function nodeChain(route: DemoRoute | undefined): TopoNode[] {
 }
 
 const primaryChain = computed(() => nodeChain(primary.value));
-const backupChain = computed(() => nodeChain(backup.value));
 
 // 节点行坐标：横向等距。
 const SVG_W = 860;
@@ -95,15 +95,26 @@ const ROW_TOP = 92;
 const ROW_BOTTOM = 192;
 const X_PAD = 44;
 
-function rowPositions(count: number, y: number) {
+function rowPositions(count: number) {
   const step = count <= 1 ? 0 : (SVG_W - X_PAD * 2) / (count - 1);
-  return Array.from({ length: count }, (_, index) => ({ x: X_PAD + index * step, y }));
+  return Array.from({ length: count }, (_, index) => X_PAD + index * step);
 }
 
-function edgeColor(status: TopoNode['status'], dimmed: boolean) {
-  if (dimmed) return '#4a5a72';
-  return status === 'blocked' ? '#ef6579' : status === 'degraded' ? '#e9b949' : '#5a95ff';
+// 绕行段布局：起点=被绕行跳的前一节点，终点=后一节点，绕行节点等距分布在其间。
+function bypassLayout() {
+  if (bypassedHopIndex.value == null || !bypassNodes.value.length || !primaryChain.value.length) return null;
+  const i = bypassedHopIndex.value;
+  const prevIndex = i;                 // chain[i] = hop[i] 的前一节点（北京时为 0）
+  const nextIndex = i + 2;             // chain[i+2] = hop[i] 的后一节点
+  const xs = rowPositions(primaryChain.value.length);
+  const prevX = xs[prevIndex] ?? xs[0];
+  const nextX = xs[nextIndex] ?? xs[xs.length - 1];
+  const n = bypassNodes.value.length;
+  const bypassXs = bypassNodes.value.map((_, index) => prevX + ((nextX - prevX) * (index + 1)) / (n + 1));
+  return { prevX, nextX, bypassXs };
 }
+
+const layout = computed(() => bypassLayout());
 
 // —— 节点图标 ——
 const ICONS: Record<TopoNodeType, string> = {
@@ -133,6 +144,10 @@ function hopDetail(hop: DemoRouteHop | undefined) {
   return `${hop.latencyMs}ms · 丢包 ${hop.packetLossPct.toFixed(1)}% · ${hop.throughputMbps.toFixed(1)} Mbps`;
 }
 
+function bypassDetail(node: DemoBypassNode) {
+  return `${node.latencyMs}ms · 丢包 ${node.packetLossPct.toFixed(1)}% · ${node.throughputMbps.toFixed(1)} Mbps`;
+}
+
 // 边样式：正常蓝 / 降级黄 / 阻断红闪。
 function edgeClass(chain: TopoNode[], index: number) {
   const hop = chain[index + 1]?.hop;
@@ -150,23 +165,23 @@ function edgeClass(chain: TopoNode[], index: number) {
         <strong>{{ regionName }} · 多跳线路拓扑</strong>
         <small>{{ routeName }}</small>
       </div>
-      <span class="tp-badge" :class="statusClass(active)">{{ statusLabel(active) }}</span>
+      <span class="tp-badge" :class="statusClass(primary)">{{ statusLabel(primary) }}</span>
       <button type="button" class="tp-close" aria-label="关闭" @click="emit('close')">×</button>
     </header>
 
     <div class="tp-meta">
-      <span>总时延 <b>{{ active?.latencyMs ?? 0 }} ms</b></span>
-      <span>中继 <b>{{ active?.hops.length ?? 0 }}</b> 跳</span>
-      <span v-if="switched">当前线路：<b class="tp-ok">备用线路</b></span>
+      <span>总时延 <b>{{ primary?.latencyMs ?? 0 }} ms</b></span>
+      <span>中继 <b>{{ primary?.hops.length ?? 0 }}</b> 跳</span>
+      <span v-if="bypassedHopIndex != null">第 <b class="tp-warn">{{ bypassedHopIndex + 1 }}</b> 跳绕行</span>
       <span v-else>当前线路：<b class="tp-ok">主线路</b></span>
     </div>
 
-    <!-- 拓扑图：主路径（或当前生效路径） + 备用路径（切换后） -->
+    <!-- 拓扑图：主路径 + 被攻击跳的分段绕行 -->
     <div class="tp-topology">
       <svg :viewBox="`0 0 ${SVG_W} ${SVG_H}`" class="tp-svg" role="img" aria-label="多跳拓扑">
         <defs>
           <marker id="tp-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
-            <path d="M0 0 L6 3 L0 6 Z" fill="#5a95ff" />
+            <path d="M0 0 L6 3 L0 6 Z" fill="#43d7a2" />
           </marker>
         </defs>
 
@@ -174,59 +189,63 @@ function edgeClass(chain: TopoNode[], index: number) {
         <g v-for="(node, index) in primaryChain" :key="`pe-${index}`">
           <line
             v-if="index < primaryChain.length - 1"
-            :x1="rowPositions(primaryChain.length, ROW_TOP)[index].x"
+            :x1="rowPositions(primaryChain.length)[index]"
             :y1="ROW_TOP"
-            :x2="rowPositions(primaryChain.length, ROW_TOP)[index + 1].x"
+            :x2="rowPositions(primaryChain.length)[index + 1]"
             :y2="ROW_TOP"
-            :class="[edgeClass(primaryChain, index), { 'tp-edge-dim': switched }]"
+            :class="edgeClass(primaryChain, index)"
           />
         </g>
 
-        <!-- 备用路径边：待命灰色虚线，切换生效后绿色点亮 -->
-        <g v-if="backupChain.length">
+        <!-- 绕行段：被攻击跳绕行至替代节点（起点/终点不变，仅该段换路） -->
+        <g v-if="layout && bypassNodes.length">
+          <line :x1="layout.prevX" :y1="ROW_TOP" :x2="layout.bypassXs[0]" :y2="ROW_BOTTOM" class="tp-edge tp-edge-backup" />
           <line
-            v-for="(node, index) in backupChain.slice(0, -1)"
-            :key="`be-${index}`"
-            :x1="rowPositions(backupChain.length, ROW_BOTTOM)[index].x"
-            :y1="ROW_BOTTOM"
-            :x2="rowPositions(backupChain.length, ROW_BOTTOM)[index + 1].x"
-            :y2="ROW_BOTTOM"
-            :class="backupActive ? 'tp-edge tp-edge-backup' : 'tp-edge tp-edge-standby'"
+            v-for="(x, index) in layout.bypassXs.slice(0, -1)"
+            :key="`bl-${index}`"
+            :x1="x" :y1="ROW_BOTTOM" :x2="layout.bypassXs[index + 1]" :y2="ROW_BOTTOM"
+            class="tp-edge tp-edge-backup"
           />
+          <line :x1="layout.bypassXs[layout.bypassXs.length - 1]" :y1="ROW_BOTTOM" :x2="layout.nextX" :y2="ROW_TOP" class="tp-edge tp-edge-backup" />
+          <g
+            v-for="(node, index) in bypassNodes"
+            :key="`bn-${node.name}`"
+            :transform="`translate(${layout.bypassXs[index]}, ${ROW_BOTTOM})`"
+          >
+            <circle r="20" class="tp-node-bg st-active" />
+            <g class="tp-node-icon st-active" transform="translate(-12,-12)">
+              <g v-html="ICONS[nodeTypeOf(node)]" />
+            </g>
+            <text class="tp-node-label" y="38" text-anchor="middle">{{ node.name }}</text>
+            <text class="tp-node-sub" y="54" text-anchor="middle">{{ TYPE_LABELS[nodeTypeOf(node)] }} · {{ bypassDetail(node) }}</text>
+          </g>
         </g>
 
         <!-- 主路径节点 -->
-        <g v-for="(node, index) in primaryChain" :key="`pn-${node.id}`" :transform="`translate(${rowPositions(primaryChain.length, ROW_TOP)[index].x}, ${ROW_TOP})`">
-          <circle r="20" class="tp-node-bg" :class="[nodeStatusClass(node.status), { 'tp-dim': switched }]" />
-          <g class="tp-node-icon" :class="[nodeStatusClass(node.status), { 'tp-dim': switched }]" transform="translate(-12,-12)">
+        <g v-for="(node, index) in primaryChain" :key="`pn-${node.id}`" :transform="`translate(${rowPositions(primaryChain.length)[index]}, ${ROW_TOP})`">
+          <circle r="20" class="tp-node-bg" :class="nodeStatusClass(node.status)" />
+          <g class="tp-node-icon" :class="nodeStatusClass(node.status)" transform="translate(-12,-12)">
             <g v-html="ICONS[node.type]" />
           </g>
-          <text class="tp-node-label" :class="{ 'tp-text-dim': switched }" y="38" text-anchor="middle">{{ node.name }}</text>
-          <text class="tp-node-sub" :class="{ 'tp-text-dim': switched }" y="54" text-anchor="middle">{{ node.type === 'site' || node.type === 'origin' ? TYPE_LABELS[node.type] : `${TYPE_LABELS[node.type]} · ${hopDetail(node.hop)}` }}</text>
+          <text class="tp-node-label" y="38" text-anchor="middle">{{ node.name }}</text>
+          <text class="tp-node-sub" y="54" text-anchor="middle">{{ node.type === 'site' || node.type === 'origin' ? TYPE_LABELS[node.type] : `${TYPE_LABELS[node.type]} · ${hopDetail(node.hop)}` }}</text>
         </g>
 
-        <!-- 备用路径节点：待命灰色，切换生效后绿色点亮 -->
-        <g v-if="backupChain.length" v-for="(node, index) in backupChain" :key="`bn-${node.id}`" :transform="`translate(${rowPositions(backupChain.length, ROW_BOTTOM)[index].x}, ${ROW_BOTTOM})`">
-          <circle r="20" class="tp-node-bg" :class="backupActive ? nodeStatusClass(node.status) : 'st-standby'" />
-          <g class="tp-node-icon" :class="backupActive ? nodeStatusClass(node.status) : 'st-standby'" transform="translate(-12,-12)">
-            <g v-html="ICONS[node.type]" />
-          </g>
-          <text class="tp-node-label" :class="{ 'tp-text-dim': !backupActive }" y="38" text-anchor="middle">{{ node.name }}</text>
-          <text class="tp-node-sub" :class="{ 'tp-text-dim': !backupActive }" y="54" text-anchor="middle">{{ node.type === 'site' || node.type === 'origin' ? TYPE_LABELS[node.type] : `${TYPE_LABELS[node.type]} · ${hopDetail(node.hop)}` }}</text>
-        </g>
-
-        <!-- 行标签：主线路（当前 / 已切换停用）、备线路（待命 / 已切换生效） -->
-        <text x="10" :y="ROW_TOP + 4" class="tp-row-label" :class="{ 'tp-row-dim': switched }">主线路{{ switched ? '（已切换停用）' : '' }}</text>
-        <text v-if="backupChain.length" x="10" :y="ROW_BOTTOM + 4" class="tp-row-label" :class="{ 'tp-row-backup': backupActive }">{{ backupActive ? '备线路（已切换生效）' : '备线路（待命）' }}</text>
+        <!-- 行标签 -->
+        <text x="10" :y="ROW_TOP + 4" class="tp-row-label">主线路{{ bypassedHopIndex != null ? '（第 ' + (bypassedHopIndex + 1) + ' 跳绕行）' : '' }}</text>
+        <text v-if="bypassNodes.length" x="10" :y="ROW_BOTTOM + 4" class="tp-row-label tp-row-backup">绕行线路（已生效）</text>
       </svg>
 
       <!-- 攻击告警横幅 -->
       <div v-if="underAttack" class="tp-attack">
         <i />检测到攻击：{{ primary?.attackNote }}，智能分析中……
       </div>
+      <div v-else-if="restoring" class="tp-attack tp-attack-restore">
+        <i />攻击解除，第 {{ (bypassedHopIndex ?? 0) + 1 }} 跳正在回切主路径……
+      </div>
     </div>
 
-    <!-- 切换策略卡 -->
+    <!-- 分段绕行策略卡 -->
     <div v-if="policy" class="tp-policy">
       <div class="tp-policy-head">
         <strong>智能切换策略 · {{ policy.status === 'applied' ? '已执行' : '已下发' }}</strong>
@@ -237,11 +256,11 @@ function edgeClass(chain: TopoNode[], index: number) {
 
     <!-- 每跳明细 -->
     <ul class="tp-hops">
-      <li v-for="(node, index) in active?.hops ?? []" :key="node.id">
-        <i class="tp-hop-dot" :class="nodeStatusClass(node.status)" />
+      <li v-for="(hop, index) in primary?.hops ?? []" :key="hop.id">
+        <i class="tp-hop-dot" :class="nodeStatusClass(hop.status)" />
         <span class="tp-hop-seq">{{ index + 1 }}</span>
-        <span class="tp-hop-copy"><strong>{{ node.name }}</strong><small>{{ TYPE_LABELS[nodeTypeOf(node)] }} · {{ node.note }}</small></span>
-        <span class="tp-hop-metrics">{{ node.latencyMs }}ms · 丢包 {{ node.packetLossPct.toFixed(1) }}%</span>
+        <span class="tp-hop-copy"><strong>{{ hop.name }}</strong><small>{{ TYPE_LABELS[nodeTypeOf(hop)] }} · {{ hop.note }}</small></span>
+        <span class="tp-hop-metrics">{{ hop.latencyMs }}ms · 丢包 {{ hop.packetLossPct.toFixed(1) }}%</span>
       </li>
     </ul>
   </aside>
@@ -257,42 +276,37 @@ function edgeClass(chain: TopoNode[], index: number) {
 .tp-badge.st-normal { color: #72deb9; background: rgba(67, 215, 162, .12); border: 1px solid rgba(67, 215, 162, .4); }
 .tp-badge.st-attacked { color: #ff8798; background: rgba(239, 101, 121, .12); border: 1px solid rgba(239, 101, 121, .45); }
 .tp-badge.st-switching { color: #edc66b; background: rgba(233, 185, 73, .12); border: 1px solid rgba(233, 185, 73, .45); }
+.tp-badge.st-switched { color: #72deb9; background: rgba(67, 215, 162, .12); border: 1px solid rgba(67, 215, 162, .4); }
 .tp-badge.st-restoring { color: #8fc3ff; background: rgba(90, 149, 255, .12); border: 1px solid rgba(90, 149, 255, .45); animation: tp-blink 1s ease-in-out infinite; }
 @keyframes tp-blink { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
-.tp-badge.st-switched, .tp-badge.st-standby { color: #9aa8bd; background: rgba(119, 131, 151, .12); border: 1px solid rgba(119, 131, 151, .4); }
-.tp-badge.st-active { color: #72deb9; background: rgba(67, 215, 162, .12); border: 1px solid rgba(67, 215, 162, .4); }
 .tp-close { flex: 0 0 auto; width: 26px; height: 26px; padding: 0; border: 1px solid #35445d; color: #aeb9ca; background: transparent; font-size: 17px; line-height: 1; cursor: pointer; }
 .tp-close:hover { color: #fff; border-color: #5d7aa8; background: #1a2942; }
 .tp-meta { display: flex; align-items: center; gap: 16px; padding: 7px 12px; border-bottom: 1px solid #222d41; color: #8f9cb1; font-size: 12px; }
 .tp-meta b { color: #c3cfdf; font-weight: 600; }
 .tp-meta .tp-ok { color: #72deb9; }
+.tp-meta .tp-warn { color: #ff8798; }
 .tp-topology { position: relative; padding: 4px 0 0; }
 .tp-svg { display: block; width: 100%; height: auto; }
 .tp-node-bg { fill: rgba(20, 32, 51, .92); stroke: #4a6589; stroke-width: 1.4; }
 .tp-node-bg.st-degraded { stroke: #e9b949; fill: rgba(48, 40, 18, .92); }
 .tp-node-bg.st-blocked { stroke: #ef6579; fill: rgba(52, 18, 26, .95); animation: tp-pulse 1.1s ease-in-out infinite; }
 .tp-node-bg.st-active { stroke: #43d7a2; }
-.tp-node-bg.st-standby { stroke: #3d4c63; fill: rgba(26, 34, 48, .8); }
-.tp-node-bg.tp-dim { stroke: #4a5a72; fill: rgba(24, 31, 44, .8); }
 .tp-node-icon { color: #8fb2e4; }
 .tp-node-icon.st-degraded { color: #e9b949; }
 .tp-node-icon.st-blocked { color: #ff8798; }
-.tp-node-icon.st-standby { color: #5c6b82; }
-.tp-node-icon.tp-dim { color: #5c6b82; }
-.tp-text-dim { fill: #5c6b82 !important; }
-.tp-row-dim { fill: #4a5a72 !important; }
+.tp-node-icon.st-active { color: #43d7a2; }
 .tp-node-label { fill: #d5deec; font-size: 11px; }
 .tp-node-sub { fill: #7d8ba2; font-size: 10px; }
 .tp-edge { stroke-width: 2; stroke: #5a95ff; }
-.tp-edge-dim { stroke: #4a5a72; stroke-dasharray: 5 4; opacity: .6; }
 .tp-edge-degraded { stroke: #e9b949; stroke-width: 2.4; }
-.tp-edge-standby { stroke: #3d4c63; stroke-width: 1.8; stroke-dasharray: 4 4; opacity: .6; }
 .tp-edge-backup { stroke: #43d7a2; stroke-width: 2.4; marker-end: url(#tp-arrow); }
 .tp-edge-attacked { stroke: #ef6579; stroke-width: 2.6; animation: tp-edge-blink 1s ease-in-out infinite; }
 .tp-row-label { fill: #6d7c93; font-size: 10px; }
 .tp-row-backup { fill: #43d7a2; }
 .tp-attack { display: flex; align-items: flex-start; gap: 8px; margin: 0 12px 8px; padding: 8px 10px; border: 1px solid rgba(239, 101, 121, .5); border-left: 3px solid #ef6579; background: rgba(239, 101, 121, .08); color: #ffb9c2; font-size: 12px; line-height: 1.5; }
+.tp-attack-restore { border-color: rgba(90, 149, 255, .5); border-left-color: #5a95ff; background: rgba(90, 149, 255, .08); color: #9fc4ff; }
 .tp-attack i { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: #ef6579; box-shadow: 0 0 8px #ef6579; }
+.tp-attack-restore i { background: #5a95ff; box-shadow: 0 0 8px #5a95ff; }
 .tp-policy { margin: 0 12px 8px; padding: 9px 11px; border: 1px solid rgba(233, 185, 73, .4); border-left: 3px solid #e9b949; background: rgba(233, 185, 73, .07); }
 .tp-policy-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .tp-policy-head strong { color: #edc66b; font-size: 13px; }

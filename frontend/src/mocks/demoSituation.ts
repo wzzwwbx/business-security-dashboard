@@ -2,6 +2,7 @@ import { reactive } from 'vue';
 
 import type {
   DemoActivity,
+  DemoBypassNode,
   DemoEquipment,
   DemoHopType,
   DemoLinkType,
@@ -219,7 +220,7 @@ const initialTimes = Array.from({ length: 7 }, (_, i) =>
 // —— 多跳业务路由 ——
 // 每条路由：北京接入中心 → 多跳中继 → 站点。主路由为当前生效线路，备用路由待命，
 // 遭受攻击时由智能分析生成切换策略下发。
-type RouteHopSeed = { name: string; type: DemoHopType; coord: [number, number]; latencyMs: number; packetLossPct: number; throughputMbps: number; note: string };
+type RouteHopSeed = { name: string; type: DemoHopType; coord: [number, number]; latencyMs: number; packetLossPct: number; throughputMbps: number; note: string; bypass?: DemoBypassNode[] };
 type RouteSeed = { countryCode: string; name: string; kind: 'primary' | 'backup'; hops: RouteHopSeed[] };
 
 const routeSeeds: RouteSeed[] = [
@@ -230,7 +231,7 @@ const routeSeeds: RouteSeed[] = [
     kind: 'primary',
     hops: [
       { name: '北京信关站 G1', type: 'gateway', coord: [117.5, 39.8], latencyMs: 3, packetLossPct: 0.1, throughputMbps: 14.5, note: '北京信关站上行业务接入' },
-      { name: '卫-1 印度洋中继星', type: 'satellite', coord: [40, 95], latencyMs: 118, packetLossPct: 1.8, throughputMbps: 11.2, note: '卫星中继：北京 ↔ 西亚' },
+      { name: '卫-1 印度洋中继星', type: 'satellite', coord: [40, 95], latencyMs: 118, packetLossPct: 1.8, throughputMbps: 11.2, note: '卫星中继：北京 ↔ 西亚', bypass: [{ name: '卫-1B 印度洋备用中继星', type: 'satellite', longitude: 62, latitude: 28, latencyMs: 126, packetLossPct: 1.2, throughputMbps: 10.9, note: '备用卫星中继' }] },
       { name: '阿布扎比信关站 G2', type: 'gateway', coord: [54.6, 23.8], latencyMs: 42, packetLossPct: 0.4, throughputMbps: 12.6, note: '阿布扎比信关站下行接入' }
     ]
   },
@@ -252,7 +253,7 @@ const routeSeeds: RouteSeed[] = [
     kind: 'primary',
     hops: [
       { name: '华南中继 R1', type: 'terrestrial', coord: [112, 22], latencyMs: 12, packetLossPct: 0.2, throughputMbps: 13.8, note: '华南陆缆骨干' },
-      { name: '马六甲中继 R3', type: 'terrestrial', coord: [99, 4], latencyMs: 55, packetLossPct: 0.4, throughputMbps: 12.6, note: '中南半岛—马六甲陆缆' }
+      { name: '马六甲中继 R3', type: 'terrestrial', coord: [99, 4], latencyMs: 55, packetLossPct: 0.4, throughputMbps: 12.6, note: '中南半岛—马六甲陆缆', bypass: [{ name: '新加坡备用中继站', type: 'terrestrial', longitude: 101.5, latitude: 3.5, latencyMs: 60, packetLossPct: 0.3, throughputMbps: 12.3, note: '备用陆缆中继' }] }
     ]
   },
   {
@@ -272,7 +273,7 @@ const routeSeeds: RouteSeed[] = [
     kind: 'primary',
     hops: [
       { name: '中亚中继 R7', type: 'terrestrial', coord: [76, 43], latencyMs: 68, packetLossPct: 0.5, throughputMbps: 12.1, note: '中亚陆缆骨干' },
-      { name: '欧洲中继 R8', type: 'terrestrial', coord: [18, 49], latencyMs: 96, packetLossPct: 0.4, throughputMbps: 11.7, note: '东欧陆缆接入' }
+      { name: '欧洲中继 R8', type: 'terrestrial', coord: [18, 49], latencyMs: 96, packetLossPct: 0.4, throughputMbps: 11.7, note: '东欧陆缆接入', bypass: [{ name: '地中海备用中继', type: 'terrestrial', longitude: 14, latitude: 45, latencyMs: 102, packetLossPct: 0.3, throughputMbps: 11.4, note: '备用陆缆中继' }] }
     ]
   },
   {
@@ -293,7 +294,7 @@ const routeSeeds: RouteSeed[] = [
     kind: 'primary',
     hops: [
       { name: '华南中继 R1', type: 'terrestrial', coord: [112, 22], latencyMs: 12, packetLossPct: 0.2, throughputMbps: 13.8, note: '华南陆缆骨干' },
-      { name: '卫-1 印度洋中继星', type: 'satellite', coord: [40, 95], latencyMs: 124, packetLossPct: 1.6, throughputMbps: 10.8, note: '卫星中继：北京 ↔ 非洲' },
+      { name: '卫-1 印度洋中继星', type: 'satellite', coord: [40, 95], latencyMs: 124, packetLossPct: 1.6, throughputMbps: 10.8, note: '卫星中继：北京 ↔ 非洲', bypass: [{ name: '卫-1B 印度洋备用中继星', type: 'satellite', longitude: 62, latitude: 28, latencyMs: 132, packetLossPct: 1.1, throughputMbps: 10.5, note: '备用卫星中继' }] },
       { name: '内罗毕信关站', type: 'gateway', coord: [38.2, 0.4], latencyMs: 46, packetLossPct: 0.5, throughputMbps: 12.2, note: '内罗毕信关站下行接入' }
     ]
   },
@@ -314,7 +315,7 @@ const routeSeeds: RouteSeed[] = [
     kind: 'primary',
     hops: [
       { name: '北京信关站 G1', type: 'gateway', coord: [117.5, 39.8], latencyMs: 3, packetLossPct: 0.1, throughputMbps: 14.5, note: '北京信关站上行业务接入' },
-      { name: '卫-2 大西洋中继星', type: 'satellite', coord: [-55, 95], latencyMs: 142, packetLossPct: 1.9, throughputMbps: 10.4, note: '卫星中继：北京 ↔ 南美' },
+      { name: '卫-2 大西洋中继星', type: 'satellite', coord: [-55, 95], latencyMs: 142, packetLossPct: 1.9, throughputMbps: 10.4, note: '卫星中继：北京 ↔ 南美', bypass: [{ name: '卫-2B 大西洋备用中继星', type: 'satellite', longitude: -30, latitude: 40, latencyMs: 150, packetLossPct: 1.3, throughputMbps: 10.1, note: '备用卫星中继' }] },
       { name: '巴西利亚信关站', type: 'gateway', coord: [-52.2, -15.6], latencyMs: 34, packetLossPct: 0.4, throughputMbps: 12.8, note: '巴西利亚信关站下行接入' }
     ]
   },
@@ -335,7 +336,7 @@ const routeSeeds: RouteSeed[] = [
     name: '北京 → 渥太华（北太平洋海缆主路由）',
     kind: 'primary',
     hops: [
-      { name: '北太平洋海缆中继', type: 'submarine', coord: [-145, 45], latencyMs: 124, packetLossPct: 0.6, throughputMbps: 11.8, note: '北太平洋海底光缆' },
+      { name: '北太平洋海缆中继', type: 'submarine', coord: [-145, 45], latencyMs: 124, packetLossPct: 0.6, throughputMbps: 11.8, note: '北太平洋海底光缆', bypass: [{ name: '北太平洋备用中继', type: 'submarine', longitude: -150, latitude: 42, latencyMs: 130, packetLossPct: 0.5, throughputMbps: 11.5, note: '备用海缆中继' }] },
       { name: '温哥华登陆站', type: 'submarine', coord: [-123, 49.2], latencyMs: 28, packetLossPct: 0.3, throughputMbps: 13.4, note: '北美西岸海缆登陆' },
       { name: '渥太华陆缆', type: 'terrestrial', coord: [-75.7, 45.4], latencyMs: 36, packetLossPct: 0.2, throughputMbps: 13.8, note: '北美陆缆骨干' }
     ]
@@ -357,7 +358,7 @@ const routeSeeds: RouteSeed[] = [
     kind: 'primary',
     hops: [
       { name: '南海海缆中继', type: 'submarine', coord: [114, 8], latencyMs: 42, packetLossPct: 0.6, throughputMbps: 11.9, note: '南海海底光缆' },
-      { name: '珊瑚海中继', type: 'submarine', coord: [150, -18], latencyMs: 88, packetLossPct: 0.5, throughputMbps: 12.2, note: '珊瑚海海底光缆' },
+      { name: '珊瑚海中继', type: 'submarine', coord: [150, -18], latencyMs: 88, packetLossPct: 0.5, throughputMbps: 12.2, note: '珊瑚海海底光缆', bypass: [{ name: '珊瑚海备用中继', type: 'submarine', longitude: 152, latitude: -20, latencyMs: 92, packetLossPct: 0.4, throughputMbps: 12.0, note: '备用海缆中继' }] },
       { name: '堪培拉登陆站', type: 'submarine', coord: [149.13, -35.28], latencyMs: 18, packetLossPct: 0.2, throughputMbps: 13.6, note: '堪培拉海缆登陆' }
     ]
   },
@@ -378,7 +379,7 @@ const routeSeeds: RouteSeed[] = [
     kind: 'primary',
     hops: [
       { name: '北太平洋海缆中继', type: 'submarine', coord: [170, 40], latencyMs: 118, packetLossPct: 0.6, throughputMbps: 11.9, note: '北太平洋海底光缆' },
-      { name: '东太平洋中继', type: 'submarine', coord: [-150, 38], latencyMs: 96, packetLossPct: 0.5, throughputMbps: 12.4, note: '东太平洋海底光缆' },
+      { name: '东太平洋中继', type: 'submarine', coord: [-150, 38], latencyMs: 96, packetLossPct: 0.5, throughputMbps: 12.4, note: '东太平洋海底光缆', bypass: [{ name: '东太平洋备用中继', type: 'submarine', longitude: -140, latitude: 30, latencyMs: 100, packetLossPct: 0.4, throughputMbps: 12.1, note: '备用海缆中继' }] },
       { name: '华盛顿登陆站', type: 'submarine', coord: [-77.0, 38.9], latencyMs: 14, packetLossPct: 0.2, throughputMbps: 13.7, note: '美国东岸海缆登陆' }
     ]
   },
@@ -408,7 +409,8 @@ function buildRoutes(): DemoRoute[] {
       packetLossPct: hop.packetLossPct,
       throughputMbps: hop.throughputMbps,
       status: 'normal',
-      note: hop.note
+      note: hop.note,
+      bypass: hop.bypass
     }));
     return {
       id: `route-${seed.countryCode}-${seed.kind}`,
@@ -619,21 +621,22 @@ const routeAttackTemplates = [
   (hop: DemoRouteHop) => `${hop.name} 连续握手失败，疑似中间人探测攻击`
 ];
 
-// 智能分析：攻击发生后由“线路安全智能分析引擎”生成切换策略并下发。
-function issueRouteSwitchPolicy(primary: DemoRoute, backup: DemoRoute, hopIndex: number) {
+// 智能分析：攻击发生后由“线路安全智能分析引擎”生成分段绕行策略并下发。
+function issueRouteSwitchPolicy(primary: DemoRoute, hopIndex: number) {
   const hop = primary.hops[hopIndex];
+  const bypassNames = (hop.bypass ?? []).map((node) => node.name).join(' → ');
   demoSituationScenario.routeSwitches.unshift({
     id: `switch-${++routeSwitchSeq}`,
     countryCode: primary.countryCode,
-    reason: `线路安全智能分析：主路由第 ${hopIndex + 1} 跳（${hop.name}）${primary.attackNote ?? '检测到链路攻击'}；综合比对各用线路健康度、时延与带宽余量，生成切换策略并下发：业务路由由「${primary.name}」切换至「${backup.name}」`,
+    reason: `线路安全智能分析：第 ${hopIndex + 1} 跳（${hop.name}）${primary.attackNote ?? '检测到链路攻击'}；起点、终点不变，仅该段绕行至 ${bypassNames || '备用节点'}，其余节点保持原路径，生成分段绕行策略并下发`,
     fromRouteId: primary.id,
-    toRouteId: backup.id,
+    toRouteId: hop.id,
     issuedAt: new Date().toISOString(),
     status: 'issued'
   });
 }
 
-// 随机检测到一次攻击：将某主路由的一跳置为阻断并进入 attacked 阶段。
+// 随机检测到一次攻击：将某主路由中带绕行路径的一跳置为阻断并进入 attacked 阶段。
 function attackRoute(route: DemoRoute, hopIndex: number) {
   const hop = route.hops[hopIndex];
   hop.status = 'blocked';
@@ -641,8 +644,19 @@ function attackRoute(route: DemoRoute, hopIndex: number) {
   hop.throughputMbps = Math.max(0.4, Math.round(hop.throughputMbps * 0.22 * 10) / 10);
   hop.note = '遭受攻击，链路阻断';
   route.status = 'attacked';
+  route.bypassedHopIndex = hopIndex;
   route.attackNote = routeAttackTemplates[Math.floor(Math.random() * routeAttackTemplates.length)](hop);
   routeIncident = { routeId: route.id, hopIndex, stage: 'attacked' };
+}
+
+// 候选攻击跳：仅选择带有绕行路径（bypass）的跳，保证攻击后能演示分段绕行。
+function pickAttackTarget() {
+  const candidates = demoSituationScenario.routes
+    .filter((route) => route.kind === 'primary' && route.status === 'normal')
+    .flatMap((route) => route.hops.map((hop, index) => ({ route, hop, index })))
+    .filter(({ hop }) => (hop.bypass?.length ?? 0) > 0);
+  if (!candidates.length) return null;
+  return randomPick(candidates);
 }
 
 // 攻击解除后回切：先进入 restoring（回切中）过渡态，下一 tick 完成恢复。
@@ -657,6 +671,7 @@ function beginRestore(route: DemoRoute) {
 }
 
 function finishRestore(route: DemoRoute) {
+  const bypassedHop = route.bypassedHopIndex != null ? route.hops[route.bypassedHopIndex] : undefined;
   route.hops.forEach((hop) => {
     hop.status = 'normal';
     hop.packetLossPct = Math.max(0.1, Math.round((hop.packetLossPct * 0.05 + 0.2) * 10) / 10);
@@ -665,8 +680,8 @@ function finishRestore(route: DemoRoute) {
   });
   route.status = 'normal';
   route.attackNote = undefined;
-  const backup = demoSituationScenario.routes.find((item) => item.countryCode === route.countryCode && item.kind === 'backup');
-  if (backup) backup.status = 'standby';
+  route.bypassedHopIndex = undefined;
+  void bypassedHop;
   restoreIncident = null;
 }
 
@@ -680,10 +695,9 @@ function maybeRestoreRoute() {
 function maybeAttackRoute() {
   if (routeIncident) return;
   if (Math.random() > 0.16) return;
-  const primaries = demoSituationScenario.routes.filter((route) => route.kind === 'primary' && route.status === 'normal');
-  if (!primaries.length) return;
-  const route = randomPick(primaries);
-  attackRoute(route, Math.floor(Math.random() * route.hops.length));
+  const target = pickAttackTarget();
+  if (!target) return;
+  attackRoute(target.route, target.index);
 }
 
 // 每个 tick 推进一阶段：attacked → 生成策略切换（switching）→ 切换完成（switched / active）。
@@ -700,11 +714,8 @@ function routeSecurityTick() {
   }
   if (!routeIncident) {
     if (routeTickCount === 1) {
-      const primaries = demoSituationScenario.routes.filter((route) => route.kind === 'primary' && route.status === 'normal');
-      if (primaries.length) {
-        const route = randomPick(primaries);
-        attackRoute(route, Math.floor(Math.random() * route.hops.length));
-      }
+      const target = pickAttackTarget();
+      if (target) attackRoute(target.route, target.index);
     } else {
       maybeAttackRoute();
       maybeRestoreRoute();
@@ -712,20 +723,17 @@ function routeSecurityTick() {
     return;
   }
   const primary = demoSituationScenario.routes.find((route) => route.id === routeIncident!.routeId);
-  const backup = primary
-    ? demoSituationScenario.routes.find((route) => route.countryCode === primary.countryCode && route.kind === 'backup')
-    : undefined;
-  if (!primary || !backup) {
+  if (!primary) {
     routeIncident = null;
     return;
   }
   if (routeIncident.stage === 'attacked') {
     primary.status = 'switching';
-    issueRouteSwitchPolicy(primary, backup, routeIncident.hopIndex);
+    issueRouteSwitchPolicy(primary, routeIncident.hopIndex);
     routeIncident.stage = 'switching';
   } else if (routeIncident.stage === 'switching') {
+    // 分段绕行完成：被攻击跳保持红色告警，绕行节点生效，其余节点不变。
     primary.status = 'switched';
-    backup.status = 'active';
     const policy = demoSituationScenario.routeSwitches[0];
     if (policy) policy.status = 'applied';
     routeIncident = null;
@@ -871,11 +879,8 @@ function assertDemoValue(label: string, actual: number, expected: number) {
 // 演示 / 测试钩子：强制触发一次线路攻击（无进行中事件时）。
 export function demoTriggerRouteAttack() {
   if (routeIncident) return;
-  const primaries = demoSituationScenario.routes.filter((route) => route.kind === 'primary' && route.status === 'normal');
-  if (!primaries.length) return;
-  const route = randomPick(primaries);
-  const hopIndex = Math.floor(Math.random() * route.hops.length);
-  attackRoute(route, hopIndex);
+  const target = pickAttackTarget();
+  if (target) attackRoute(target.route, target.index);
 }
 
 export function validateDemoSituationScenario() {

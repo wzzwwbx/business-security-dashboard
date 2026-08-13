@@ -454,8 +454,8 @@ function handleClick(payload: Record<string, any>) {
   if (region && 'countryCode' in region) emit('selectCountry', region.countryCode);
 }
 
-// —— 切换策略下发提示（单次展示，手动关闭） ——
-const switchToast = ref<string | null>(null);
+// —— 切换策略下发提示（单次展示，点击打开对应拓扑，手动关闭） ——
+const switchToast = ref<{ text: string; countryCode: string } | null>(null);
 let lastToastSwitchId = '';
 // 空数组时访问 [0] 不会收集依赖，改为监听 length 并用策略 id 去重。
 watch(() => demoSituationScenario.routeSwitches.length, () => {
@@ -464,8 +464,15 @@ watch(() => demoSituationScenario.routeSwitches.length, () => {
   lastToastSwitchId = policy.id;
   const region = demoSituationScenario.regions.find((item) => item.countryCode === policy.countryCode);
   const name = region ? (region.countryCode === 'CN' ? '北京' : region.countryName) : policy.countryCode;
-  switchToast.value = `线路安全智能分析：${name} 主路由遭攻击，已生成并下发切换策略，点击线路查看多跳拓扑与切换路径`;
+  switchToast.value = {
+    text: `线路安全智能分析：${name} 主路由遭攻击，已生成并下发分段绕行策略，点击查看对应线路拓扑`,
+    countryCode: policy.countryCode
+  };
 });
+
+function openTopologyFromToast() {
+  if (switchToast.value) topologyCountry.value = switchToast.value.countryCode;
+}
 </script>
 
 <template>
@@ -479,9 +486,9 @@ watch(() => demoSituationScenario.routeSwitches.length, () => {
     </div>
 
     <Transition name="route-toast">
-      <div v-if="switchToast" class="route-switch-toast" role="status">
-        <i /><span>{{ switchToast }}</span>
-        <button type="button" class="toast-close" aria-label="关闭提示" @click="switchToast = null">×</button>
+      <div v-if="switchToast" class="route-switch-toast" role="status" @click="openTopologyFromToast">
+        <i /><span>{{ switchToast.text }}</span>
+        <button type="button" class="toast-close" aria-label="关闭提示" @click.stop="switchToast = null">×</button>
       </div>
     </Transition>
 
@@ -514,7 +521,7 @@ watch(() => demoSituationScenario.routeSwitches.length, () => {
 .map-legend-overlay i.status.offline { background: #778397; }
 
 /* 切换策略下发提示 */
-.route-switch-toast { position: absolute; z-index: 8; top: 56px; right: 12px; max-width: 460px; display: flex; align-items: flex-start; gap: 8px; padding: 10px 10px 10px 14px; border: 1px solid rgba(239, 101, 121, .6); border-left: 3px solid #ef6579; background: rgba(28, 16, 26, .94); backdrop-filter: blur(4px); color: #ffd9de; font-size: 13px; line-height: 1.5; box-shadow: 0 6px 24px rgba(0, 0, 0, .45); }
+.route-switch-toast { position: absolute; z-index: 8; top: 56px; right: 12px; max-width: 460px; display: flex; align-items: flex-start; gap: 8px; padding: 10px 10px 10px 14px; border: 1px solid rgba(239, 101, 121, .6); border-left: 3px solid #ef6579; background: rgba(28, 16, 26, .94); backdrop-filter: blur(4px); color: #ffd9de; font-size: 13px; line-height: 1.5; box-shadow: 0 6px 24px rgba(0, 0, 0, .45); cursor: pointer; }
 .route-switch-toast i { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: #ef6579; box-shadow: 0 0 8px #ef6579; }
 .route-switch-toast span { flex: 1 1 auto; }
 .route-switch-toast .toast-close { flex: 0 0 auto; width: 22px; height: 22px; padding: 0; border: 1px solid rgba(239, 101, 121, .5); color: #ffb9c2; background: transparent; font-size: 15px; line-height: 1; cursor: pointer; }

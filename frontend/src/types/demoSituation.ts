@@ -116,6 +116,18 @@ export type DemoRouteStatus = 'normal' | 'attacked' | 'switching' | 'switched' |
 /** 中继节点类型。 */
 export type DemoHopType = 'ground' | 'satellite' | 'submarine' | 'terrestrial' | 'gateway';
 
+/** 某跳被攻击时的绕行替代节点（分段切换：起点、终点不变，中间节点绕行）。 */
+export interface DemoBypassNode {
+  name: string;
+  type: DemoHopType;
+  latitude: number;
+  longitude: number;
+  latencyMs: number;
+  packetLossPct: number;
+  throughputMbps: number;
+  note: string;
+}
+
 /** 通信线路中的一跳（中继节点间的一段链路）。 */
 export interface DemoRouteHop {
   id: string;
@@ -130,6 +142,8 @@ export interface DemoRouteHop {
   throughputMbps: number;
   status: DemoHopStatus;
   note: string;
+  /** 本跳被攻击时的绕行替代节点（起点=上一跳终点，终点=本跳终点不变）。 */
+  bypass?: DemoBypassNode[];
 }
 
 /** 一条完整业务路由：北京接入中心 → 多跳中继 → 站点。 */
@@ -148,6 +162,8 @@ export interface DemoRoute {
   status: DemoRouteStatus;
   /** 最近一次攻击检测说明（attacked 时）。 */
   attackNote?: string;
+  /** 当前绕行的跳索引（分段切换时，该跳绕行至 bypass 节点）。 */
+  bypassedHopIndex?: number;
 }
 
 /** 智能分析生成的线路切换策略（已下发）。 */
