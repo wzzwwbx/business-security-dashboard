@@ -280,7 +280,13 @@ interface GeoRouteLine {
 
 const geoRouteLines: GeoRouteLine[] = [];
 let highlightedRoute: Array<{ seriesIndex: number; dataIndex: number }> = [];
-const HIT_THRESHOLD_PX = 8;
+const BASE_HIT_THRESHOLD_PX = 8;
+
+// 命中阈值随 geo 缩放自适应：放大时线条更宽更疏，收紧阈值避免误触；缩小时放宽便于点击。
+function hitThreshold(chart: { getOption: () => { geo?: Array<{ zoom?: number }> } }) {
+  const zoom = chart.getOption().geo?.[0]?.zoom ?? 1.08;
+  return Math.max(4, Math.min(12, BASE_HIT_THRESHOLD_PX * (1.08 / zoom)));
+}
 
 function discretizeLine(x1: number, y1: number, x2: number, y2: number, cpx?: number, cpy?: number): Array<[number, number]> {
   const pts: Array<[number, number]> = [];
@@ -311,6 +317,7 @@ function pointToSegmentDist(px: number, py: number, a: [number, number], b: [num
 function findRouteAt(px: number, py: number) {
   const chart = mapChart.value?.getChart();
   if (!chart) return null;
+  const threshold = hitThreshold(chart);
   let best: GeoRouteLine | null = null;
   let bestDist = Infinity;
   for (const line of geoRouteLines) {
@@ -327,7 +334,7 @@ function findRouteAt(px: number, py: number) {
       }
     }
   }
-  return bestDist <= HIT_THRESHOLD_PX ? best : null;
+  return bestDist <= threshold ? best : null;
 }
 
 function highlightRoute(routeId: string | undefined) {
@@ -447,9 +454,8 @@ function handleClick(payload: Record<string, any>) {
   if (region && 'countryCode' in region) emit('selectCountry', region.countryCode);
 }
 
-// —— 切换策略下发提示 ——
+// —— 切换策略下发提示（单次展示，手动关闭） ——
 const switchToast = ref<string | null>(null);
-let toastTimer: number | undefined;
 let lastToastSwitchId = '';
 // 空数组时访问 [0] 不会收集依赖，改为监听 length 并用策略 id 去重。
 watch(() => demoSituationScenario.routeSwitches.length, () => {
@@ -459,8 +465,6 @@ watch(() => demoSituationScenario.routeSwitches.length, () => {
   const region = demoSituationScenario.regions.find((item) => item.countryCode === policy.countryCode);
   const name = region ? (region.countryCode === 'CN' ? '北京' : region.countryName) : policy.countryCode;
   switchToast.value = `线路安全智能分析：${name} 主路由遭攻击，已生成并下发切换策略，点击线路查看多跳拓扑与切换路径`;
-  if (toastTimer) window.clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => { switchToast.value = null; }, 8000);
 });
 </script>
 
@@ -476,7 +480,8 @@ watch(() => demoSituationScenario.routeSwitches.length, () => {
 
     <Transition name="route-toast">
       <div v-if="switchToast" class="route-switch-toast" role="status">
-        <i />{{ switchToast }}
+        <i /><span>{{ switchToast }}</span>
+        <button type="button" class="toast-close" aria-label="关闭提示" @click="switchToast = null">×</button>
       </div>
     </Transition>
 
@@ -509,8 +514,11 @@ watch(() => demoSituationScenario.routeSwitches.length, () => {
 .map-legend-overlay i.status.offline { background: #778397; }
 
 /* 切换策略下发提示 */
-.route-switch-toast { position: absolute; z-index: 8; top: 56px; right: 12px; max-width: 420px; display: flex; align-items: flex-start; gap: 8px; padding: 10px 14px; border: 1px solid rgba(239, 101, 121, .6); border-left: 3px solid #ef6579; background: rgba(28, 16, 26, .94); backdrop-filter: blur(4px); color: #ffd9de; font-size: 13px; line-height: 1.5; box-shadow: 0 6px 24px rgba(0, 0, 0, .45); }
+.route-switch-toast { position: absolute; z-index: 8; top: 56px; right: 12px; max-width: 460px; display: flex; align-items: flex-start; gap: 8px; padding: 10px 10px 10px 14px; border: 1px solid rgba(239, 101, 121, .6); border-left: 3px solid #ef6579; background: rgba(28, 16, 26, .94); backdrop-filter: blur(4px); color: #ffd9de; font-size: 13px; line-height: 1.5; box-shadow: 0 6px 24px rgba(0, 0, 0, .45); }
 .route-switch-toast i { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: #ef6579; box-shadow: 0 0 8px #ef6579; }
+.route-switch-toast span { flex: 1 1 auto; }
+.route-switch-toast .toast-close { flex: 0 0 auto; width: 22px; height: 22px; padding: 0; border: 1px solid rgba(239, 101, 121, .5); color: #ffb9c2; background: transparent; font-size: 15px; line-height: 1; cursor: pointer; }
+.route-switch-toast .toast-close:hover { color: #fff; background: rgba(239, 101, 121, .2); }
 
 .route-panel-enter-active, .route-panel-leave-active { transition: opacity .22s ease, transform .22s ease; }
 .route-panel-enter-from, .route-panel-leave-to { opacity: 0; transform: translateX(-12px); }

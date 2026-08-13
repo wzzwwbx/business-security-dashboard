@@ -33,7 +33,8 @@ function statusLabel(route: DemoRoute | undefined) {
     normal: '运行正常',
     attacked: '遭受攻击',
     switching: '策略切换中',
-    switched: '已切换停用'
+    switched: '已切换停用',
+    restoring: '回切中'
   };
   return labels[route.status];
 }
@@ -256,6 +257,8 @@ function edgeClass(chain: TopoNode[], index: number) {
 .tp-badge.st-normal { color: #72deb9; background: rgba(67, 215, 162, .12); border: 1px solid rgba(67, 215, 162, .4); }
 .tp-badge.st-attacked { color: #ff8798; background: rgba(239, 101, 121, .12); border: 1px solid rgba(239, 101, 121, .45); }
 .tp-badge.st-switching { color: #edc66b; background: rgba(233, 185, 73, .12); border: 1px solid rgba(233, 185, 73, .45); }
+.tp-badge.st-restoring { color: #8fc3ff; background: rgba(90, 149, 255, .12); border: 1px solid rgba(90, 149, 255, .45); animation: tp-blink 1s ease-in-out infinite; }
+@keyframes tp-blink { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
 .tp-badge.st-switched, .tp-badge.st-standby { color: #9aa8bd; background: rgba(119, 131, 151, .12); border: 1px solid rgba(119, 131, 151, .4); }
 .tp-badge.st-active { color: #72deb9; background: rgba(67, 215, 162, .12); border: 1px solid rgba(67, 215, 162, .4); }
 .tp-close { flex: 0 0 auto; width: 26px; height: 26px; padding: 0; border: 1px solid #35445d; color: #aeb9ca; background: transparent; font-size: 17px; line-height: 1; cursor: pointer; }

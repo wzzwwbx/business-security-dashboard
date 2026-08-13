@@ -27,6 +27,19 @@ export default defineConfig(({ mode }) => {
       }
     },
     define: clientEnvDefine,
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'echarts-core': ['echarts/core'],
+            'echarts-charts': ['echarts/charts'],
+            'echarts-components': ['echarts/components'],
+            'echarts-renderers': ['echarts/renderers'],
+            'vue-vendor': ['vue', 'vue-router']
+          }
+        }
+      }
+    },
     optimizeDeps: {
       force: true,
       include: ['echarts/core', 'echarts/charts', 'echarts/components', 'echarts/renderers']

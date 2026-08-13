@@ -51,9 +51,9 @@ const regionSeeds: RegionSeed[] = [
   { countryCode: 'DE', countryName: '德国', city: '柏林', longitude: 10.4, latitude: 51.1, people: 4, online: 3, healthy: 3, degraded: 1, department: '欧洲业务保障组', trafficGb: 2.3, uplinkMbps: 2.5, downlinkMbps: 3.8, linkType: 'ground', message: { login: 4, logout: 1, sentMessages: 25, receivedMessages: 27, sentFiles: 7, receivedFiles: 8 }, signing: { received: 13, processed: 10, pending: 2, exception: 1 } },
   { countryCode: 'KE', countryName: '肯尼亚', city: '内罗毕', longitude: 37.9, latitude: 0.2, people: 3, online: 3, healthy: 3, degraded: 0, department: '非洲业务保障组', trafficGb: 1.8, uplinkMbps: 2.1, downlinkMbps: 3.0, linkType: 'satellite', satelliteId: 'sat-1', message: { login: 3, logout: 0, sentMessages: 17, receivedMessages: 20, sentFiles: 5, receivedFiles: 7 }, signing: { received: 10, processed: 8, pending: 2, exception: 0 } },
   { countryCode: 'BR', countryName: '巴西', city: '巴西利亚', longitude: -51.9, latitude: -14.2, people: 3, online: 2, healthy: 2, degraded: 1, department: '南美业务保障组', trafficGb: 1.8, uplinkMbps: 1.8, downlinkMbps: 2.7, linkType: 'satellite', satelliteId: 'sat-2', message: { login: 2, logout: 0, sentMessages: 15, receivedMessages: 16, sentFiles: 4, receivedFiles: 5 }, signing: { received: 9, processed: 7, pending: 1, exception: 1 } },
-  { countryCode: 'CA', countryName: '加拿大', city: '多伦多', longitude: -79.4, latitude: 43.7, people: 2, online: 0, healthy: 0, degraded: 0, department: '北美备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } },
-  { countryCode: 'AU', countryName: '澳大利亚', city: '悉尼', longitude: 151.2, latitude: -33.9, people: 2, online: 0, healthy: 0, degraded: 0, department: '大洋洲备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } },
-  { countryCode: 'US', countryName: '美国', city: '洛杉矶', longitude: -118.2, latitude: 34.1, people: 2, online: 0, healthy: 0, degraded: 0, department: '北美备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } }
+  { countryCode: 'CA', countryName: '加拿大', city: '渥太华', longitude: -75.7, latitude: 45.4, people: 2, online: 0, healthy: 0, degraded: 0, department: '北美备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } },
+  { countryCode: 'AU', countryName: '澳大利亚', city: '堪培拉', longitude: 149.13, latitude: -35.28, people: 2, online: 0, healthy: 0, degraded: 0, department: '大洋洲备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } },
+  { countryCode: 'US', countryName: '美国', city: '华盛顿', longitude: -77.0, latitude: 38.9, people: 2, online: 0, healthy: 0, degraded: 0, department: '北美备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } }
 ];
 
 const securityEventTime = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60000).toISOString();
@@ -332,64 +332,64 @@ const routeSeeds: RouteSeed[] = [
   // 加拿大：北太平洋海缆主路由 + 北极光缆备路由
   {
     countryCode: 'CA',
-    name: '北京 → 多伦多（北太平洋海缆主路由）',
+    name: '北京 → 渥太华（北太平洋海缆主路由）',
     kind: 'primary',
     hops: [
       { name: '北太平洋海缆中继', type: 'submarine', coord: [-145, 45], latencyMs: 124, packetLossPct: 0.6, throughputMbps: 11.8, note: '北太平洋海底光缆' },
       { name: '温哥华登陆站', type: 'submarine', coord: [-123, 49.2], latencyMs: 28, packetLossPct: 0.3, throughputMbps: 13.4, note: '北美西岸海缆登陆' },
-      { name: '多伦多陆缆', type: 'terrestrial', coord: [-79.5, 43.6], latencyMs: 36, packetLossPct: 0.2, throughputMbps: 13.8, note: '北美陆缆骨干' }
+      { name: '渥太华陆缆', type: 'terrestrial', coord: [-75.7, 45.4], latencyMs: 36, packetLossPct: 0.2, throughputMbps: 13.8, note: '北美陆缆骨干' }
     ]
   },
   {
     countryCode: 'CA',
-    name: '北京 → 多伦多（北极光缆备路由）',
+    name: '北京 → 渥太华（北极光缆备路由）',
     kind: 'backup',
     hops: [
       { name: '白令海中继', type: 'submarine', coord: [170, 60], latencyMs: 96, packetLossPct: 0.5, throughputMbps: 12.1, note: '白令海海底光缆' },
       { name: '北极光缆中继', type: 'submarine', coord: [-45, 78], latencyMs: 148, packetLossPct: 0.8, throughputMbps: 10.9, note: '北极圈海底光缆' },
-      { name: '多伦多陆缆', type: 'terrestrial', coord: [-79.5, 43.6], latencyMs: 36, packetLossPct: 0.2, throughputMbps: 13.8, note: '北美陆缆骨干' }
+      { name: '渥太华陆缆', type: 'terrestrial', coord: [-75.7, 45.4], latencyMs: 36, packetLossPct: 0.2, throughputMbps: 13.8, note: '北美陆缆骨干' }
     ]
   },
   // 澳大利亚：南海海缆主路由 + 西太平洋海缆备路由
   {
     countryCode: 'AU',
-    name: '北京 → 悉尼（南海海缆主路由）',
+    name: '北京 → 堪培拉（南海海缆主路由）',
     kind: 'primary',
     hops: [
       { name: '南海海缆中继', type: 'submarine', coord: [114, 8], latencyMs: 42, packetLossPct: 0.6, throughputMbps: 11.9, note: '南海海底光缆' },
       { name: '珊瑚海中继', type: 'submarine', coord: [150, -18], latencyMs: 88, packetLossPct: 0.5, throughputMbps: 12.2, note: '珊瑚海海底光缆' },
-      { name: '悉尼登陆站', type: 'submarine', coord: [151.2, -33.6], latencyMs: 18, packetLossPct: 0.2, throughputMbps: 13.6, note: '悉尼海缆登陆' }
+      { name: '堪培拉登陆站', type: 'submarine', coord: [149.13, -35.28], latencyMs: 18, packetLossPct: 0.2, throughputMbps: 13.6, note: '堪培拉海缆登陆' }
     ]
   },
   {
     countryCode: 'AU',
-    name: '北京 → 悉尼（西太平洋海缆备路由）',
+    name: '北京 → 堪培拉（西太平洋海缆备路由）',
     kind: 'backup',
     hops: [
       { name: '菲律宾海中继', type: 'submarine', coord: [135, 15], latencyMs: 62, packetLossPct: 0.5, throughputMbps: 12.3, note: '菲律宾海海底光缆' },
       { name: '关岛中继', type: 'submarine', coord: [144.8, 13.4], latencyMs: 34, packetLossPct: 0.4, throughputMbps: 12.8, note: '关岛海缆枢纽' },
-      { name: '悉尼登陆站', type: 'submarine', coord: [151.2, -33.6], latencyMs: 18, packetLossPct: 0.2, throughputMbps: 13.6, note: '悉尼海缆登陆' }
+      { name: '堪培拉登陆站', type: 'submarine', coord: [149.13, -35.28], latencyMs: 18, packetLossPct: 0.2, throughputMbps: 13.6, note: '堪培拉海缆登陆' }
     ]
   },
   // 美国：北太平洋海缆主路由 + 中太平洋海缆备路由
   {
     countryCode: 'US',
-    name: '北京 → 洛杉矶（北太平洋海缆主路由）',
+    name: '北京 → 华盛顿（北太平洋海缆主路由）',
     kind: 'primary',
     hops: [
       { name: '北太平洋海缆中继', type: 'submarine', coord: [170, 40], latencyMs: 118, packetLossPct: 0.6, throughputMbps: 11.9, note: '北太平洋海底光缆' },
       { name: '东太平洋中继', type: 'submarine', coord: [-150, 38], latencyMs: 96, packetLossPct: 0.5, throughputMbps: 12.4, note: '东太平洋海底光缆' },
-      { name: '洛杉矶登陆站', type: 'submarine', coord: [-118.5, 33.9], latencyMs: 14, packetLossPct: 0.2, throughputMbps: 13.7, note: '美国西岸海缆登陆' }
+      { name: '华盛顿登陆站', type: 'submarine', coord: [-77.0, 38.9], latencyMs: 14, packetLossPct: 0.2, throughputMbps: 13.7, note: '美国东岸海缆登陆' }
     ]
   },
   {
     countryCode: 'US',
-    name: '北京 → 洛杉矶（中太平洋海缆备路由）',
+    name: '北京 → 华盛顿（中太平洋海缆备路由）',
     kind: 'backup',
     hops: [
       { name: '日本中继', type: 'submarine', coord: [140, 32], latencyMs: 48, packetLossPct: 0.4, throughputMbps: 12.9, note: '日本海缆枢纽' },
       { name: '中途岛中继', type: 'submarine', coord: [-177, 28], latencyMs: 108, packetLossPct: 0.6, throughputMbps: 12.0, note: '中太平洋海底光缆' },
-      { name: '洛杉矶登陆站', type: 'submarine', coord: [-118.5, 33.9], latencyMs: 14, packetLossPct: 0.2, throughputMbps: 13.7, note: '美国西岸海缆登陆' }
+      { name: '华盛顿登陆站', type: 'submarine', coord: [-77.0, 38.9], latencyMs: 14, packetLossPct: 0.2, throughputMbps: 13.7, note: '美国东岸海缆登陆' }
     ]
   }
 ];
@@ -645,21 +645,36 @@ function attackRoute(route: DemoRoute, hopIndex: number) {
   routeIncident = { routeId: route.id, hopIndex, stage: 'attacked' };
 }
 
-// 攻击解除后回切：主路由恢复 normal，备用路由回到待命，链路参数复位。
-function maybeRestoreRoute() {
-  const switched = demoSituationScenario.routes.filter((route) => route.kind === 'primary' && route.status === 'switched');
-  if (!switched.length || Math.random() > 0.14) return;
-  const route = randomPick(switched);
+// 攻击解除后回切：先进入 restoring（回切中）过渡态，下一 tick 完成恢复。
+interface RestoreIncident {
+  routeId: string;
+}
+let restoreIncident: RestoreIncident | null = null;
+
+function beginRestore(route: DemoRoute) {
+  route.status = 'restoring';
+  restoreIncident = { routeId: route.id };
+}
+
+function finishRestore(route: DemoRoute) {
   route.hops.forEach((hop) => {
     hop.status = 'normal';
     hop.packetLossPct = Math.max(0.1, Math.round((hop.packetLossPct * 0.05 + 0.2) * 10) / 10);
-    hop.throughputMbps = Math.round((Math.min(14.5, hop.throughputMbps * 3.2)) * 10) / 10;
+    hop.throughputMbps = Math.round(Math.min(14.5, hop.throughputMbps * 3.2) * 10) / 10;
     hop.note = hop.note === '遭受攻击，链路阻断' ? '链路恢复正常' : hop.note;
   });
   route.status = 'normal';
   route.attackNote = undefined;
   const backup = demoSituationScenario.routes.find((item) => item.countryCode === route.countryCode && item.kind === 'backup');
   if (backup) backup.status = 'standby';
+  restoreIncident = null;
+}
+
+// 检测到可回切的主路由（攻击已解除），触发回切过渡。
+function maybeRestoreRoute() {
+  const switched = demoSituationScenario.routes.filter((route) => route.kind === 'primary' && route.status === 'switched');
+  if (!switched.length || Math.random() > 0.14) return;
+  beginRestore(randomPick(switched));
 }
 
 function maybeAttackRoute() {
@@ -676,6 +691,13 @@ function maybeAttackRoute() {
 let routeTickCount = 0;
 function routeSecurityTick() {
   routeTickCount += 1;
+  // 回切过渡：restoring 保持一个 tick 后完成恢复。
+  if (restoreIncident) {
+    const route = demoSituationScenario.routes.find((item) => item.id === restoreIncident!.routeId);
+    if (route) finishRestore(route);
+    else restoreIncident = null;
+    return;
+  }
   if (!routeIncident) {
     if (routeTickCount === 1) {
       const primaries = demoSituationScenario.routes.filter((route) => route.kind === 'primary' && route.status === 'normal');

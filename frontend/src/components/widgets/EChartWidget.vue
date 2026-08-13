@@ -81,7 +81,6 @@ echartsCore.use([
   echartsCharts.RadarChart,
   echartsCharts.GaugeChart,
   echartsCharts.FunnelChart,
-  echartsCharts.MapChart,
   echartsCharts.ScatterChart,
   echartsCharts.EffectScatterChart,
   echartsCharts.LinesChart,
@@ -93,9 +92,6 @@ echartsCore.use([
   echartsComponents.GridComponent,
   echartsComponents.RadarComponent,
   echartsComponents.GeoComponent,
-  echartsComponents.VisualMapComponent,
-  echartsComponents.AriaComponent,
-  echartsComponents.GraphicComponent,
   echartsRenderers.CanvasRenderer
 ]);
 

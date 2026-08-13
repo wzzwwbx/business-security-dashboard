@@ -110,8 +110,8 @@ export interface DemoSatellite {
 /** 路由跳的安全状态。 */
 export type DemoHopStatus = 'normal' | 'degraded' | 'blocked';
 
-/** 路由整体状态（含切换状态机）。 */
-export type DemoRouteStatus = 'normal' | 'attacked' | 'switching' | 'switched';
+/** 路由整体状态（含切换/回切状态机）。 */
+export type DemoRouteStatus = 'normal' | 'attacked' | 'switching' | 'switched' | 'restoring';
 
 /** 中继节点类型。 */
 export type DemoHopType = 'ground' | 'satellite' | 'submarine' | 'terrestrial' | 'gateway';

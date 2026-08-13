@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import EChartWidget from '@/components/widgets/EChartWidget.vue';
+import RouteTopologyPanel from '@/components/demo/RouteTopologyPanel.vue';
 import { demoSituationScenario, demoTotals } from '@/mocks/demoSituation';
 import { compactDepartmentName, messageRankingOption, topicRankingOption, type RankingMode } from '@/utils/rankingChart';
 import { computed, ref, watch } from 'vue';
@@ -160,13 +161,25 @@ const regionRows = computed(() => demoSituationScenario.regions
   .sort((a, b) => b.trafficGb - a.trafficGb)
   .slice(0, 5)
   .map((region) => {
-  if (activeTopic.value === 'traffic') {
-    const load = region.uplinkMbps + region.downlinkMbps;
-    return { name: region.countryCode === 'CN' ? '北京' : region.countryName, primary: `${load.toFixed(1)} Mbps`, secondary: `上行 ${region.uplinkMbps.toFixed(1)} / 下行 ${region.downlinkMbps.toFixed(1)} Mbps · ${region.trafficGb.toFixed(1)} GB`, tone: load >= 14 ? 'warning' : 'success' };
+    const hasTopology = demoSituationScenario.routes.some((route) => route.countryCode === region.countryCode);
+    const name = region.countryCode === 'CN' ? '北京' : region.countryName;
+    if (activeTopic.value === 'traffic') {
+      const load = region.uplinkMbps + region.downlinkMbps;
+      return { countryCode: region.countryCode, name, hasTopology, primary: `${load.toFixed(1)} Mbps`, secondary: `上行 ${region.uplinkMbps.toFixed(1)} / 下行 ${region.downlinkMbps.toFixed(1)} Mbps · ${region.trafficGb.toFixed(1)} GB`, tone: load >= 14 ? 'warning' : 'success' };
+    }
+    if (activeTopic.value === 'message') {
+      return { countryCode: region.countryCode, name, hasTopology, primary: `${region.people.filter((person) => person.online).length}/${region.people.length} 登录`, secondary: `${region.people.reduce((sum, person) => sum + person.message.sentMessages + person.message.receivedMessages, 0)} 条消息`, tone: region.people.some((person) => person.suiteStatus === 'offline') ? 'danger' : 'success' };
+    }
+    return { countryCode: region.countryCode, name, hasTopology, primary: `${region.people.reduce((sum, person) => sum + person.signing.processed, 0)} 份已处理`, secondary: `${region.people.reduce((sum, person) => sum + person.signing.pending, 0)} 份待处理`, tone: region.people.reduce((sum, person) => sum + person.signing.exception, 0) > 0 ? 'warning' : 'success' };
+  }));
+
+// 区域运行状态行点击：复用多跳线路拓扑面板。
+const topologyCountry = ref<string | null>(null);
+function openTopology(countryCode: string) {
+  if (demoSituationScenario.routes.some((route) => route.countryCode === countryCode)) {
+    topologyCountry.value = countryCode;
   }
-  if (activeTopic.value === 'message') return { name: region.countryCode === 'CN' ? '北京' : region.countryName, primary: `${region.people.filter((person) => person.online).length}/${region.people.length} 登录`, secondary: `${region.people.reduce((sum, person) => sum + person.message.sentMessages + person.message.receivedMessages, 0)} 条消息`, tone: region.people.some((person) => person.suiteStatus === 'offline') ? 'danger' : 'success' };
-  return { name: region.countryCode === 'CN' ? '北京' : region.countryName, primary: `${region.people.reduce((sum, person) => sum + person.signing.processed, 0)} 份已处理`, secondary: `${region.people.reduce((sum, person) => sum + person.signing.pending, 0)} 份待处理`, tone: region.people.reduce((sum, person) => sum + person.signing.exception, 0) > 0 ? 'warning' : 'success' };
-}));
+}
 
 const eventRows = computed(() => demoSituationScenario.people.flatMap((person) => person.activities.map((activity) => ({ ...activity, person }))).sort((a, b) => a.minutesAgo - b.minutesAgo).filter((item) => {
   if (activeTopic.value === 'traffic') return item.type === 'security' || item.type === 'file';
@@ -275,7 +288,7 @@ function relativeTime(minutes: number) {
       </main>
 
       <aside class="business-column right-column">
-        <article class="ops-panel region-status-panel"><header><span>区域运行状态</span></header><div class="region-rows"><div v-for="row in regionRows" :key="row.name"><i :class="`tone-${row.tone}`" /><span><strong>{{ row.name }}</strong><small>{{ row.secondary }}</small></span><b>{{ row.primary }}</b></div></div></article>
+        <article class="ops-panel region-status-panel"><header><span>区域运行状态</span></header><div class="region-rows"><button v-for="row in regionRows" :key="row.name" type="button" class="region-row" :class="{ clickable: row.hasTopology }" :title="row.hasTopology ? '点击查看多跳线路拓扑' : ''" @click="row.hasTopology && openTopology(row.countryCode)"><i :class="`tone-${row.tone}`" /><span><strong>{{ row.name }}</strong><small>{{ row.secondary }}</small></span><b>{{ row.primary }}</b></button></div></article>
         <article class="ops-panel event-panel"><header><span>最近业务活动</span></header><div class="event-rows"><div v-for="event in eventRows" :key="event.id"><time>{{ relativeTime(event.minutesAgo) }}</time><span><strong>{{ event.person.name }} · {{ event.title }}</strong><small>{{ event.detail }}</small></span></div><div v-if="!eventRows.length" class="empty-events">当前专题无新增异常事件</div></div></article>
       </aside>
     </section>
@@ -300,6 +313,10 @@ function relativeTime(minutes: number) {
       <article class="ops-panel topic-rank-panel"><header><span>业务系统吞吐排名</span><b>当前 Mbps</b></header><div class="topic-ranking-chart"><EChartWidget :option="trafficSystemsOption" /></div></article>
       <article class="ops-panel topic-rank-panel"><header><span>区域链路流量排名</span><b>上行 + 下行</b></header><div class="topic-ranking-chart"><EChartWidget :option="trafficRegionsOption" /></div></article>
     </section>
+
+    <Transition name="route-panel">
+      <RouteTopologyPanel v-if="topologyCountry" :country-code="topologyCountry" @close="topologyCountry = null" />
+    </Transition>
   </div>
 </template>
 
@@ -310,7 +327,9 @@ function relativeTime(minutes: number) {
 .business-workspace { min-height: 0; display: grid; grid-template-columns: minmax(220px,250px) minmax(500px,1fr) minmax(270px,300px); gap: 10px; }.business-column { min-height: 0; display: grid; gap: 10px; }.left-column { grid-template-rows: 1fr 1fr; }.center-column { grid-template-rows: 1.55fr 1fr; }.right-column { grid-template-rows: 1.08fr .92fr; }
 .ops-panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #28344a; background: #111827; }.ops-panel > header { flex: 0 0 auto; height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 12px; border-bottom: 1px solid #263147; }.ops-panel header span { display: block; overflow: hidden; color: #eef4ff; font-size: 16px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; flex-shrink: 0; }.ops-panel header small { display: block; margin-top: 3px; color: #8493aa; font-size: 12px; }.ops-panel header > b { overflow: hidden; color: #ead07c; font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }.status-panel,.chart-panel { display: grid; grid-template-rows: 52px minmax(0,1fr); }.status-chart { min-height: 0; }.chart-panel > div { min-height: 0; }
 .fact-list { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); overflow-y: auto; overflow-x: hidden; }.fact-list div { min-height: 64px; padding: 11px 12px; border-right: 1px solid #243047; border-bottom: 1px solid #243047; }.fact-list div:nth-child(2n) { border-right: 0; }.fact-list span,.fact-list strong { display: block; }.fact-list span { overflow: hidden; color: #8492a8; font-size: 14px; white-space: nowrap; text-overflow: ellipsis; }.fact-list strong { overflow: hidden; margin-top: 6px; color: #d8e0eb; font: 600 14px var(--font-family-base); white-space: nowrap; text-overflow: ellipsis; }
-.region-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }.region-rows > div { min-height: 52px; display: grid; grid-template-columns: 7px minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 7px 12px; border-bottom: 1px solid #222d41; }.region-rows i { width: 7px; height: 7px; border-radius: 50%; background: #43d7a2; }.region-rows i.tone-warning { background: #e9b949; }.region-rows i.tone-danger { background: #ef6579; }.region-rows strong,.region-rows small { display: block; }.region-rows strong { color: #cfd7e3; font-size: 12px; }.region-rows small { margin-top: 3px; color: #8492a8; font-size: 11px; }.region-rows b { color: #b4c0d2; font: 600 12px var(--font-family-base); white-space: nowrap; }
+.region-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }.region-row { width: 100%; min-height: 52px; display: grid; grid-template-columns: 7px minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 7px 12px; border: 0; border-bottom: 1px solid #222d41; color: inherit; background: transparent; text-align: left; cursor: default; }.region-row.clickable { cursor: pointer; }.region-row.clickable:hover { background: #182338; }.region-row i { width: 7px; height: 7px; border-radius: 50%; background: #43d7a2; }.region-row i.tone-warning { background: #e9b949; }.region-row i.tone-danger { background: #ef6579; }.region-row strong,.region-row small { display: block; }.region-row strong { color: #cfd7e3; font-size: 12px; }.region-row small { margin-top: 3px; color: #8492a8; font-size: 11px; }.region-row b { color: #b4c0d2; font: 600 12px var(--font-family-base); white-space: nowrap; }
+/* 业务态势内复用多跳拓扑面板：相对业务面板定位，避开顶部专题切换条。 */
+:deep(.topology-panel) { top: 68px; }
 .event-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 2px 12px; }.event-rows > div:not(.empty-events) { display: grid; grid-template-columns: 84px minmax(0,1fr); gap: 8px; padding: 9px 0; border-bottom: 1px solid #222d41; }.event-rows time { color: #8492a8; font: 11px var(--font-family-base); white-space: nowrap; }.event-rows strong,.event-rows small { display: block; }.event-rows strong { overflow: hidden; color: #cfd7e3; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }.event-rows small { overflow: hidden; margin-top: 3px; color: #8492a8; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }.empty-events { padding: 18px 0; color: #8492a8; font-size: 12px; text-align: center; }
 .ranking-strip { min-height: 0; display: grid; grid-template-columns: 1.1fr 1fr; gap: 10px; }.ranking-panel, .topic-rank-panel { display: grid; grid-template-rows: 52px minmax(0,1fr); }.ranking-header { min-width: 0; }.rank-mode-switch { flex: 0 0 auto; display: inline-grid; grid-template-columns: repeat(3, 36px); height: 26px; border: 1px solid #35445d; background: #0d1524; }.rank-mode-switch button { width: 36px; height: 24px; padding: 0; border: 0; border-right: 1px solid #35445d; color: #8594aa; background: transparent; font: 12px var(--font-family-base); cursor: pointer; }.rank-mode-switch button:last-child { border-right: 0; }.rank-mode-switch button:hover { color: #dbe8fb; background: #182740; }.rank-mode-switch button.active { color: #eef5ff; background: #284b7c; box-shadow: inset 0 -2px #6aa4ff; }.topic-ranking-chart, .ranking-chart { min-height: 0; }.topic-ranking-chart :deep(.chart-shell), .topic-ranking-chart :deep(.chart-box), .ranking-chart :deep(.chart-shell), .ranking-chart :deep(.chart-box) { min-height: 0; height: 100%; }
 @media (max-width: 1300px) { .business-workspace { grid-template-columns: 205px minmax(430px,1fr) 250px; } }
@@ -331,7 +350,7 @@ function relativeTime(minutes: number) {
   }
   .business-workspace { min-height: 500px; }
 }
-@media (max-height: 820px) and (min-width: 1051px) and (min-width: 1500px) { .demo-heading { min-height: 38px; }.demo-heading h1 { font-size: 19px; }.topic-switch button { min-height: 40px; }.metric-strip article { min-height: 80px; padding: 10px 14px 12px; }.metric-strip strong { font-size: 26px; }.left-column { grid-template-rows: .92fr 1.08fr; }.center-column { grid-template-rows: 1.35fr 1fr; }.right-column { grid-template-rows: 1.35fr .65fr; }.ops-panel > header { height: 38px; }.status-panel,.chart-panel { grid-template-rows: 38px minmax(0,1fr); }.fact-list div { min-height: 48px; padding: 7px 10px; }.region-rows > div { min-height: 42px; padding: 5px 10px; }.event-rows > div:not(.empty-events) { padding: 6px 0; } }
+@media (max-height: 820px) and (min-width: 1051px) and (min-width: 1500px) { .demo-heading { min-height: 38px; }.demo-heading h1 { font-size: 19px; }.topic-switch button { min-height: 40px; }.metric-strip article { min-height: 80px; padding: 10px 14px 12px; }.metric-strip strong { font-size: 26px; }.left-column { grid-template-rows: .92fr 1.08fr; }.center-column { grid-template-rows: 1.35fr 1fr; }.right-column { grid-template-rows: 1.35fr .65fr; }.ops-panel > header { height: 38px; }.status-panel,.chart-panel { grid-template-rows: 38px minmax(0,1fr); }.fact-list div { min-height: 48px; padding: 7px 10px; }.region-row { min-height: 42px; padding: 5px 10px; }.event-rows > div:not(.empty-events) { padding: 6px 0; } }
 @media (max-width: 1050px) { .demo-business { height: auto; grid-template-rows: auto auto auto auto; }.business-workspace { grid-template-columns: 1fr 1.8fr; }.right-column { grid-column: 1/-1; grid-template-columns: 1fr 1fr; grid-template-rows: 330px; }.metric-strip { grid-template-columns: repeat(2,1fr); }.metric-strip article:nth-child(2) { border-right: 0; } }
 @media (max-width: 720px) { .heading-status span,.topic-switch span { display: none; }.topic-switch button { min-height: 42px; }.metric-strip,.business-workspace { grid-template-columns: 1fr; }.metric-strip article { border-right: 0; border-bottom: 1px solid #28344a; }.left-column,.right-column { grid-column: auto; grid-template-columns: 1fr; grid-template-rows: auto; }.center-column { grid-template-rows: 360px 280px; }.ranking-strip { grid-template-columns: 1fr; } }
 
@@ -341,7 +360,7 @@ function relativeTime(minutes: number) {
 /* Dashboard body text follows one readable baseline across all panels. */
 .ops-panel > header { height: 52px; }.status-panel,.chart-panel { grid-template-rows: 52px minmax(0, 1fr); }
 .ops-panel header span { font-size: 17px; }.ops-panel header > b,.region-rows strong,.region-rows small,.region-rows b,.event-rows time,.event-rows strong,.event-rows small,.empty-events { font-size: 18px; }
-.fact-list div { min-height: 82px; }.region-rows > div { min-height: 44px; padding: 5px 12px; }.event-rows > div:not(.empty-events) { grid-template-columns: 84px minmax(0,1fr); padding: 7px 0; }
+.fact-list div { min-height: 82px; }.region-row { min-height: 44px; padding: 5px 12px; }.event-rows > div:not(.empty-events) { grid-template-columns: 84px minmax(0,1fr); padding: 7px 0; }
 .region-rows strong { font-size: 15px; }.region-rows small { font-size: 13px; }.region-rows b { font-size: 14px; }
 .ranking-panel > header, .topic-rank-panel > header { height: 52px; }.ranking-panel header span, .topic-rank-panel header span { font-size: 17px; }.topic-rank-panel header > b { font-size: 15px; }
 </style>
