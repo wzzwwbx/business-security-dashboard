@@ -2,6 +2,16 @@
 import BaseSkeleton from '@/components/common/BaseSkeleton.vue';
 import EChartWidget from '@/components/widgets/EChartWidget.vue';
 import RouteTopologyPanel from '@/components/demo/RouteTopologyPanel.vue';
+import flagAe from '@/assets/map/flag-ae.svg';
+import flagAu from '@/assets/map/flag-au.svg';
+import flagBr from '@/assets/map/flag-br.svg';
+import flagCa from '@/assets/map/flag-ca.svg';
+import flagDe from '@/assets/map/flag-de.svg';
+import flagKe from '@/assets/map/flag-ke.svg';
+import flagSg from '@/assets/map/flag-sg.svg';
+import flagUs from '@/assets/map/flag-us.svg';
+import satelliteSuccess from '@/assets/map/satellite-success.svg';
+import satelliteWarning from '@/assets/map/satellite-warning.svg';
 import { demoSituationScenario } from '@/mocks/demoSituation';
 import type { DemoRegion } from '@/types/demoSituation';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
@@ -42,6 +52,17 @@ function regionStatus(region: DemoRegion) {
   return { color: '#e9b949', label: '部分在线' };
 }
 
+function findRegionByMapName(name: string) {
+  return props.regions.find((region) => region.countryName === name || region.countryCode === name || (region.countryCode === 'CN' && name === '北京'));
+}
+
+function regionTooltip(region: DemoRegion) {
+  const person = region.people[0];
+  if (!person) return `<strong>${region.countryName}</strong><br/>暂无用户数据`;
+  const messageTotal = person.message.sentMessages + person.message.receivedMessages;
+  return `<strong>${region.countryName}</strong><br/>用户 ${person.name} · ${person.code}<br/>${person.department}<br/>${person.online ? '在线' : '离线'} · ${person.suiteStatusLabel} · ${person.primaryIp}<br/>密信收发 ${messageTotal} 条 · 签阅待处理 ${person.signing.pending} 份`;
+}
+
 const beijing = computed(() => props.regions.find((region) => region.countryCode === 'CN'));
 
 // 红色五角星：北京站点标识。
@@ -56,47 +77,31 @@ const SAT_GEO: Record<string, [number, number]> = {
   'sat-2': [-55, 95]
 };
 
-// 真实卫星矢量图（data URI SVG：两侧太阳能帆板 + 星体 + 天线锅，天线随状态着色）。
-function satelliteSvg(accent: string) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90">
-    <rect x="2" y="34" width="36" height="22" rx="1.5" fill="#16395f" stroke="#4a8ad4" stroke-width="1.2"/>
-    <line x1="11" y1="34" x2="11" y2="56" stroke="#4a8ad4" stroke-width="0.7"/>
-    <line x1="20" y1="34" x2="20" y2="56" stroke="#4a8ad4" stroke-width="0.7"/>
-    <line x1="29" y1="34" x2="29" y2="56" stroke="#4a8ad4" stroke-width="0.7"/>
-    <line x1="2" y1="41" x2="38" y2="41" stroke="#4a8ad4" stroke-width="0.7"/>
-    <line x1="2" y1="49" x2="38" y2="49" stroke="#4a8ad4" stroke-width="0.7"/>
-    <rect x="3" y="35" width="14" height="8" fill="#2e5b8f" opacity="0.7"/>
-    <rect x="82" y="34" width="36" height="22" rx="1.5" fill="#16395f" stroke="#4a8ad4" stroke-width="1.2"/>
-    <line x1="91" y1="34" x2="91" y2="56" stroke="#4a8ad4" stroke-width="0.7"/>
-    <line x1="100" y1="34" x2="100" y2="56" stroke="#4a8ad4" stroke-width="0.7"/>
-    <line x1="109" y1="34" x2="109" y2="56" stroke="#4a8ad4" stroke-width="0.7"/>
-    <line x1="82" y1="41" x2="118" y2="41" stroke="#4a8ad4" stroke-width="0.7"/>
-    <line x1="82" y1="49" x2="118" y2="49" stroke="#4a8ad4" stroke-width="0.7"/>
-    <rect x="103" y="35" width="14" height="8" fill="#2e5b8f" opacity="0.7"/>
-    <rect x="40" y="26" width="40" height="38" rx="4" fill="#e4edff" stroke="#9fb8e0" stroke-width="1.2"/>
-    <rect x="40" y="44" width="40" height="8" fill="#9fc3f0" opacity="0.55"/>
-    <rect x="40" y="54" width="40" height="5" fill="#7fa8e0" opacity="0.6"/>
-    <rect x="52" y="31" width="10" height="10" rx="2" fill="#5a95ff" opacity="0.9"/>
-    <rect x="68" y="31" width="8" height="8" rx="2" fill="#5a95ff" opacity="0.7"/>
-    <line x1="60" y1="26" x2="60" y2="10" stroke="#c0d4f0" stroke-width="3"/>
-    <ellipse cx="60" cy="10" rx="15" ry="5.5" fill="#eef5ff" stroke="#8fb0dd" stroke-width="1.2"/>
-    <ellipse cx="60" cy="10" rx="7" ry="2.4" fill="#5a95ff" opacity="0.55"/>
-    <line x1="80" y1="34" x2="94" y2="22" stroke="${accent}" stroke-width="2.5"/>
-    <path d="M94 22 L103 13 L107 24 Z" fill="${accent}"/>
-    <rect x="47" y="64" width="8" height="7" rx="1.5" fill="#c9a54b"/>
-    <rect x="65" y="64" width="8" height="7" rx="1.5" fill="#c9a54b"/>
-  </svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-}
+// 通信卫星和国旗使用构建时打包的同源 SVG，避免依赖 data URI、CSP 配置和客户端 emoji 字体。
+const FLAG_SYMBOLS: Record<string, string> = {
+  AE: flagAe,
+  SG: flagSg,
+  DE: flagDe,
+  KE: flagKe,
+  BR: flagBr,
+  CA: flagCa,
+  AU: flagAu,
+  US: flagUs
+};
 
-// 站点国旗（emoji 渲染为 SVG data URI，作为 scatter symbol）。
+const SATELLITE_SYMBOLS = {
+  warning: satelliteWarning,
+  success: satelliteSuccess
+} as const;
+
+// 站点国旗使用构建时打包的本地 SVG 图标。
 const FLAG_EMOJI: Record<string, string> = {
   AE: '🇦🇪', SG: '🇸🇬', DE: '🇩🇪', KE: '🇰🇪', BR: '🇧🇷', CA: '🇨🇦', AU: '🇦🇺', US: '🇺🇸'
 };
 
 function flagSvg(emoji: string) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text x="12" y="17" font-size="17" text-anchor="middle">${emoji}</text></svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  const countryCode = Object.entries(FLAG_EMOJI).find(([, value]) => value === emoji)?.[0];
+  return FLAG_SYMBOLS[countryCode ?? 'AE'] ?? flagAe;
 }
 
 const chartOption = computed(() => {
@@ -163,15 +168,14 @@ const chartOption = computed(() => {
     geoRouteLines.push({ countryCode: segment.countryCode, routeId: segment.routeId, seriesIndex: 2, dataIndex, from: coords[0], to: coords[1], curveness });
   });
 
-  // 通信卫星：真实卫星矢量图，位于地图上方“天空”区域（高纬度海洋上空）。
+  // 通信卫星位于地图上方“天空”区域（高纬度海洋上空）。
   const satellitePoints = demoSituationScenario.satellites.map((sat) => {
     const geo = SAT_GEO[sat.id] ?? SAT_GEO['sat-1'];
     const warn = sat.status === 'warning';
-    const accent = warn ? '#ffc857' : '#43d7a2';
     return {
       name: sat.name,
       value: [...geo, 0],
-      symbol: `image://${satelliteSvg(accent)}`,
+      symbol: `image://${SATELLITE_SYMBOLS[warn ? 'warning' : 'success']}`,
       symbolSize: 44,
       itemStyle: { shadowColor: warn ? 'rgba(255,200,87,.7)' : 'rgba(67,215,162,.7)', shadowBlur: 12 },
       label: {
@@ -194,18 +198,16 @@ const chartOption = computed(() => {
       textStyle: { color: '#e9edfa', fontSize: 14 },
       formatter: (params: any) => {
         const payload = params.data?.payload as (DemoRegion & { kind?: string; bandwidthMbps?: number; utilization?: number; note?: string }) | undefined;
-        if (!payload) return params.name ?? '';
-        if (payload.kind === 'satellite') {
+        if (payload?.kind === 'satellite') {
           return `<strong>${payload.name}</strong><br/>带宽 ${payload.bandwidthMbps} Mbps · 利用率 ${payload.utilization}%<br/>${payload.note ?? ''}`;
         }
-        const online = payload.people.filter((person) => person.online).length;
-        const healthy = payload.people.filter((person) => person.suiteStatus === 'healthy').length;
-        const channel = payload.linkType === 'satellite' ? '卫星信道' : '地面信道';
-        return `<strong>${payload.countryCode === 'CN' ? '北京' : payload.countryName}</strong><br/>配发人员 ${payload.people.length} 人 · 在线 ${online} 人 · ${regionStatus(payload).label}<br/>完整套件 ${healthy} 套 · ${channel} · 今日流量 ${payload.trafficGb.toFixed(1)} GB`;
+        const region = payload?.countryCode ? payload : findRegionByMapName(params.name);
+        return region ? regionTooltip(region) : params.name ?? '';
       }
     },
     geo: {
       map: 'demo-world-countries',
+      tooltip: { show: true },
       roam: true,
       zoom: 1.08,
       center: [18, 17],
@@ -437,12 +439,22 @@ onBeforeUnmount(() => {
 const topologyCountry = ref<string | null>(null);
 
 function handleClick(payload: Record<string, any>) {
-  // 仅 scatter（区域点 / 卫星图标）点击参与区域选择并关闭线路面板；
-  // 地图区域等非 scatter 点击交由 zr 自定义线路命中处理，不能清空拓扑面板。
-  if (payload.seriesType !== 'scatter') return;
-  topologyCountry.value = null;
   const data = payload.data as { payload?: (DemoRegion & { kind?: string }) | undefined } | undefined;
   const payloadData = data?.payload;
+
+  // 点击国家区域本身时，按地图名称找到该国唯一用户并打开详情。
+  if (payload.componentType === 'geo') {
+    const region = findRegionByMapName(payload.name);
+    if (region) {
+      topologyCountry.value = null;
+      emit('selectCountry', region.countryCode);
+    }
+    return;
+  }
+
+  // 仅 scatter（区域点 / 卫星图标）点击参与区域选择；线路点击由 zr 自定义命中处理。
+  if (payload.seriesType !== 'scatter') return;
+  topologyCountry.value = null;
   // 卫星图标：打开该卫星服务的第一条路由拓扑（卫-1 → 阿布扎比、卫-2 → 巴西利亚）。
   if (payloadData?.kind === 'satellite') {
     const satelliteId = payloadData.id;

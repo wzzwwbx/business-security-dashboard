@@ -28,6 +28,7 @@ export default defineConfig(({ mode }) => {
     },
     define: clientEnvDefine,
     build: {
+      assetsInlineLimit: 0,
       rollupOptions: {
         output: {
           manualChunks: {

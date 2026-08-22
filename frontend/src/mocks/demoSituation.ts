@@ -47,14 +47,14 @@ const names = [
 
 const regionSeeds: RegionSeed[] = [
   { countryCode: 'CN', countryName: '中国', city: '北京', longitude: 116.4, latitude: 39.9, people: 1, online: 1, healthy: 1, degraded: 0, department: '北京通信保障中心', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 1, logout: 0, sentMessages: 8, receivedMessages: 10, sentFiles: 2, receivedFiles: 3 }, signing: { received: 4, processed: 4, pending: 0, exception: 0 } },
-  { countryCode: 'AE', countryName: '阿联酋', city: '阿布扎比', longitude: 54.4, latitude: 24.3, people: 5, online: 4, healthy: 3, degraded: 1, department: '西亚业务保障组', trafficGb: 3.2, uplinkMbps: 3.6, downlinkMbps: 5.1, linkType: 'satellite', satelliteId: 'sat-1', message: { login: 5, logout: 1, sentMessages: 34, receivedMessages: 38, sentFiles: 11, receivedFiles: 13 }, signing: { received: 18, processed: 14, pending: 3, exception: 1 } },
-  { countryCode: 'SG', countryName: '新加坡', city: '新加坡', longitude: 103.8, latitude: 1.3, people: 4, online: 4, healthy: 4, degraded: 0, department: '东南亚业务保障组', trafficGb: 2.4, uplinkMbps: 2.8, downlinkMbps: 4.0, linkType: 'ground', message: { login: 5, logout: 1, sentMessages: 27, receivedMessages: 31, sentFiles: 8, receivedFiles: 9 }, signing: { received: 14, processed: 11, pending: 3, exception: 0 } },
-  { countryCode: 'DE', countryName: '德国', city: '柏林', longitude: 10.4, latitude: 51.1, people: 4, online: 3, healthy: 3, degraded: 1, department: '欧洲业务保障组', trafficGb: 2.3, uplinkMbps: 2.5, downlinkMbps: 3.8, linkType: 'ground', message: { login: 4, logout: 1, sentMessages: 25, receivedMessages: 27, sentFiles: 7, receivedFiles: 8 }, signing: { received: 13, processed: 10, pending: 2, exception: 1 } },
-  { countryCode: 'KE', countryName: '肯尼亚', city: '内罗毕', longitude: 37.9, latitude: 0.2, people: 3, online: 3, healthy: 3, degraded: 0, department: '非洲业务保障组', trafficGb: 1.8, uplinkMbps: 2.1, downlinkMbps: 3.0, linkType: 'satellite', satelliteId: 'sat-1', message: { login: 3, logout: 0, sentMessages: 17, receivedMessages: 20, sentFiles: 5, receivedFiles: 7 }, signing: { received: 10, processed: 8, pending: 2, exception: 0 } },
-  { countryCode: 'BR', countryName: '巴西', city: '巴西利亚', longitude: -51.9, latitude: -14.2, people: 3, online: 2, healthy: 2, degraded: 1, department: '南美业务保障组', trafficGb: 1.8, uplinkMbps: 1.8, downlinkMbps: 2.7, linkType: 'satellite', satelliteId: 'sat-2', message: { login: 2, logout: 0, sentMessages: 15, receivedMessages: 16, sentFiles: 4, receivedFiles: 5 }, signing: { received: 9, processed: 7, pending: 1, exception: 1 } },
-  { countryCode: 'CA', countryName: '加拿大', city: '渥太华', longitude: -75.7, latitude: 45.4, people: 2, online: 0, healthy: 0, degraded: 0, department: '北美备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } },
-  { countryCode: 'AU', countryName: '澳大利亚', city: '堪培拉', longitude: 149.13, latitude: -35.28, people: 2, online: 0, healthy: 0, degraded: 0, department: '大洋洲备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } },
-  { countryCode: 'US', countryName: '美国', city: '华盛顿', longitude: -77.0, latitude: 38.9, people: 2, online: 0, healthy: 0, degraded: 0, department: '北美备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } }
+  { countryCode: 'AE', countryName: '阿联酋', city: '阿布扎比', longitude: 54.4, latitude: 24.3, people: 1, online: 1, healthy: 0, degraded: 1, department: '西亚业务保障组', trafficGb: 3.2, uplinkMbps: 3.6, downlinkMbps: 5.1, linkType: 'satellite', satelliteId: 'sat-1', message: { login: 1, logout: 0, sentMessages: 34, receivedMessages: 38, sentFiles: 11, receivedFiles: 13 }, signing: { received: 18, processed: 14, pending: 3, exception: 1 } },
+  { countryCode: 'SG', countryName: '新加坡', city: '新加坡', longitude: 103.8, latitude: 1.3, people: 1, online: 1, healthy: 1, degraded: 0, department: '东南亚业务保障组', trafficGb: 2.4, uplinkMbps: 2.8, downlinkMbps: 4.0, linkType: 'ground', message: { login: 1, logout: 0, sentMessages: 27, receivedMessages: 31, sentFiles: 8, receivedFiles: 9 }, signing: { received: 14, processed: 11, pending: 3, exception: 0 } },
+  { countryCode: 'DE', countryName: '德国', city: '柏林', longitude: 10.4, latitude: 51.1, people: 1, online: 1, healthy: 0, degraded: 1, department: '欧洲业务保障组', trafficGb: 2.3, uplinkMbps: 2.5, downlinkMbps: 3.8, linkType: 'ground', message: { login: 1, logout: 0, sentMessages: 25, receivedMessages: 27, sentFiles: 7, receivedFiles: 8 }, signing: { received: 13, processed: 10, pending: 2, exception: 1 } },
+  { countryCode: 'KE', countryName: '肯尼亚', city: '内罗毕', longitude: 37.9, latitude: 0.2, people: 1, online: 1, healthy: 1, degraded: 0, department: '非洲业务保障组', trafficGb: 1.8, uplinkMbps: 2.1, downlinkMbps: 3.0, linkType: 'satellite', satelliteId: 'sat-1', message: { login: 1, logout: 0, sentMessages: 17, receivedMessages: 20, sentFiles: 5, receivedFiles: 7 }, signing: { received: 10, processed: 8, pending: 2, exception: 0 } },
+  { countryCode: 'BR', countryName: '巴西', city: '巴西利亚', longitude: -51.9, latitude: -14.2, people: 1, online: 1, healthy: 0, degraded: 1, department: '南美业务保障组', trafficGb: 1.8, uplinkMbps: 1.8, downlinkMbps: 2.7, linkType: 'satellite', satelliteId: 'sat-2', message: { login: 1, logout: 0, sentMessages: 15, receivedMessages: 16, sentFiles: 4, receivedFiles: 5 }, signing: { received: 9, processed: 7, pending: 1, exception: 1 } },
+  { countryCode: 'CA', countryName: '加拿大', city: '渥太华', longitude: -75.7, latitude: 45.4, people: 1, online: 0, healthy: 0, degraded: 0, department: '北美备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } },
+  { countryCode: 'AU', countryName: '澳大利亚', city: '堪培拉', longitude: 149.13, latitude: -35.28, people: 1, online: 0, healthy: 0, degraded: 0, department: '大洋洲备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } },
+  { countryCode: 'US', countryName: '美国', city: '华盛顿', longitude: -77.0, latitude: 38.9, people: 1, online: 0, healthy: 0, degraded: 0, department: '北美备用保障组', trafficGb: 0, uplinkMbps: 0, downlinkMbps: 0, linkType: 'ground', message: { login: 0, logout: 0, sentMessages: 0, receivedMessages: 0, sentFiles: 0, receivedFiles: 0 }, signing: { received: 0, processed: 0, pending: 0, exception: 0 } }
 ];
 
 const securityEventTime = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60000).toISOString();
@@ -208,7 +208,7 @@ people.forEach((person) => {
 });
 
 // 将初始安全事件关联到对应人员：异常登录→阿联酋、证书到期→新加坡、密钥异常→阿联酋等。
-const initialEventPersonIndexes = [1, 7, 9, 4, 13];
+const initialEventPersonIndexes = [1, 2, 3, 4, 5];
 securityEvents.forEach((event, index) => {
   event.personId = people[initialEventPersonIndexes[index]]?.id;
 });
@@ -884,18 +884,18 @@ export function demoTriggerRouteAttack() {
 }
 
 export function validateDemoSituationScenario() {
-  assertDemoValue('配发人员', demoTotals.assignedPeople, 26);
-  assertDemoValue('在线用户', demoTotals.onlinePeople, 17);
-  assertDemoValue('完整套件', demoTotals.healthySuites, 16);
+  assertDemoValue('配发人员', demoTotals.assignedPeople, 9);
+  assertDemoValue('在线用户', demoTotals.onlinePeople, 6);
+  assertDemoValue('完整套件', demoTotals.healthySuites, 3);
   assertDemoValue('降级套件', demoTotals.degradedSuites, 3);
-  assertDemoValue('离线套件', demoTotals.offlineSuites, 7);
-  assertDemoValue('PAD 在线', demoTotals.padOnline, 19);
-  assertDemoValue('密盒就绪', demoTotals.cryptoReady, 18);
-  assertDemoValue('身份密钥可用', demoTotals.keyReady, 18);
-  assertDemoValue('卫星终端通联', demoTotals.satelliteConnected, 17);
-  assertDemoValue('密信软件可用', demoTotals.messageAvailable, 19);
-  assertDemoValue('密信当前登录', demoTotals.messageLoggedIn, 17);
-  assertDemoValue('签阅软件可用', demoTotals.signingAvailable, 19);
+  assertDemoValue('离线套件', demoTotals.offlineSuites, 3);
+  assertDemoValue('PAD 在线', demoTotals.padOnline, 6);
+  assertDemoValue('密盒就绪', demoTotals.cryptoReady, 6);
+  assertDemoValue('身份密钥可用', demoTotals.keyReady, 5);
+  assertDemoValue('卫星终端通联', demoTotals.satelliteConnected, 6);
+  assertDemoValue('密信软件可用', demoTotals.messageAvailable, 6);
+  assertDemoValue('密信当前登录', demoTotals.messageLoggedIn, 6);
+  assertDemoValue('签阅软件可用', demoTotals.signingAvailable, 6);
   assertDemoValue('密信会话闭合', demoTotals.message.login - demoTotals.message.logout, demoTotals.messageLoggedIn);
   assertDemoValue('密信消息发送', demoTotals.message.sentMessages, 126);
   assertDemoValue('密信消息接收', demoTotals.message.receivedMessages, 142);
@@ -906,7 +906,7 @@ export function validateDemoSituationScenario() {
   assertDemoValue('签阅待处理', demoTotals.signing.pending, 11);
   assertDemoValue('签阅异常退回', demoTotals.signing.exception, 3);
   assertDemoValue('签阅状态闭合', demoTotals.signing.processed + demoTotals.signing.pending + demoTotals.signing.exception, demoTotals.signing.received);
-  assertDemoValue('人员装备数量', people.reduce((total, person) => total + person.equipment.length, 0), 156);
+  assertDemoValue('人员装备数量', people.reduce((total, person) => total + person.equipment.length, 0), 54);
   assertDemoValue('区域累计流量', Math.round(regions.reduce((total, region) => total + region.trafficGb, 0) * 10), Math.round(demoSituationScenario.link.trafficGb * 10));
   assertDemoValue('卫星数量', demoSituationScenario.satellites.length, 2);
   assertDemoValue('业务系统数量', demoSituationScenario.systemTraffic.snapshot.length, 3);

@@ -13,11 +13,38 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const selectedCountryCode = ref('AE');
 const selectedPerson = ref<DemoPerson | null>(null);
+const selectedDepartment = ref<string | null>(null);
 const drawerTab = ref('overview');
+const departmentDrawerTab = ref('overview');
 const securityEvents = demoSituationScenario.securityEvents;
 const personSecurityEvents = computed(() => selectedPerson.value
   ? demoSituationScenario.securityEvents.filter((event) => event.personId === selectedPerson.value?.id)
   : []);
+const departmentPeople = computed(() => selectedDepartment.value
+  ? demoSituationScenario.people.filter((person) => person.department === selectedDepartment.value)
+  : []);
+const departmentSecurityEvents = computed(() => {
+  const personIds = new Set(departmentPeople.value.map((person) => person.id));
+  return demoSituationScenario.securityEvents.filter((event) => event.personId && personIds.has(event.personId));
+});
+const departmentSummary = computed(() => {
+  const people = departmentPeople.value;
+  return {
+    total: people.length,
+    online: people.filter((person) => person.online).length,
+    healthy: people.filter((person) => person.suiteStatus === 'healthy').length,
+    degraded: people.filter((person) => person.suiteStatus === 'degraded').length,
+    offline: people.filter((person) => person.suiteStatus === 'offline').length,
+    sentMessages: people.reduce((total, person) => total + person.message.sentMessages, 0),
+    receivedMessages: people.reduce((total, person) => total + person.message.receivedMessages, 0),
+    sentFiles: people.reduce((total, person) => total + person.message.sentFiles, 0),
+    receivedFiles: people.reduce((total, person) => total + person.message.receivedFiles, 0),
+    signingReceived: people.reduce((total, person) => total + person.signing.received, 0),
+    signingProcessed: people.reduce((total, person) => total + person.signing.processed, 0),
+    signingPending: people.reduce((total, person) => total + person.signing.pending, 0),
+    signingException: people.reduce((total, person) => total + person.signing.exception, 0)
+  };
+});
 const topMetrics = computed(() => {
   const events = demoSituationScenario.securityEvents;
   return [
@@ -150,7 +177,11 @@ const equipmentIcon: Record<DemoEquipmentType, BaseIconName> = {
 };
 
 function selectRegion(region: DemoRegion | string) {
-  selectedCountryCode.value = typeof region === 'string' ? region : region.countryCode;
+  const countryCode = typeof region === 'string' ? region : region.countryCode;
+  selectedCountryCode.value = countryCode;
+  const selectedRegion = demoSituationScenario.regions.find((item) => item.countryCode === countryCode);
+  const person = selectedRegion?.people[0];
+  if (person) openPerson(person);
 }
 
 // 业务态势下钻：首页相关图表/面板点击后进入业务态势对应专题。
@@ -159,8 +190,20 @@ function drillBusiness(topic: 'message' | 'signing' | 'traffic' = 'message') {
 }
 
 function openPerson(person: DemoPerson) {
+  selectedDepartment.value = null;
   selectedPerson.value = person;
   drawerTab.value = 'overview';
+}
+
+function openDepartment(department: string) {
+  if (!demoSituationScenario.people.some((person) => person.department === department)) return;
+  selectedPerson.value = null;
+  selectedDepartment.value = department;
+  departmentDrawerTab.value = 'overview';
+}
+
+function openPersonFromDepartment(person: DemoPerson) {
+  openPerson(person);
 }
 
 function handleUserRankingClick(payload: Record<string, any>) {
@@ -169,8 +212,9 @@ function handleUserRankingClick(payload: Record<string, any>) {
   if (person) openPerson(person);
 }
 
-function handleDeptRankingClick() {
-  drillBusiness('message');
+function handleDeptRankingClick(payload: Record<string, any>) {
+  const department = payload.data?.department as string | undefined;
+  if (department) openDepartment(department);
 }
 
 function openSecurityEvent(event: DemoActivity) {
@@ -217,7 +261,7 @@ function eventClock(event: DemoActivity) {
   <div class="demo-overview">
     <section class="metric-strip" aria-label="综合核心指标">
       <article v-for="metric in topMetrics" :key="metric.label" class="metric-block" :class="[`tone-${metric.tone}`, { drillable: metric.drill }]" @click="metric.drill && drillBusiness(metric.drill)">
-        <span>{{ metric.label }}<i v-if="metric.drill" class="drill-hint">点击下钻</i></span>
+        <span>{{ metric.label }}</span>
         <strong>{{ metric.value }}<small>{{ metric.unit }}</small></strong>
         <p>{{ metric.note }}</p>
       </article>
@@ -327,7 +371,7 @@ function eventClock(event: DemoActivity) {
       <template v-if="selectedPerson">
         <section v-if="drawerTab === 'overview'" class="drawer-stack">
           <div class="drawer-facts">
-            <article><span>所属部门</span><strong>{{ selectedPerson.department }}</strong></article>
+            <article><span>所属部门</span><button type="button" class="drawer-link" @click="openDepartment(selectedPerson.department)">{{ selectedPerson.department }}</button></article>
             <article><span>所在区域</span><strong>{{ selectedPerson.countryName }} · {{ selectedPerson.city }}</strong></article>
             <article><span>终端地址</span><strong>{{ selectedPerson.primaryIp }}</strong></article>
             <article><span>最后活动</span><strong>{{ relativeTime(selectedPerson.lastActiveMinutes) }}</strong></article>
@@ -373,6 +417,52 @@ function eventClock(event: DemoActivity) {
         </section>
       </template>
     </DetailDrawerShell>
+
+    <DetailDrawerShell
+      centered
+      :open="Boolean(selectedDepartment)"
+      :title="selectedDepartment ? `${selectedDepartment} · 部门详情` : '部门详情'"
+      :subtitle="selectedDepartment ? `${departmentSummary.total} 名用户 · ${departmentSummary.online} 人在线` : ''"
+      :badges="selectedDepartment ? [{ label: `${departmentSummary.online}/${departmentSummary.total} 在线`, tone: departmentSummary.online === departmentSummary.total ? 'success' : departmentSummary.online ? 'warning' : 'danger' }, ...(departmentSecurityEvents.length ? [{ label: `${departmentSecurityEvents.length} 起安全事件`, tone: 'danger' as const }] : [])] : []"
+      :tabs="[{ key: 'overview', label: '部门概况' }, { key: 'security', label: '安全事件' }]"
+      :active-tab="departmentDrawerTab"
+      @close="selectedDepartment = null"
+      @select-tab="departmentDrawerTab = $event"
+    >
+      <template v-if="selectedDepartment">
+        <section v-if="departmentDrawerTab === 'overview'" class="drawer-stack">
+          <div class="drawer-facts">
+            <article><span>用户总数</span><strong>{{ departmentSummary.total }} 人</strong></article>
+            <article><span>在线用户</span><strong>{{ departmentSummary.online }} 人</strong></article>
+            <article><span>套件状态</span><strong>{{ departmentSummary.healthy }} 完整 · {{ departmentSummary.degraded }} 降级</strong></article>
+            <article><span>离线用户</span><strong>{{ departmentSummary.offline }} 人</strong></article>
+          </div>
+          <div class="drawer-summaries">
+            <article class="drawer-summary">
+              <span>今日密信</span>
+              <strong>收发 {{ departmentSummary.sentMessages + departmentSummary.receivedMessages }} 条消息 · {{ departmentSummary.sentFiles + departmentSummary.receivedFiles }} 份文件</strong>
+              <small>发送 {{ departmentSummary.sentMessages }} 条 · 接收 {{ departmentSummary.receivedMessages }} 条 · 文件收发 {{ departmentSummary.sentFiles + departmentSummary.receivedFiles }} 份</small>
+            </article>
+            <article class="drawer-summary">
+              <span>今日签阅</span>
+              <strong>收到 {{ departmentSummary.signingReceived }} 份 · 已处理 {{ departmentSummary.signingProcessed }} 份</strong>
+              <small>待处理 {{ departmentSummary.signingPending }} 份 · 异常退回 {{ departmentSummary.signingException }} 份</small>
+            </article>
+          </div>
+          <section class="department-members">
+            <header><strong>部门成员</strong><span>{{ departmentSummary.total }} 人</span></header>
+            <button v-for="person in departmentPeople" :key="person.id" type="button" class="department-member" @click="openPersonFromDepartment(person)">
+              <span><strong>{{ person.name }} · {{ person.code }}</strong><small>{{ person.countryName }} {{ person.city }} · {{ person.primaryIp }}</small></span>
+              <b :class="person.online ? 'online' : 'offline'">{{ person.online ? '在线' : '离线' }}</b>
+            </button>
+          </section>
+        </section>
+        <section v-else class="drawer-stack">
+          <article v-for="event in departmentSecurityEvents" :key="event.id" class="drawer-activity"><i :class="`tone-${event.tone}`" /><div><strong>{{ securityLevelLabel(event) }} · {{ event.title }}</strong><p>{{ event.detail }}</p><small>{{ personName(event.personId ?? '') }} · {{ eventClock(event) }} · {{ relativeTime(event.minutesAgo) }}</small></div></article>
+          <div v-if="!departmentSecurityEvents.length" class="drawer-empty">该部门暂无关联安全事件</div>
+        </section>
+      </template>
+    </DetailDrawerShell>
   </div>
 </template>
 
@@ -386,7 +476,7 @@ function eventClock(event: DemoActivity) {
 .metric-block strong small { margin-left: 4px; color: #aab5c7; font-size: 16px; font-weight: 500; }
 .metric-block p { margin: 5px 0 0; color: #8492a8; font-size: 14px; line-height: 1.2; }
 .metric-block.tone-success strong { color: #72deb9; }.metric-block.tone-info strong { color: #85aefd; }.metric-block.tone-warning strong { color: #edc66b; }
-.metric-block.drillable { cursor: pointer; transition: background .18s ease, border-color .18s ease; }.metric-block.drillable:hover { background: #16213a; box-shadow: inset 3px 0 #85aefd; }.drill-hint { margin-left: 8px; padding: 2px 6px; border: 1px solid #3d5374; border-radius: 999px; color: #7fb0ff; font-size: 12px; font-weight: 400; white-space: nowrap; }.metric-block.drillable:hover .drill-hint { color: #cfe2ff; border-color: #7fb0ff; }
+.metric-block.drillable { cursor: pointer; transition: background .18s ease, border-color .18s ease; }.metric-block.drillable:hover { background: #16213a; box-shadow: inset 3px 0 #85aefd; }
 .overview-workspace { min-height: 0; display: grid; grid-template-columns: minmax(250px, 270px) minmax(0, 1fr) minmax(250px, 270px); gap: 10px; }
 .workspace-column,.center-column { min-height: 0; display: grid; gap: 10px; }.left-column { grid-template-rows: 1.08fr .92fr; }.right-column { grid-template-rows: 1fr 1.12fr; }.center-column { grid-template-rows: minmax(0, 1fr); }
 .bottom-strip { min-height: 0; display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.2fr) minmax(0, .85fr); gap: 10px; }
@@ -398,7 +488,7 @@ function eventClock(event: DemoActivity) {
 .bottom-strip .ops-panel > header { height: 42px; }.system-traffic-panel,.security-panel,.signing-panel { display: grid; grid-template-rows: 42px minmax(0, 1fr); }.system-traffic-chart { min-height: 0; }.security-list { min-height: 0; overflow: hidden; padding: 1px 10px; }.security-list > .security-item { width: 100%; min-height: 36px; display: grid; grid-template-columns: 7px 34px 62px minmax(0, 1fr); gap: 7px; align-items: center; padding: 2px 4px; border: 0; border-bottom: 1px solid #222d41; color: inherit; background: transparent; text-align: left; cursor: pointer; }.security-list > .security-item:hover { background: #16213a; }.security-list i { width: 7px; height: 7px; border-radius: 50%; background: #5a95ff; }.security-list i.tone-danger { background: #ef6579; }.security-list i.tone-warning { background: #e9b949; }.security-list i.tone-success { background: #43d7a2; }.security-level { display: inline-flex; align-items: center; justify-content: center; height: 20px; border: 1px solid #3c4b62; color: #9ca9ba; font-size: 11px; white-space: nowrap; }.security-level.level-high { border-color: rgba(239,101,121,.48); color: #ff8798; background: rgba(239,101,121,.09); }.security-level.level-medium { border-color: rgba(233,185,73,.46); color: #edc66b; background: rgba(233,185,73,.08); }.security-level.level-notice { border-color: rgba(90,149,255,.44); color: #85aefd; background: rgba(90,149,255,.08); }.security-copy { min-width: 0; }.security-list strong,.security-list small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.security-list strong { color: #dbe3ef; font-size: 12px; line-height: 14px; }.security-list small { margin-top: 1px; color: #77869d; font-size: 10px; line-height: 12px; }.security-list time { color: #92a0b5; font: 12px var(--font-family-mono, monospace); white-space: nowrap; }.signing-content { min-height: 0; display: grid; grid-template-rows: 32px minmax(0,1fr); padding: 7px 12px 8px; }.signing-progress { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 9px; align-items: center; }.signing-progress > i { height: 5px; overflow: hidden; background: #253149; }.signing-progress em { display: block; height: 100%; background: #43d7a2; }.signing-progress span { color: #aebbd0; font: 600 12px var(--font-family-mono, monospace); white-space: nowrap; }.signing-stats { min-height: 0; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border-top: 1px solid #253047; }.signing-stats > span { min-width: 0; padding: 8px 7px 2px; border-right: 1px solid #253047; }.signing-stats > span:last-child { border-right: 0; }.signing-stats small,.signing-stats strong { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }.signing-stats small { color: #8492a8; font-size: 11px; }.signing-stats strong { margin-top: 4px; color: #dce5f2; font: 600 17px var(--font-family-mono, monospace); }.signing-stats .warning strong { color: #edc66b; }.signing-stats .danger strong { color: #ef7182; }
 .region-status-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }.region-status-row { width: 100%; min-height: 48px; display: grid; grid-template-columns: 7px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 6px 12px; border: 0; border-bottom: 1px solid #222d41; color: inherit; background: transparent; cursor: pointer; text-align: left; }.region-status-row:hover { background: #182338; }.region-status-row > i { width: 7px; height: 7px; border-radius: 50%; background: #778397; }.region-status-row > i.tone-success { background: #43d7a2; }.region-status-row > i.tone-warning { background: #e9b949; }.region-status-row > i.tone-offline { background: #778397; }.region-status-copy { min-width: 0; }.region-status-copy strong, .region-status-copy small { display: block; }.region-status-copy strong { color: #cfd7e3; font-size: 12px; }.region-status-copy small { margin-top: 3px; color: #8492a8; font: 11px var(--font-family-base); }.region-status-row > b { color: #b4c0d2; font: 600 12px var(--font-family-base); white-space: nowrap; }
 .business-grid { flex: 0 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); padding: 10px 12px; border-bottom: 1px solid #253047; }.business-grid > span { min-width: 0; padding: 6px 8px; border-right: 1px solid #253047; }.business-grid > span:nth-child(3n) { border-right: 0; }.business-grid small,.business-grid strong { display: block; }.business-grid small { overflow: hidden; color: #8492a8; font-size: 13px; white-space: nowrap; text-overflow: ellipsis; }.business-grid strong { margin-top: 3px; color: #dce5f2; font: 600 15px var(--font-family-base); white-space: nowrap; }.activity-list { flex: 1 1 auto; min-height: 0; overflow: hidden; padding: 2px 12px; }.activity-list > div { display: grid; grid-template-columns: 6px 1fr; gap: 8px; align-items: start; padding: 3px 0; border-bottom: 1px solid #222d41; }.activity-list i,.drawer-activity > i { width: 6px; height: 6px; margin-top: 5px; border-radius: 50%; background: #5a95ff; }.activity-list i.tone-success,.drawer-activity > i.tone-success { background: #43d7a2; }.activity-list i.tone-warning,.drawer-activity > i.tone-warning { background: #e9b949; }.activity-list strong,.activity-list small { display: block; }.activity-list strong { overflow: hidden; color: #bfc9d8; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }.activity-list small { margin-top: 1px; color: #8492a8; font-size: 12px; }
-.drawer-stack { display: grid; gap: 12px; }.drawer-facts { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }.drawer-facts article,.drawer-summary,.equipment-cards article,.drawer-activity { border: 1px solid #31405a; background: #121c2e; border-radius: 6px; }.drawer-facts article { min-height: 72px; padding: 12px; }.drawer-facts span,.drawer-summary span { display: block; color: #93a1b8; font-size: 16px; }.drawer-facts strong,.drawer-summary strong { display: block; margin-top: 6px; color: #e8eef9; font-size: 18px; line-height: 1.3; }.drawer-summaries { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }.drawer-summary { padding: 14px; }.drawer-summary small { display: block; margin-top: 6px; color: #8d9bb0; font-size: 16px; }.equipment-cards { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }.equipment-cards article { min-height: 80px; display: grid; grid-template-columns: 38px 1fr auto; gap: 12px; align-items: center; padding: 12px; }.equipment-icon { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid #3a4b67; color: #91a9cf; }.equipment-icon :deep(svg) { width: 20px; }.equipment-cards strong,.equipment-cards small,.equipment-cards p { display: block; }.equipment-cards strong { font-size: 18px; }.equipment-cards small { margin-top: 3px; color: #7f8ea6; font-size: 16px; }.equipment-cards p { margin: 6px 0 0; color: #9aa8bd; font-size: 16px; }.equipment-cards article > b { color: #72d9b4; font-size: 16px; }.equipment-cards article.tone-warning > b { color: #e8bc59; }.equipment-cards article.tone-danger > b { color: #ef7182; }.drawer-activity { display: grid; grid-template-columns: 8px 1fr; gap: 12px; padding: 14px; }.drawer-activity strong { font-size: 18px; }.drawer-empty { padding: 22px 0; color: #8492a8; font-size: 18px; text-align: center; }.drawer-activity p { margin: 6px 0; color: #9aa8bd; font-size: 16px; }.drawer-activity small { color: #7f8ea6; font-size: 16px; }
+.drawer-link { display: block; width: 100%; margin-top: 6px; padding: 0; border: 0; color: #8db8ff; background: transparent; font: inherit; font-weight: 600; line-height: 1.3; text-align: left; cursor: pointer; }.drawer-link:hover { color: #d6e6ff; text-decoration: underline; }.department-members { overflow: hidden; border: 1px solid #31405a; background: #121c2e; border-radius: 6px; }.department-members > header { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 14px; border-bottom: 1px solid #31405a; }.department-members > header strong { color: #e8eef9; font-size: 16px; }.department-members > header span { color: #8d9bb0; font-size: 14px; }.department-member { width: 100%; min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 14px; border: 0; border-bottom: 1px solid #26364e; color: inherit; background: transparent; text-align: left; cursor: pointer; }.department-member:last-child { border-bottom: 0; }.department-member:hover { background: #182338; }.department-member > span { min-width: 0; }.department-member strong,.department-member small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.department-member strong { color: #dce5f2; font-size: 15px; }.department-member small { margin-top: 4px; color: #8492a8; font-size: 13px; }.department-member > b { flex: 0 0 auto; font-size: 13px; }.department-member > b.online { color: #72d9b4; }.department-member > b.offline { color: #ef7182; }.drawer-stack { display: grid; gap: 12px; }.drawer-facts { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }.drawer-facts article,.drawer-summary,.equipment-cards article,.drawer-activity { border: 1px solid #31405a; background: #121c2e; border-radius: 6px; }.drawer-facts article { min-height: 72px; padding: 12px; }.drawer-facts span,.drawer-summary span { display: block; color: #93a1b8; font-size: 16px; }.drawer-facts strong,.drawer-summary strong { display: block; margin-top: 6px; color: #e8eef9; font-size: 18px; line-height: 1.3; }.drawer-summaries { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }.drawer-summary { padding: 14px; }.drawer-summary small { display: block; margin-top: 6px; color: #8d9bb0; font-size: 16px; }.equipment-cards { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }.equipment-cards article { min-height: 80px; display: grid; grid-template-columns: 38px 1fr auto; gap: 12px; align-items: center; padding: 12px; }.equipment-icon { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid #3a4b67; color: #91a9cf; }.equipment-icon :deep(svg) { width: 20px; }.equipment-cards strong,.equipment-cards small,.equipment-cards p { display: block; }.equipment-cards strong { font-size: 18px; }.equipment-cards small { margin-top: 3px; color: #7f8ea6; font-size: 16px; }.equipment-cards p { margin: 6px 0 0; color: #9aa8bd; font-size: 16px; }.equipment-cards article > b { color: #72d9b4; font-size: 16px; }.equipment-cards article.tone-warning > b { color: #e8bc59; }.equipment-cards article.tone-danger > b { color: #ef7182; }.drawer-activity { display: grid; grid-template-columns: 8px 1fr; gap: 12px; padding: 14px; }.drawer-activity strong { font-size: 18px; }.drawer-empty { padding: 22px 0; color: #8492a8; font-size: 18px; text-align: center; }.drawer-activity p { margin: 6px 0; color: #9aa8bd; font-size: 16px; }.drawer-activity small { color: #7f8ea6; font-size: 16px; }
 @media (max-width: 1450px) { .overview-workspace { grid-template-columns: 240px minmax(430px,1fr) 240px; } }
 /* 自适应：中等尺寸屏压缩边栏、指标与底条。 */
 @media (max-width: 1640px) and (min-width: 1500px) {
