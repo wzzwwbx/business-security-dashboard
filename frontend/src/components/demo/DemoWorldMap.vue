@@ -47,9 +47,9 @@ onMounted(async () => {
 
 function regionStatus(region: DemoRegion) {
   const online = region.people.filter((person) => person.online).length;
-  if (online === 0) return { color: '#778397', label: '全员离线' };
-  if (online === region.people.length) return { color: '#43d7a2', label: '全员在线' };
-  return { color: '#e9b949', label: '部分在线' };
+  if (online === 0) return { color: '#778397' };
+  if (online === region.people.length) return { color: '#43d7a2' };
+  return { color: '#e9b949' };
 }
 
 function findRegionByMapName(name: string) {
@@ -492,9 +492,6 @@ function openTopologyFromToast() {
     <div class="map-legend-overlay" aria-label="地图图例">
       <span><i class="ground" />地面链路</span>
       <span><i class="satellite" />卫星链路</span>
-      <span><i class="status success" />全员在线</span>
-      <span><i class="status warning" />部分在线</span>
-      <span><i class="status offline" />全员离线</span>
     </div>
 
     <Transition name="route-toast">
@@ -527,10 +524,6 @@ function openTopologyFromToast() {
 .map-legend-overlay i { display: inline-block; }
 .map-legend-overlay i.ground { width: 16px; height: 0; border-top: 2px solid #5a95ff; }
 .map-legend-overlay i.satellite { width: 16px; height: 0; border-top: 2px dashed #a97bff; }
-.map-legend-overlay i.status { width: 7px; height: 7px; border-radius: 50%; background: #778397; }
-.map-legend-overlay i.status.success { background: #43d7a2; }
-.map-legend-overlay i.status.warning { background: #e9b949; }
-.map-legend-overlay i.status.offline { background: #778397; }
 
 /* 切换策略下发提示 */
 .route-switch-toast { position: absolute; z-index: 8; top: 56px; right: 12px; max-width: 460px; display: flex; align-items: flex-start; gap: 8px; padding: 10px 10px 10px 14px; border: 1px solid rgba(239, 101, 121, .6); border-left: 3px solid #ef6579; background: rgba(28, 16, 26, .94); backdrop-filter: blur(4px); color: #ffd9de; font-size: 13px; line-height: 1.5; box-shadow: 0 6px 24px rgba(0, 0, 0, .45); cursor: pointer; }
