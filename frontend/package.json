@@ -9,7 +9,7 @@
     "dev:mock": "vite --mode mock",
     "build": "vue-tsc --noEmit && vite build --mode integration",
     "build:mock": "vue-tsc --noEmit && vite build --mode mock",
-    "build:copy": "npm run build && rm -f dist.zip && zip -qr dist.zip dist -x '*/.DS_Store' '*/._*'",
+    "build:copy": "npm run build && node scripts/package-dist.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
