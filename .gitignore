@@ -25,3 +25,8 @@ rpm-out/
 deploy/docker/*.tgz
 deploy/docker/docker-compose-linux-*
 *.rpm
+frontend/node_modules-win64.tar.gz
+frontend/dist.tar.gz
+deploy/windows/business-security-dashboard-offline/node_modules-win64.tar.gz
+frontend/._package-lock.json
+frontend/._node_modules
