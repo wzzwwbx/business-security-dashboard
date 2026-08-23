@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, rmSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -6,38 +6,38 @@ import { spawnSync } from 'node:child_process';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const frontendDir = resolve(scriptDir, '..');
 const distDir = resolve(frontendDir, 'dist');
-const archivePath = resolve(frontendDir, 'dist.zip');
+const archivePath = resolve(frontendDir, 'dist.tar.gz');
 
-function removeSystemMetadata(directory) {
-  for (const entry of readdirSync(directory, { withFileTypes: true })) {
-    const entryPath = resolve(directory, entry.name);
-    if (entry.name === '.DS_Store' || entry.name.startsWith('._')) {
-      rmSync(entryPath, { recursive: true, force: true });
-    } else if (entry.isDirectory()) {
-      removeSystemMetadata(entryPath);
-    }
-  }
-}
-
-function run(command, args, options = {}) {
-  const result = spawnSync(command, args, { stdio: 'inherit', ...options });
-  if (result.error) throw result.error;
-  if (result.status !== 0) process.exit(result.status ?? 1);
-}
-
-if (!existsSync(distDir)) {
+if (!existsSync(resolve(distDir, 'index.html'))) {
   throw new Error(`Missing build output: ${distDir}`);
 }
 
 rmSync(archivePath, { force: true });
-removeSystemMetadata(distDir);
 
-if (process.platform === 'win32') {
-  const quotePowerShell = (value) => `'${value.replaceAll("'", "''")}'`;
-  const command = `Compress-Archive -Path ${quotePowerShell(distDir)} -DestinationPath ${quotePowerShell(archivePath)} -Force`;
-  run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', command]);
-} else {
-  run('zip', ['-qr', archivePath, 'dist', '-x', '*/.DS_Store', '*/._*'], { cwd: frontendDir });
+const result = spawnSync('tar', [
+  '-czf',
+  archivePath,
+  '--exclude=._*',
+  '--exclude=.DS_Store',
+  '-C',
+  frontendDir,
+  'dist'
+], {
+  stdio: 'inherit',
+  env: { ...process.env, COPYFILE_DISABLE: '1' }
+});
+
+if (result.error) {
+  console.error(`Unable to run tar: ${result.error.message}`);
+  console.error('请确认系统已安装 tar：Windows 10 1803+、macOS 和 Linux 通常已自带。');
+  process.exit(1);
 }
 
-console.log(`Created ${archivePath}`);
+if (result.status !== 0) {
+  console.error(`tar failed with exit code ${result.status ?? 'unknown'}`);
+  console.error('请确认系统已安装 tar：Windows 10 1803+、macOS 和 Linux 通常已自带。');
+  process.exit(result.status ?? 1);
+}
+
+const sizeMb = (statSync(archivePath).size / 1024 / 1024).toFixed(1);
+console.log(`Created ${archivePath} (${sizeMb} MB)`);

@@ -14,7 +14,7 @@ probe/target/
 probe/data/
 # local previews
 tmp-screens/
-frontend/dist.zip
+frontend/dist.tar.gz
 
 # offline deployment bundle
 dist-offline-arm64/
