@@ -29,6 +29,18 @@ export interface DemoActivity {
   personId?: string;
 }
 
+/** 现场演示触发后，在地图点位上短暂显示的联动信号。 */
+export interface DemoLiveSignal {
+  id: string;
+  countryCode: string;
+  source: 'zero-trust' | 'message' | 'signing';
+  sourceLabel: string;
+  title: string;
+  tone: SituationTone;
+  count: number;
+  occurredAt: string;
+}
+
 export interface DemoEquipment {
   type: DemoEquipmentType;
   label: string;
@@ -223,6 +235,8 @@ export interface DemoSituationScenario {
   link: DemoLinkSnapshot;
   businessTrend: DemoBusinessTrend;
   securityEvents: DemoActivity[];
+  /** 现场演示触发后在地图点位显示的联动信号。 */
+  liveSignals: DemoLiveSignal[];
   /** 通信卫星中继节点。 */
   satellites: DemoSatellite[];
   /** 各业务系统流量（业务态势·系统流量专题）。 */

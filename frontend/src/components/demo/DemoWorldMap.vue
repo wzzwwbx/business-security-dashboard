@@ -13,7 +13,7 @@ import flagUs from '@/assets/map/flag-us.svg';
 import satelliteSuccess from '@/assets/map/satellite-success.svg';
 import satelliteWarning from '@/assets/map/satellite-warning.svg';
 import { demoSituationScenario } from '@/mocks/demoSituation';
-import type { DemoRegion } from '@/types/demoSituation';
+import type { DemoLiveSignal, DemoRegion } from '@/types/demoSituation';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -23,6 +23,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   selectCountry: [countryCode: string];
+  selectSecurityEvent: [eventId: string];
 }>();
 
 const worldGeoJson = ref<Record<string, unknown> | null>(null);
@@ -64,6 +65,34 @@ function regionTooltip(region: DemoRegion) {
 }
 
 const beijing = computed(() => props.regions.find((region) => region.countryCode === 'CN'));
+const activeLiveSignal = ref<DemoLiveSignal | null>(null);
+let liveSignalTimer: number | undefined;
+
+watch(() => [demoSituationScenario.liveSignals.length, demoSituationScenario.liveSignals[0]?.occurredAt], () => {
+  const signal = demoSituationScenario.liveSignals[0];
+  if (!signal) {
+    activeLiveSignal.value = null;
+    return;
+  }
+  activeLiveSignal.value = { ...signal };
+  if (liveSignalTimer !== undefined) window.clearTimeout(liveSignalTimer);
+  liveSignalTimer = window.setTimeout(() => {
+    activeLiveSignal.value = null;
+    liveSignalTimer = undefined;
+  }, 5200);
+});
+
+const liveSignalSeries = computed(() => {
+  const signal = activeLiveSignal.value;
+  if (!signal) return [];
+  return [{
+    name: '北京事件提醒',
+    value: [beijing.value?.longitude ?? 116.4, beijing.value?.latitude ?? 39.9, signal.count],
+    symbolSize: signal.tone === 'danger' ? 38 : 32,
+    itemStyle: { color: signal.tone === 'danger' ? '#ff4d5f' : signal.tone === 'success' ? '#35d8a0' : '#4ba3ff', shadowBlur: 22, shadowColor: signal.tone === 'danger' ? 'rgba(255,77,95,.86)' : 'rgba(75,163,255,.75)' },
+    payload: signal
+  }];
+});
 
 // 红色五角星：北京站点标识。
 const STAR_PATH = 'M24 2 L29.4 18.3 L46.6 18.3 L32.8 28.9 L38.4 45.1 L24 34.8 L9.6 45.1 L15.2 28.9 L1.4 18.3 L18.6 18.3 Z';
@@ -132,9 +161,9 @@ const chartOption = computed(() => {
     routeId: demoSituationScenario.routes.find((route) => route.countryCode === region.countryCode && route.kind === 'primary')?.id,
     countryCode: region.countryCode,
     lineStyle: {
-      color: '#5a95ff',
+      color: '#6eafff',
       width: 1 + region.downlinkMbps / 3,
-      opacity: 0.5
+      opacity: 0.72
     }
   })) : [];
   groundSegments.forEach((segment, dataIndex) => {
@@ -201,6 +230,9 @@ const chartOption = computed(() => {
         if (payload?.kind === 'satellite') {
           return `<strong>${payload.name}</strong><br/>带宽 ${payload.bandwidthMbps} Mbps · 利用率 ${payload.utilization}%<br/>${payload.note ?? ''}`;
         }
+        if (payload?.sourceLabel) {
+          return `<strong>${payload.sourceLabel}联动</strong><br/>${payload.title}<br/>北京点位已同步更新`;
+        }
         const region = payload?.countryCode ? payload : findRegionByMapName(params.name);
         return region ? regionTooltip(region) : params.name ?? '';
       }
@@ -213,8 +245,8 @@ const chartOption = computed(() => {
       center: [18, 17],
       top: '14%',
       scaleLimit: { min: 0.85, max: 6 },
-      itemStyle: { areaColor: '#17243b', borderColor: '#46617f', borderWidth: 0.6 },
-      emphasis: { itemStyle: { areaColor: '#243b5d', borderColor: '#8eb1db' }, label: { show: true, color: '#eef4ff', fontSize: 16 } },
+      itemStyle: { areaColor: '#214264', borderColor: '#6d9bc7', borderWidth: 0.75 },
+      emphasis: { itemStyle: { areaColor: '#356a97', borderColor: '#b9e1ff' }, label: { show: true, color: '#ffffff', fontSize: 16 } },
       select: { disabled: true }
     },
     series: [
@@ -244,6 +276,14 @@ const chartOption = computed(() => {
         zlevel: 4,
         label: { show: false },
         data: satellitePoints
+      },
+      {
+        name: '现场联动',
+        type: 'effectScatter',
+        coordinateSystem: 'geo',
+        zlevel: 5,
+        rippleEffect: { scale: 2.8, brushType: 'stroke' },
+        data: liveSignalSeries.value
       },
       {
         name: '人员在线状态',
@@ -427,6 +467,7 @@ function onChartRendered() {
 }
 
 onBeforeUnmount(() => {
+  if (liveSignalTimer !== undefined) window.clearTimeout(liveSignalTimer);
   const chart = mapChart.value?.getChart();
   if (chart) {
     chart.getZr().off('click', handleZrClick as never);
@@ -466,7 +507,9 @@ function handleClick(payload: Record<string, any>) {
   if (region && 'countryCode' in region) emit('selectCountry', region.countryCode);
 }
 
-// —— 切换策略下发提示（单次展示，点击打开对应拓扑，手动关闭） ——
+const liveSignalToast = computed(() => activeLiveSignal.value);
+
+
 const switchToast = ref<{ text: string; countryCode: string } | null>(null);
 let lastToastSwitchId = '';
 // 空数组时访问 [0] 不会收集依赖，改为监听 length 并用策略 id 去重。
@@ -482,9 +525,11 @@ watch(() => demoSituationScenario.routeSwitches.length, () => {
   };
 });
 
-function openTopologyFromToast() {
-  if (switchToast.value) topologyCountry.value = switchToast.value.countryCode;
+function openLiveSignal(signal: DemoLiveSignal) {
+  if (signal.source === 'zero-trust') emit('selectSecurityEvent', demoSituationScenario.securityEvents[0]?.id ?? '');
+  activeLiveSignal.value = null;
 }
+
 </script>
 
 <template>
@@ -493,6 +538,13 @@ function openTopologyFromToast() {
       <span><i class="ground" />地面链路</span>
       <span><i class="satellite" />卫星链路</span>
     </div>
+
+    <Transition name="route-toast">
+      <div v-if="liveSignalToast" class="route-switch-toast live-signal-toast" :class="`is-${liveSignalToast.tone}`" role="status" @click="openLiveSignal(liveSignalToast)">
+        <i /><span><strong>{{ liveSignalToast.sourceLabel }}事件提醒</strong><small>{{ liveSignalToast.title }}</small></span>
+        <button type="button" class="toast-close" aria-label="关闭事件提示" @click.stop="activeLiveSignal = null">×</button>
+      </div>
+    </Transition>
 
     <Transition name="route-toast">
       <div v-if="switchToast" class="route-switch-toast" role="status" @click="openTopologyFromToast">
@@ -531,6 +583,8 @@ function openTopologyFromToast() {
 .route-switch-toast span { flex: 1 1 auto; }
 .route-switch-toast .toast-close { flex: 0 0 auto; width: 22px; height: 22px; padding: 0; border: 1px solid rgba(239, 101, 121, .5); color: #ffb9c2; background: transparent; font-size: 15px; line-height: 1; cursor: pointer; }
 .route-switch-toast .toast-close:hover { color: #fff; background: rgba(239, 101, 121, .2); }
+.live-signal-toast.is-success { border-color: rgba(67, 215, 162, .6); border-left-color: #43d7a2; color: #d8fff0; }.live-signal-toast.is-info { border-color: rgba(90, 149, 255, .6); border-left-color: #5a95ff; color: #dceaff; }.live-signal-toast.is-success i { background: #43d7a2; box-shadow: 0 0 8px #43d7a2; }.live-signal-toast.is-info i { background: #5a95ff; box-shadow: 0 0 8px #5a95ff; }.live-signal-toast strong,.live-signal-toast small { display: block; }.live-signal-toast strong { font-size: 13px; }.live-signal-toast small { margin-top: 2px; color: #b6c8df; font-size: 11px; }
+
 
 .route-panel-enter-active, .route-panel-leave-active { transition: opacity .22s ease; }
 .route-panel-enter-from, .route-panel-leave-to { opacity: 0; }

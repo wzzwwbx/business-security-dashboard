@@ -3,7 +3,7 @@ import BaseIcon from '@/components/common/BaseIcon.vue';
 import DetailDrawerShell from '@/components/common/DetailDrawerShell.vue';
 import DemoWorldMap from '@/components/demo/DemoWorldMap.vue';
 import EChartWidget from '@/components/widgets/EChartWidget.vue';
-import { demoSituationScenario, demoTotals } from '@/mocks/demoSituation';
+import { demoClearLiveSignals, demoSituationScenario, demoTotals, demoTriggerMessageActivity, demoTriggerSigningActivity, demoTriggerZeroTrustPasswordFailure } from '@/mocks/demoSituation';
 import type { DemoActivity, DemoEquipmentType, DemoPerson, DemoRegion } from '@/types/demoSituation';
 import type { BaseIconName } from '@/components/common/BaseIcon.vue';
 import { compactDepartmentName, messageRankingOption, type RankingMode } from '@/utils/rankingChart';
@@ -13,6 +13,8 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const selectedCountryCode = ref('AE');
 const selectedPerson = ref<DemoPerson | null>(null);
+const selectedSecurityEvent = ref<DemoActivity | null>(null);
+const defenseStrategyApplied = ref(false);
 const selectedDepartment = ref<string | null>(null);
 const drawerTab = ref('overview');
 const departmentDrawerTab = ref('overview');
@@ -26,6 +28,14 @@ const departmentPeople = computed(() => selectedDepartment.value
 const departmentSecurityEvents = computed(() => {
   const personIds = new Set(departmentPeople.value.map((person) => person.id));
   return demoSituationScenario.securityEvents.filter((event) => event.personId && personIds.has(event.personId));
+});
+const defenseTarget = computed(() => {
+  const event = selectedSecurityEvent.value;
+  const person = event?.personId ? demoSituationScenario.people.find((item) => item.id === event.personId) : null;
+  return {
+    person,
+    devices: person ? ['零信任接入网关 GW-BJ-01', '边界防火墙 FW-BJ-01', '密信应用服务器 APP-BJ-01'] : ['零信任接入网关 GW-BJ-01', '边界防火墙 FW-BJ-01']
+  };
 });
 const departmentSummary = computed(() => {
   const people = departmentPeople.value;
@@ -189,6 +199,19 @@ function drillBusiness(topic: 'message' | 'signing' | 'traffic' = 'message') {
   void router.push({ path: '/business', query: { topic } });
 }
 
+function triggerSecurityDemo() {
+  demoTriggerZeroTrustPasswordFailure();
+}
+
+function triggerMessageDemo() {
+  demoTriggerMessageActivity();
+}
+
+function triggerSigningDemo() {
+  demoTriggerSigningActivity();
+}
+
+
 function openPerson(person: DemoPerson) {
   selectedDepartment.value = null;
   selectedPerson.value = person;
@@ -218,10 +241,20 @@ function handleDeptRankingClick(payload: Record<string, any>) {
 }
 
 function openSecurityEvent(event: DemoActivity) {
-  const person = demoSituationScenario.people.find((item) => item.id === event.personId);
-  if (!person) return;
-  selectedPerson.value = person;
-  drawerTab.value = 'security';
+  selectedPerson.value = null;
+  selectedDepartment.value = null;
+  selectedSecurityEvent.value = event;
+  defenseStrategyApplied.value = false;
+}
+
+function applyDefenseStrategy() {
+  demoClearLiveSignals('CN');
+  defenseStrategyApplied.value = true;
+}
+
+function openSecurityEventById(eventId: string) {
+  const event = demoSituationScenario.securityEvents.find((item) => item.id === eventId);
+  if (event) openSecurityEvent(event);
 }
 
 function personName(personId: string) {
@@ -292,13 +325,13 @@ function eventClock(event: DemoActivity) {
 
       <main class="center-column">
         <article class="ops-panel map-panel">
-          <div class="map-body"><DemoWorldMap :regions="demoSituationScenario.regions" :selected-country-code="selectedCountryCode" @select-country="selectRegion" /></div>
+          <div class="map-body"><DemoWorldMap :regions="demoSituationScenario.regions" :selected-country-code="selectedCountryCode" @select-country="selectRegion" @select-security-event="openSecurityEventById" /></div>
         </article>
       </main>
 
       <aside class="workspace-column right-column">
         <article class="ops-panel business-panel drill-panel" @click="drillBusiness('message')">
-          <header><span>今日业务摘要</span><b>查看明细 ›</b></header>
+          <header><span class="panel-title">今日业务摘要<button class="panel-refresh" type="button" title="模拟密信发送" aria-label="模拟密信发送" @click.stop="triggerMessageDemo"><BaseIcon name="refresh" /></button></span><b>查看明细 ›</b></header>
           <div class="business-grid">
             <span><small>消息发送</small><strong>{{ demoTotals.message.sentMessages }}</strong></span>
             <span><small>消息接收</small><strong>{{ demoTotals.message.receivedMessages }}</strong></span>
@@ -332,7 +365,7 @@ function eventClock(event: DemoActivity) {
       </article>
 
       <article class="ops-panel security-panel">
-        <header><span>安全事件</span><b>高危 {{ securityEventSummary.high }} · 中危 {{ securityEventSummary.medium }}</b></header>
+        <header><span class="panel-title">安全事件<button class="panel-refresh" type="button" title="模拟零信任密码错误" aria-label="模拟零信任密码错误" @click.stop="triggerSecurityDemo"><BaseIcon name="refresh" /></button></span><b>高危 {{ securityEventSummary.high }} · 中危 {{ securityEventSummary.medium }}</b></header>
         <div class="security-list">
           <button v-for="event in securityEvents.slice(0, 3)" :key="event.id" type="button" class="security-item" :title="event.detail" @click="openSecurityEvent(event)">
             <i :class="`tone-${event.tone}`" />
@@ -344,7 +377,7 @@ function eventClock(event: DemoActivity) {
       </article>
 
       <article class="ops-panel signing-panel drill-panel" @click="drillBusiness('signing')">
-        <header><span>签阅处置</span><b>处理率 {{ signingCompletionRate.toFixed(1) }}% · 明细 ›</b></header>
+        <header><span class="panel-title">签阅处置<button class="panel-refresh" type="button" title="模拟完成一份签阅" aria-label="模拟完成一份签阅" @click.stop="triggerSigningDemo"><BaseIcon name="refresh" /></button></span><b>处理率 {{ signingCompletionRate.toFixed(1) }}% · 明细 ›</b></header>
         <div class="signing-content">
           <div class="signing-progress" aria-label="签阅处理进度"><i><em :style="{ width: `${signingCompletionRate}%` }" /></i><span>{{ demoTotals.signing.processed }}/{{ demoTotals.signing.received }}</span></div>
           <div class="signing-stats">
@@ -356,6 +389,43 @@ function eventClock(event: DemoActivity) {
         </div>
       </article>
     </section>
+
+    <DetailDrawerShell
+      centered
+      :open="Boolean(selectedSecurityEvent)"
+      :title="selectedSecurityEvent ? '自主防御 · 处置策略' : '自主防御 · 处置策略'"
+      :subtitle="selectedSecurityEvent ? `${securityLevelLabel(selectedSecurityEvent)} · ${eventClock(selectedSecurityEvent)}` : ''"
+      :badges="selectedSecurityEvent ? [{ label: defenseStrategyApplied ? '策略已下发' : '待下发', tone: defenseStrategyApplied ? 'success' : 'warning' }, { label: '智能分析引擎', tone: 'info' }] : []"
+      @close="selectedSecurityEvent = null"
+    >
+      <template v-if="selectedSecurityEvent">
+        <section class="defense-drawer">
+          <article class="defense-event-summary">
+            <div class="defense-event-icon"><BaseIcon name="security" /></div>
+            <div><span>检测到安全事件</span><h3>{{ selectedSecurityEvent.title }}</h3><p>{{ selectedSecurityEvent.detail }}</p></div>
+          </article>
+          <div class="defense-facts">
+            <article><span>风险等级</span><strong class="danger-text">{{ securityLevelLabel(selectedSecurityEvent) }}</strong></article>
+            <article><span>关联人员</span><strong>{{ defenseTarget.person?.name ?? '北京接入点' }}</strong></article>
+            <article><span>风险来源</span><strong>零信任认证</strong></article>
+            <article><span>处置模式</span><strong>自主防御</strong></article>
+          </div>
+          <article class="defense-analysis">
+            <header><strong>智能研判结论</strong><span>规则 + 风险因子</span></header>
+            <div class="defense-flow"><span>认证异常</span><i>→</i><span>连续失败</span><i>→</i><span>账号风险升高</span><i>→</i><b>阻断访问</b></div>
+            <p>分析引擎结合失败次数、接入位置、终端状态和访问策略命中结果，判定本次行为需要立即阻断，并生成最小影响范围的处置策略。</p>
+          </article>
+          <article class="defense-policy">
+            <header><strong>生成处置策略</strong><span :class="defenseStrategyApplied ? 'applied' : ''">{{ defenseStrategyApplied ? '已执行' : '待下发' }}</span></header>
+            <div class="policy-row"><i>01</i><span><strong>冻结高风险会话</strong><small>立即终止当前北京接入会话，阻止继续访问业务资源</small></span><b>立即</b></div>
+            <div class="policy-row"><i>02</i><span><strong>下发认证阻断规则</strong><small>将账号加入零信任临时阻断名单，策略有效期 30 分钟</small></span><b>高优先级</b></div>
+            <div class="policy-row"><i>03</i><span><strong>保留审计证据</strong><small>记录认证失败、设备指纹、访问对象和策略执行结果</small></span><b>自动</b></div>
+          </article>
+          <article class="defense-targets"><header><strong>策略下发目标</strong><span>{{ defenseTarget.devices.length }} 个安全设备</span></header><div><span v-for="device in defenseTarget.devices" :key="device"><BaseIcon name="security" />{{ device }}<b :class="defenseStrategyApplied ? 'online' : ''">{{ defenseStrategyApplied ? '已下发' : '待下发' }}</b></span></div></article>
+          <button class="defense-apply" type="button" :disabled="defenseStrategyApplied" @click="applyDefenseStrategy"><BaseIcon name="security" />{{ defenseStrategyApplied ? '处置策略已下发并开始执行' : '下发自主防御策略' }}</button>
+        </section>
+      </template>
+    </DetailDrawerShell>
 
     <DetailDrawerShell
       centered
@@ -467,11 +537,11 @@ function eventClock(event: DemoActivity) {
 </template>
 
 <style scoped>
-.demo-overview { height: calc(100vh - var(--topbar-height) - 22px); min-height: 640px; display: grid; grid-template-rows: minmax(96px, auto) minmax(0, 1fr) 172px; gap: 10px; color: #e7ebf5; }
-.metric-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid #28344a; background: #111827; }
-.metric-block { min-height: 96px; padding: 14px 18px 16px; border-right: 1px solid #28344a; }
+.demo-overview { height: calc(100vh - var(--topbar-height) - 22px); min-height: 640px; display: grid; grid-template-rows: minmax(96px, auto) minmax(0, 1fr) 172px; gap: 10px; color: #eef5ff; background: radial-gradient(circle at 50% 44%, rgba(61, 137, 214, .12), transparent 48%); }
+.metric-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid #385171; background: #172337; }
+.metric-block { min-height: 96px; padding: 14px 18px 16px; border-right: 1px solid #385171; }
 .metric-block:last-child { border-right: 0; }
-.metric-block > span { display: block; color: #aab5c7; font-size: 18px; line-height: 1.1; }
+.metric-block > span { display: block; color: #c3d1e5; font-size: 18px; line-height: 1.1; }
 .metric-block strong { display: block; margin-top: 5px; color: #f2f5fb; font: 600 32px var(--font-family-mono, monospace); line-height: 1.05; }
 .metric-block strong small { margin-left: 4px; color: #aab5c7; font-size: 16px; font-weight: 500; }
 .metric-block p { margin: 5px 0 0; color: #8492a8; font-size: 14px; line-height: 1.2; }
@@ -480,14 +550,17 @@ function eventClock(event: DemoActivity) {
 .overview-workspace { min-height: 0; display: grid; grid-template-columns: minmax(250px, 270px) minmax(0, 1fr) minmax(250px, 270px); gap: 10px; }
 .workspace-column,.center-column { min-height: 0; display: grid; gap: 10px; }.left-column { grid-template-rows: 1.08fr .92fr; }.right-column { grid-template-rows: 1fr 1.12fr; }.center-column { grid-template-rows: minmax(0, 1fr); }
 .bottom-strip { min-height: 0; display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.2fr) minmax(0, .85fr); gap: 10px; }
-.ops-panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #28344a; background: #111827; }
+.ops-panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #385171; background: linear-gradient(180deg, #17263b 0%, #121e31 100%); box-shadow: inset 0 1px rgba(157, 207, 255, .06), 0 8px 20px rgba(0,0,0,.12); }
 .ops-panel > header { height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 12px; border-bottom: 1px solid #263147; }
 .ops-panel header span { display: block; overflow: hidden; color: #eef4ff; font-size: 17px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; flex-shrink: 0; }.ops-panel header > b { overflow: hidden; color: #c9dbfb; font: 600 14px var(--font-family-base); white-space: nowrap; text-overflow: ellipsis; }
 .ranking-panel { display: grid; grid-template-rows: 52px minmax(0,1fr); }.ranking-header { min-width: 0; }.rank-mode-switch { flex: 0 0 auto; display: inline-grid; grid-template-columns: repeat(3, 36px); height: 26px; border: 1px solid #35445d; background: #0d1524; }.rank-mode-switch button { width: 36px; height: 24px; padding: 0; border: 0; border-right: 1px solid #35445d; color: #8594aa; background: transparent; font: 12px var(--font-family-base); cursor: pointer; }.rank-mode-switch button:last-child { border-right: 0; }.rank-mode-switch button:hover { color: #dbe8fb; background: #182740; }.rank-mode-switch button.active { color: #eef5ff; background: #284b7c; box-shadow: inset 0 -2px #6aa4ff; }.ranking-chart { min-height: 0; cursor: pointer; }
-.map-panel { display: block; }.map-body { min-height: 0; height: 100%; background: #0c1321; }
+.map-panel { display: block; }.map-body { min-height: 0; height: 100%; background: radial-gradient(circle at 50% 48%, rgba(61, 155, 224, .24), transparent 58%), #10213a; }
 .bottom-strip .ops-panel > header { height: 42px; }.system-traffic-panel,.security-panel,.signing-panel { display: grid; grid-template-rows: 42px minmax(0, 1fr); }.system-traffic-chart { min-height: 0; }.security-list { min-height: 0; overflow: hidden; padding: 1px 10px; }.security-list > .security-item { width: 100%; min-height: 36px; display: grid; grid-template-columns: 7px 34px 62px minmax(0, 1fr); gap: 7px; align-items: center; padding: 2px 4px; border: 0; border-bottom: 1px solid #222d41; color: inherit; background: transparent; text-align: left; cursor: pointer; }.security-list > .security-item:hover { background: #16213a; }.security-list i { width: 7px; height: 7px; border-radius: 50%; background: #5a95ff; }.security-list i.tone-danger { background: #ef6579; }.security-list i.tone-warning { background: #e9b949; }.security-list i.tone-success { background: #43d7a2; }.security-level { display: inline-flex; align-items: center; justify-content: center; height: 20px; border: 1px solid #3c4b62; color: #9ca9ba; font-size: 11px; white-space: nowrap; }.security-level.level-high { border-color: rgba(239,101,121,.48); color: #ff8798; background: rgba(239,101,121,.09); }.security-level.level-medium { border-color: rgba(233,185,73,.46); color: #edc66b; background: rgba(233,185,73,.08); }.security-level.level-notice { border-color: rgba(90,149,255,.44); color: #85aefd; background: rgba(90,149,255,.08); }.security-copy { min-width: 0; }.security-list strong,.security-list small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.security-list strong { color: #dbe3ef; font-size: 12px; line-height: 14px; }.security-list small { margin-top: 1px; color: #77869d; font-size: 10px; line-height: 12px; }.security-list time { color: #92a0b5; font: 12px var(--font-family-mono, monospace); white-space: nowrap; }.signing-content { min-height: 0; display: grid; grid-template-rows: 32px minmax(0,1fr); padding: 7px 12px 8px; }.signing-progress { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 9px; align-items: center; }.signing-progress > i { height: 5px; overflow: hidden; background: #253149; }.signing-progress em { display: block; height: 100%; background: #43d7a2; }.signing-progress span { color: #aebbd0; font: 600 12px var(--font-family-mono, monospace); white-space: nowrap; }.signing-stats { min-height: 0; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border-top: 1px solid #253047; }.signing-stats > span { min-width: 0; padding: 8px 7px 2px; border-right: 1px solid #253047; }.signing-stats > span:last-child { border-right: 0; }.signing-stats small,.signing-stats strong { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }.signing-stats small { color: #8492a8; font-size: 11px; }.signing-stats strong { margin-top: 4px; color: #dce5f2; font: 600 17px var(--font-family-mono, monospace); }.signing-stats .warning strong { color: #edc66b; }.signing-stats .danger strong { color: #ef7182; }
 .region-status-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }.region-status-row { width: 100%; min-height: 48px; display: grid; grid-template-columns: 7px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 6px 12px; border: 0; border-bottom: 1px solid #222d41; color: inherit; background: transparent; cursor: pointer; text-align: left; }.region-status-row:hover { background: #182338; }.region-status-row > i { width: 7px; height: 7px; border-radius: 50%; background: #778397; }.region-status-row > i.tone-success { background: #43d7a2; }.region-status-row > i.tone-warning { background: #e9b949; }.region-status-row > i.tone-offline { background: #778397; }.region-status-copy { min-width: 0; }.region-status-copy strong, .region-status-copy small { display: block; }.region-status-copy strong { color: #cfd7e3; font-size: 12px; }.region-status-copy small { margin-top: 3px; color: #8492a8; font: 11px var(--font-family-base); }.region-status-row > b { color: #b4c0d2; font: 600 12px var(--font-family-base); white-space: nowrap; }
 .business-grid { flex: 0 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); padding: 10px 12px; border-bottom: 1px solid #253047; }.business-grid > span { min-width: 0; padding: 6px 8px; border-right: 1px solid #253047; }.business-grid > span:nth-child(3n) { border-right: 0; }.business-grid small,.business-grid strong { display: block; }.business-grid small { overflow: hidden; color: #8492a8; font-size: 13px; white-space: nowrap; text-overflow: ellipsis; }.business-grid strong { margin-top: 3px; color: #dce5f2; font: 600 15px var(--font-family-base); white-space: nowrap; }.activity-list { flex: 1 1 auto; min-height: 0; overflow: hidden; padding: 2px 12px; }.activity-list > div { display: grid; grid-template-columns: 6px 1fr; gap: 8px; align-items: start; padding: 3px 0; border-bottom: 1px solid #222d41; }.activity-list i,.drawer-activity > i { width: 6px; height: 6px; margin-top: 5px; border-radius: 50%; background: #5a95ff; }.activity-list i.tone-success,.drawer-activity > i.tone-success { background: #43d7a2; }.activity-list i.tone-warning,.drawer-activity > i.tone-warning { background: #e9b949; }.activity-list strong,.activity-list small { display: block; }.activity-list strong { overflow: hidden; color: #bfc9d8; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }.activity-list small { margin-top: 1px; color: #8492a8; font-size: 12px; }
+.ops-panel > header > span:first-child { min-width: 0; flex: 1 1 auto; }.ops-panel > header > .panel-header-actions { flex: 0 0 auto; min-width: 0; white-space: nowrap; }.panel-header-actions > b { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-title { display: inline-flex !important; align-items: center; gap: 7px; min-width: 0; flex: 1 1 auto !important; }.panel-title .panel-refresh { flex: 0 0 auto; }.panel-refresh { width: 24px; height: 24px; display: grid; place-items: center; flex: 0 0 auto; padding: 0; border: 1px solid #4b6990; color: #a9ccff; background: rgba(52, 91, 143, .45); cursor: pointer; }.panel-refresh:hover { border-color: #9ac8ff; color: #ffffff; background: #315d91; }.panel-refresh :deep(svg) { width: 14px; height: 14px; }
+.defense-drawer { display: grid; gap: 12px; }.defense-event-summary { display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 14px; border: 1px solid rgba(255, 97, 120, .45); background: rgba(109, 36, 55, .18); }.defense-event-icon { width: 44px; height: 44px; display: grid; place-items: center; color: #ff8291; border: 1px solid rgba(255, 97, 120, .48); background: rgba(255, 97, 120, .1); }.defense-event-icon :deep(svg) { width: 23px; }.defense-event-summary span,.defense-analysis header span,.defense-targets header span { color: #9eb1ca; font-size: 12px; }.defense-event-summary h3 { margin: 4px 0; color: #fff1f3; font-size: 18px; }.defense-event-summary p { margin: 0; color: #c0cada; font-size: 13px; line-height: 1.5; }.defense-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }.defense-facts article { min-height: 66px; padding: 10px; border: 1px solid #3a5275; background: #172944; }.defense-facts span { display: block; color: #91a7c3; font-size: 11px; }.defense-facts strong { display: block; margin-top: 8px; color: #e5f0ff; font-size: 15px; }.defense-facts .danger-text { color: #ff8190; }.defense-analysis,.defense-policy,.defense-targets { border: 1px solid #3a5275; background: #14263e; }.defense-analysis header,.defense-policy header,.defense-targets header { display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; border-bottom: 1px solid #304866; }.defense-analysis header strong,.defense-policy header strong,.defense-targets header strong { color: #e9f3ff; font-size: 14px; }.defense-analysis p { margin: 0; padding: 10px 12px 12px; color: #aebed2; font-size: 12px; line-height: 1.55; }.defense-flow { display: flex; align-items: center; gap: 7px; padding: 12px; overflow-x: auto; }.defense-flow span,.defense-flow b { padding: 6px 8px; border: 1px solid #4b6b94; color: #cfe5ff; background: #1d385b; font-size: 12px; white-space: nowrap; }.defense-flow b { border-color: rgba(255, 97, 120, .6); color: #ffadb8; background: rgba(139, 44, 66, .35); }.defense-flow i { color: #6faeff; font-style: normal; }.defense-policy header > span { padding: 4px 7px; border: 1px solid rgba(255, 200, 87, .45); color: #ffd57f; background: rgba(255, 200, 87, .1); font-size: 11px; }.defense-policy header > span.applied { border-color: rgba(67, 215, 162, .5); color: #78e6bd; background: rgba(67, 215, 162, .1); }.policy-row { display: grid; grid-template-columns: 28px 1fr auto; gap: 9px; align-items: center; min-height: 52px; padding: 7px 12px; border-bottom: 1px solid #283f5d; }.policy-row:last-child { border-bottom: 0; }.policy-row > i { display: grid; place-items: center; width: 24px; height: 24px; color: #9cc6ff; border: 1px solid #4f739f; font: 11px var(--font-family-mono, monospace); font-style: normal; }.policy-row span { min-width: 0; }.policy-row strong,.policy-row small { display: block; }.policy-row strong { color: #e5f0ff; font-size: 12px; }.policy-row small { margin-top: 3px; overflow: hidden; color: #91a7c3; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }.policy-row > b { color: #f2c771; font-size: 11px; white-space: nowrap; }.defense-targets > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px 12px; }.defense-targets > div > span { display: grid; grid-template-columns: 16px 1fr; gap: 5px; align-items: center; color: #c7d9ee; font-size: 11px; }.defense-targets :deep(svg) { width: 14px; color: #83bdff; }.defense-targets > div b { grid-column: 2; color: #f2c771; font-size: 10px; font-weight: 500; }.defense-targets > div b.online { color: #70dfb6; }.defense-apply { min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #6aa8ed; color: #eff7ff; background: #28598e; cursor: pointer; font-size: 14px; font-weight: 600; }.defense-apply:hover:not(:disabled) { background: #3473b5; box-shadow: 0 0 18px rgba(73, 157, 255, .22); }.defense-apply:disabled { border-color: #4e806f; color: #9ae4c4; background: #214f47; cursor: default; }.defense-apply :deep(svg) { width: 17px; }
 .drawer-link { display: block; width: 100%; margin-top: 6px; padding: 0; border: 0; color: #8db8ff; background: transparent; font: inherit; font-weight: 600; line-height: 1.3; text-align: left; cursor: pointer; }.drawer-link:hover { color: #d6e6ff; text-decoration: underline; }.department-members { overflow: hidden; border: 1px solid #31405a; background: #121c2e; border-radius: 6px; }.department-members > header { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 14px; border-bottom: 1px solid #31405a; }.department-members > header strong { color: #e8eef9; font-size: 16px; }.department-members > header span { color: #8d9bb0; font-size: 14px; }.department-member { width: 100%; min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 14px; border: 0; border-bottom: 1px solid #26364e; color: inherit; background: transparent; text-align: left; cursor: pointer; }.department-member:last-child { border-bottom: 0; }.department-member:hover { background: #182338; }.department-member > span { min-width: 0; }.department-member strong,.department-member small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.department-member strong { color: #dce5f2; font-size: 15px; }.department-member small { margin-top: 4px; color: #8492a8; font-size: 13px; }.department-member > b { flex: 0 0 auto; font-size: 13px; }.department-member > b.online { color: #72d9b4; }.department-member > b.offline { color: #ef7182; }.drawer-stack { display: grid; gap: 12px; }.drawer-facts { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }.drawer-facts article,.drawer-summary,.equipment-cards article,.drawer-activity { border: 1px solid #31405a; background: #121c2e; border-radius: 6px; }.drawer-facts article { min-height: 72px; padding: 12px; }.drawer-facts span,.drawer-summary span { display: block; color: #93a1b8; font-size: 16px; }.drawer-facts strong,.drawer-summary strong { display: block; margin-top: 6px; color: #e8eef9; font-size: 18px; line-height: 1.3; }.drawer-summaries { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }.drawer-summary { padding: 14px; }.drawer-summary small { display: block; margin-top: 6px; color: #8d9bb0; font-size: 16px; }.equipment-cards { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }.equipment-cards article { min-height: 80px; display: grid; grid-template-columns: 38px 1fr auto; gap: 12px; align-items: center; padding: 12px; }.equipment-icon { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid #3a4b67; color: #91a9cf; }.equipment-icon :deep(svg) { width: 20px; }.equipment-cards strong,.equipment-cards small,.equipment-cards p { display: block; }.equipment-cards strong { font-size: 18px; }.equipment-cards small { margin-top: 3px; color: #7f8ea6; font-size: 16px; }.equipment-cards p { margin: 6px 0 0; color: #9aa8bd; font-size: 16px; }.equipment-cards article > b { color: #72d9b4; font-size: 16px; }.equipment-cards article.tone-warning > b { color: #e8bc59; }.equipment-cards article.tone-danger > b { color: #ef7182; }.drawer-activity { display: grid; grid-template-columns: 8px 1fr; gap: 12px; padding: 14px; }.drawer-activity strong { font-size: 18px; }.drawer-empty { padding: 22px 0; color: #8492a8; font-size: 18px; text-align: center; }.drawer-activity p { margin: 6px 0; color: #9aa8bd; font-size: 16px; }.drawer-activity small { color: #7f8ea6; font-size: 16px; }
 @media (max-width: 1450px) { .overview-workspace { grid-template-columns: 240px minmax(430px,1fr) 240px; } }
 /* 自适应：中等尺寸屏压缩边栏、指标与底条。 */

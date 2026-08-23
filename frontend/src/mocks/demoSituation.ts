@@ -6,6 +6,7 @@ import type {
   DemoEquipment,
   DemoHopType,
   DemoLinkType,
+  DemoLiveSignal,
   DemoMessageMetrics,
   DemoPerson,
   DemoRegion,
@@ -430,6 +431,7 @@ const scenarioData: DemoSituationScenario = {
   people,
   regions,
   securityEvents,
+  liveSignals: [],
   satellites: [
     { id: 'sat-1', name: '卫-1 印度洋中继星', longitude: 75, latitude: 0, status: 'warning', bandwidthMbps: 20, utilization: 68, note: '服务西亚、非洲区域接入' },
     { id: 'sat-2', name: '卫-2 大西洋中继星', longitude: -45, latitude: 0, status: 'success', bandwidthMbps: 10, utilization: 42, note: '服务南美区域接入' }
@@ -517,6 +519,7 @@ const timeLabel = () => new Date().toLocaleTimeString('zh-CN', { hour: '2-digit'
 
 let tickCount = 0;
 let securitySeq = securityEvents.length + 100;
+let liveSignalSeq = 0;
 
 const securityEventPool: Array<{ title: string; detail: (person: DemoPerson) => string; tone: DemoActivity['tone']; level: NonNullable<DemoActivity['securityLevel']> }> = [
   { title: '境外地址异常登录尝试', detail: (person) => `${person.countryName} ${person.city} 节点连续登录失败，已触发锁定策略`, tone: 'danger', level: 'high' },
@@ -530,6 +533,27 @@ const securityEventPool: Array<{ title: string; detail: (person: DemoPerson) => 
 function pushActivity(person: DemoPerson, activity: DemoActivity) {
   if (person.activities.length >= 6) person.activities.shift();
   person.activities.push(activity);
+}
+
+function beijingPerson() {
+  return demoSituationScenario.people.find((person) => person.countryCode === 'CN') ?? demoSituationScenario.people[0];
+}
+
+function pushLiveSignal(signal: Omit<DemoLiveSignal, 'id' | 'occurredAt' | 'count'>) {
+  const existing = demoSituationScenario.liveSignals.find((item) => item.countryCode === signal.countryCode && item.source === signal.source);
+  if (existing) {
+    existing.count += 1;
+    existing.title = signal.title;
+    existing.occurredAt = new Date().toISOString();
+  } else {
+    demoSituationScenario.liveSignals.unshift({
+      ...signal,
+      id: `live-${++liveSignalSeq}`,
+      count: 1,
+      occurredAt: new Date().toISOString()
+    });
+  }
+  if (demoSituationScenario.liveSignals.length > 6) demoSituationScenario.liveSignals.pop();
 }
 
 function setMessageSession(person: DemoPerson, online: boolean) {
@@ -873,6 +897,83 @@ if (typeof window !== 'undefined') {
 function assertDemoValue(label: string, actual: number, expected: number) {
   if (actual !== expected) {
     throw new Error(`演示场景数据不一致：${label} 应为 ${expected}，实际为 ${actual}`);
+  }
+}
+
+// 演示 / 测试钩子：现场控制台模拟零信任侧连续密码错误。
+export function demoTriggerZeroTrustPasswordFailure(attempts = 5) {
+  const person = beijingPerson();
+  if (!person) return;
+  const occurredAt = new Date().toISOString();
+  const event: DemoActivity = {
+    id: `sec-demo-${++securitySeq}`,
+    type: 'security',
+    title: '零信任密码认证失败',
+    detail: `北京接入点连续 ${attempts} 次密码输入错误，账号已锁定，零信任策略已阻断本次访问`,
+    minutesAgo: 0,
+    occurredAt,
+    securityLevel: 'high',
+    tone: 'danger',
+    personId: person.id
+  };
+  demoSituationScenario.securityEvents.unshift(event);
+  if (demoSituationScenario.securityEvents.length > 6) demoSituationScenario.securityEvents.pop();
+  pushActivity(person, { ...event, id: `act-${Date.now()}-zero-trust`, title: '零信任认证失败', detail: event.detail });
+  pushLiveSignal({ countryCode: 'CN', source: 'zero-trust', sourceLabel: '零信任', title: `密码错误 ${attempts} 次`, tone: 'danger' });
+  refreshTotals();
+}
+
+// 演示 / 测试钩子：模拟北京密信侧发送一条业务消息。
+export function demoTriggerMessageActivity() {
+  const person = beijingPerson();
+  if (!person) return;
+  person.message.sentMessages += 1;
+  pushActivity(person, {
+    id: `act-${Date.now()}-demo-message`,
+    type: 'message',
+    title: '密信发送成功',
+    detail: `${person.name}（北京）向业务联系人发送 1 条密信消息`,
+    minutesAgo: 0,
+    tone: 'info'
+  });
+  pushLiveSignal({ countryCode: 'CN', source: 'message', sourceLabel: '密信', title: '发送消息 +1', tone: 'info' });
+  refreshTotals();
+}
+
+// 演示 / 测试钩子：模拟北京签阅侧完成一份文件签阅。
+export function demoTriggerSigningActivity() {
+  const person = beijingPerson();
+  if (!person) return;
+  person.signing.received += 1;
+  person.signing.processed += 1;
+  pushActivity(person, {
+    id: `act-${Date.now()}-demo-signing`,
+    type: 'signing',
+    title: '完成文件签阅',
+    detail: `${person.name}（北京）完成 1 份文件签阅，结果已回传态势系统`,
+    minutesAgo: 0,
+    tone: 'success'
+  });
+  pushLiveSignal({ countryCode: 'CN', source: 'signing', sourceLabel: '签阅', title: '完成签阅 +1', tone: 'success' });
+  refreshTotals();
+}
+
+// 演示 / 测试钩子：一键串演零信任、密信和签阅三个联动结果。
+export function demoTriggerFullScenario() {
+  demoTriggerZeroTrustPasswordFailure();
+  demoTriggerMessageActivity();
+  demoTriggerSigningActivity();
+}
+
+export function demoClearLiveSignals(countryCode?: string) {
+  if (!countryCode) {
+    demoSituationScenario.liveSignals.splice(0);
+    return;
+  }
+  for (let index = demoSituationScenario.liveSignals.length - 1; index >= 0; index -= 1) {
+    if (demoSituationScenario.liveSignals[index]?.countryCode === countryCode) {
+      demoSituationScenario.liveSignals.splice(index, 1);
+    }
   }
 }
 
