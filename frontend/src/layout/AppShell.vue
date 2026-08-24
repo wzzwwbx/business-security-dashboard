@@ -28,6 +28,10 @@
               <strong>{{ auth.currentUser.value?.displayName || '当前用户' }}</strong>
               <span>{{ auth.currentUser.value?.roleNames?.join(' / ') || auth.modeLabel.value }}</span>
             </div>
+            <button class="user-menu-item sound-setting" type="button" role="menuitemcheckbox" :aria-checked="String(!soundMuted)" @click="toggleAlarmSound">
+              <BaseIcon :name="soundMuted ? 'volume-off' : 'volume'" />
+              <span>提示声音：{{ soundMuted ? '关闭' : '开启' }}</span>
+            </button>
             <RouterLink v-if="systemRoute" class="user-menu-item" :to="systemRoute" role="menuitem" @click="userMenuOpen = false">
               <BaseIcon name="system" />
               <span>系统管理</span>
@@ -49,6 +53,7 @@
 
 <script setup lang="ts">
 import BaseIcon from '@/components/common/BaseIcon.vue';
+import { activateAlarmSound, installAlarmSound, isAlarmSoundMuted, setAlarmSoundMuted } from '@/services/AlarmSoundService';
 import { useAuthSession } from '@/composables/useAuthSession';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
@@ -58,6 +63,7 @@ const route = useRoute();
 const router = useRouter();
 const now = ref('');
 const userMenuOpen = ref(false);
+const soundMuted = ref(isAlarmSoundMuted());
 let timer: number | undefined;
 
 const isPreviewAuth = import.meta.env.VITE_PREVIEW_AUTH === 'preview';
@@ -67,6 +73,12 @@ function refreshClock() {
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
   }).format(new Date()).replace(/\//g, '-');
+}
+
+function toggleAlarmSound() {
+  soundMuted.value = !soundMuted.value;
+  setAlarmSoundMuted(soundMuted.value);
+  if (!soundMuted.value) activateAlarmSound();
 }
 
 async function toggleFullscreen() {
@@ -89,6 +101,7 @@ watch(() => route.fullPath, () => {
 });
 
 onMounted(() => {
+  installAlarmSound();
   refreshClock();
   timer = window.setInterval(refreshClock, 1000);
 });
@@ -188,6 +201,7 @@ onBeforeUnmount(() => {
 }
 .user-menu-heading { display: grid; gap: 3px; padding: 10px; border-bottom: 1px solid #414755; }
 .user-menu-heading span { color: #8c96a8; font-size: 11px; }
+.sound-setting { border-top: 1px solid #414755; margin-top: 4px; }
 .user-menu-item { display: flex; align-items: center; gap: 9px; width: 100%; padding: 10px; border: 0; color: #c1c6d7; background: transparent; text-align: left; cursor: pointer; }
 .user-menu-item:hover { color: #e0e2ed; background: #272a32; }
 .user-menu-item .base-icon { width: 16px; height: 16px; }

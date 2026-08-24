@@ -13,6 +13,7 @@ import flagUs from '@/assets/map/flag-us.svg';
 import satelliteSuccess from '@/assets/map/satellite-success.svg';
 import satelliteWarning from '@/assets/map/satellite-warning.svg';
 import { demoSituationScenario } from '@/mocks/demoSituation';
+import { installAlarmSound, notifyAlarmSound } from '@/services/AlarmSoundService';
 import type { DemoLiveSignal, DemoRegion } from '@/types/demoSituation';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 
@@ -30,6 +31,7 @@ const worldGeoJson = ref<Record<string, unknown> | null>(null);
 const mapChart = ref<InstanceType<typeof EChartWidget> | null>(null);
 
 onMounted(async () => {
+  installAlarmSound();
   const response = await fetch('/maps/world-110m.json');
   const data = await response.json() as { features: Array<{ properties: Record<string, string>; [key: string]: unknown }>; [key: string]: unknown };
   worldGeoJson.value = {
@@ -68,13 +70,42 @@ const beijing = computed(() => props.regions.find((region) => region.countryCode
 const activeLiveSignal = ref<DemoLiveSignal | null>(null);
 let liveSignalTimer: number | undefined;
 
-watch(() => [demoSituationScenario.liveSignals.length, demoSituationScenario.liveSignals[0]?.occurredAt], () => {
-  const signal = demoSituationScenario.liveSignals[0];
+type MapToast =
+  | { kind: 'live'; signal: DemoLiveSignal }
+  | { kind: 'route'; id: string; text: string; countryCode: string };
+
+const currentToast = ref<MapToast | null>(null);
+let toastTimer: number | undefined;
+
+function showToast(toast: MapToast, duration: number) {
+  currentToast.value = toast;
+  if (toastTimer !== undefined) window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => {
+    if (currentToast.value === toast) currentToast.value = null;
+    toastTimer = undefined;
+  }, duration);
+}
+
+function closeToast() {
+  currentToast.value = null;
+  if (toastTimer !== undefined) {
+    window.clearTimeout(toastTimer);
+    toastTimer = undefined;
+  }
+}
+
+watch(() => demoSituationScenario.liveSignals.map((item) => `${item.id}:${item.occurredAt}`).join('|'), () => {
+  const signal = [...demoSituationScenario.liveSignals]
+    .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt))[0];
   if (!signal) {
     activeLiveSignal.value = null;
     return;
   }
   activeLiveSignal.value = { ...signal };
+  showToast({ kind: 'live', signal: { ...signal } }, 5200);
+  if (signal.tone === 'danger') {
+    notifyAlarmSound([{ id: `${signal.id}:${signal.occurredAt}` }]);
+  }
   if (liveSignalTimer !== undefined) window.clearTimeout(liveSignalTimer);
   liveSignalTimer = window.setTimeout(() => {
     activeLiveSignal.value = null;
@@ -468,6 +499,7 @@ function onChartRendered() {
 
 onBeforeUnmount(() => {
   if (liveSignalTimer !== undefined) window.clearTimeout(liveSignalTimer);
+  if (toastTimer !== undefined) window.clearTimeout(toastTimer);
   const chart = mapChart.value?.getChart();
   if (chart) {
     chart.getZr().off('click', handleZrClick as never);
@@ -507,29 +539,41 @@ function handleClick(payload: Record<string, any>) {
   if (region && 'countryCode' in region) emit('selectCountry', region.countryCode);
 }
 
-const liveSignalToast = computed(() => activeLiveSignal.value);
-
-
-const switchToast = ref<{ text: string; countryCode: string } | null>(null);
-let lastToastSwitchId = '';
 // 空数组时访问 [0] 不会收集依赖，改为监听 length 并用策略 id 去重。
+let lastToastSwitchId = '';
 watch(() => demoSituationScenario.routeSwitches.length, () => {
   const policy = demoSituationScenario.routeSwitches[0];
   if (!policy || policy.id === lastToastSwitchId) return;
   lastToastSwitchId = policy.id;
   const region = demoSituationScenario.regions.find((item) => item.countryCode === policy.countryCode);
   const name = region ? (region.countryCode === 'CN' ? '北京' : region.countryName) : policy.countryCode;
-  switchToast.value = {
+  showToast({
+    kind: 'route',
+    id: policy.id,
     text: `线路安全智能分析：${name} 主路由遭攻击，已生成并下发分段绕行策略，点击查看对应线路拓扑`,
     countryCode: policy.countryCode
-  };
+  }, 6500);
+  notifyAlarmSound([{ id: policy.id }]);
 });
+
+function openTopologyFromToast(toast: Extract<MapToast, { kind: 'route' }>) {
+  topologyCountry.value = toast.countryCode;
+  closeToast();
+}
 
 function openLiveSignal(signal: DemoLiveSignal) {
   if (signal.source === 'zero-trust') emit('selectSecurityEvent', demoSituationScenario.securityEvents[0]?.id ?? '');
   activeLiveSignal.value = null;
+  closeToast();
 }
 
+function handleToastClick(toast: MapToast) {
+  if (toast.kind === 'route') {
+    openTopologyFromToast(toast);
+    return;
+  }
+  openLiveSignal(toast.signal);
+}
 </script>
 
 <template>
@@ -540,16 +584,17 @@ function openLiveSignal(signal: DemoLiveSignal) {
     </div>
 
     <Transition name="route-toast">
-      <div v-if="liveSignalToast" class="route-switch-toast live-signal-toast" :class="`is-${liveSignalToast.tone}`" role="status" @click="openLiveSignal(liveSignalToast)">
-        <i /><span><strong>{{ liveSignalToast.sourceLabel }}事件提醒</strong><small>{{ liveSignalToast.title }}</small></span>
-        <button type="button" class="toast-close" aria-label="关闭事件提示" @click.stop="activeLiveSignal = null">×</button>
-      </div>
-    </Transition>
-
-    <Transition name="route-toast">
-      <div v-if="switchToast" class="route-switch-toast" role="status" @click="openTopologyFromToast">
-        <i /><span>{{ switchToast.text }}</span>
-        <button type="button" class="toast-close" aria-label="关闭提示" @click.stop="switchToast = null">×</button>
+      <div
+        v-if="currentToast"
+        class="route-switch-toast"
+        :class="currentToast.kind === 'live' ? ['live-signal-toast', `is-${currentToast.signal.tone}`] : ''"
+        role="status"
+        @click="handleToastClick(currentToast)"
+      >
+        <i />
+        <span v-if="currentToast.kind === 'live'"><strong>{{ currentToast.signal.sourceLabel }}事件提醒</strong><small>{{ currentToast.signal.title }}</small></span>
+        <span v-else>{{ currentToast.text }}</span>
+        <button type="button" class="toast-close" aria-label="关闭事件提示" @click.stop="closeToast">×</button>
       </div>
     </Transition>
 

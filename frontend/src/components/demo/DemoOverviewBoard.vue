@@ -4,6 +4,7 @@ import DetailDrawerShell from '@/components/common/DetailDrawerShell.vue';
 import DemoWorldMap from '@/components/demo/DemoWorldMap.vue';
 import EChartWidget from '@/components/widgets/EChartWidget.vue';
 import { demoClearLiveSignals, demoSituationScenario, demoTotals, demoTriggerMessageActivity, demoTriggerSigningActivity, demoTriggerZeroTrustPasswordFailure } from '@/mocks/demoSituation';
+import { activateAlarmSound } from '@/services/AlarmSoundService';
 import type { DemoActivity, DemoEquipmentType, DemoPerson, DemoRegion } from '@/types/demoSituation';
 import type { BaseIconName } from '@/components/common/BaseIcon.vue';
 import { compactDepartmentName, messageRankingOption, type RankingMode } from '@/utils/rankingChart';
@@ -15,6 +16,9 @@ const selectedCountryCode = ref('AE');
 const selectedPerson = ref<DemoPerson | null>(null);
 const selectedSecurityEvent = ref<DemoActivity | null>(null);
 const defenseStrategyApplied = ref(false);
+const ownerNotified = ref(false);
+const notificationLog = ref<Record<string, string>>({});
+const dispatchLog = ref<Record<string, string>>({});
 const selectedDepartment = ref<string | null>(null);
 const drawerTab = ref('overview');
 const departmentDrawerTab = ref('overview');
@@ -60,7 +64,7 @@ const topMetrics = computed(() => {
   return [
     { label: '在线用户 / 用户总数', value: `${demoTotals.onlinePeople}/${demoTotals.assignedPeople}`, unit: '人', note: `在线率 ${(demoTotals.onlinePeople / demoTotals.assignedPeople * 100).toFixed(0)}%`, tone: 'success' },
     { label: '今日密信消息收发', value: demoTotals.message.sentMessages + demoTotals.message.receivedMessages, unit: '条', note: `密信文件收发 ${demoTotals.message.sentFiles + demoTotals.message.receivedFiles} 份`, tone: 'info', drill: 'message' as const },
-    { label: '今日安全事件', value: events.length, unit: '起', note: '安全、认证与链路事件滚动更新', tone: 'warning' },
+    { label: '待处置告警', value: events.length, unit: '起', note: '终端 / 安全设备 / 零信任汇聚研判', tone: 'warning' },
     { label: '签阅收到 / 已处理', value: `${demoTotals.signing.received}/${demoTotals.signing.processed}`, unit: '份', note: `待处理 ${demoTotals.signing.pending} 份 · 异常退回 ${demoTotals.signing.exception} 份`, tone: 'info', drill: 'signing' as const }
   ];
 });
@@ -168,8 +172,11 @@ const signingCompletionRate = computed(() => demoTotals.signing.received
   : 0);
 
 const securityEventSummary = computed(() => ({
-  high: securityEvents.filter((event) => event.securityLevel === 'high').length,
-  medium: securityEvents.filter((event) => event.securityLevel === 'medium').length
+  high: securityEvents.filter((event) => event.securityLevel === 'high' && !dispatchLog.value[event.id]).length,
+  medium: securityEvents.filter((event) => event.securityLevel === 'medium').length,
+  notified: Object.keys(notificationLog.value).length,
+  dispatched: Object.keys(dispatchLog.value).length,
+  pending: securityEvents.length - Object.keys(dispatchLog.value).length
 }));
 
 const recentActivities = computed(() => demoSituationScenario.people
@@ -200,6 +207,7 @@ function drillBusiness(topic: 'message' | 'signing' | 'traffic' = 'message') {
 }
 
 function triggerSecurityDemo() {
+  activateAlarmSound();
   demoTriggerZeroTrustPasswordFailure();
 }
 
@@ -244,12 +252,41 @@ function openSecurityEvent(event: DemoActivity) {
   selectedPerson.value = null;
   selectedDepartment.value = null;
   selectedSecurityEvent.value = event;
-  defenseStrategyApplied.value = false;
+  defenseStrategyApplied.value = Boolean(dispatchLog.value[event.id]);
+  ownerNotified.value = Boolean(notificationLog.value[event.id]);
+}
+
+function notifySecurityOwner() {
+  const event = selectedSecurityEvent.value;
+  if (!event) return;
+  ownerNotified.value = true;
+  notificationLog.value = { ...notificationLog.value, [event.id]: new Date().toLocaleTimeString('zh-CN', { hour12: false }) };
 }
 
 function applyDefenseStrategy() {
+  const event = selectedSecurityEvent.value;
+  if (!event) return;
   demoClearLiveSignals('CN');
   defenseStrategyApplied.value = true;
+  dispatchLog.value = { ...dispatchLog.value, [event.id]: new Date().toLocaleTimeString('zh-CN', { hour12: false }) };
+}
+
+function securitySourceLabel(event: DemoActivity) {
+  if (event.title.includes('零信任') || event.title.includes('登录') || event.title.includes('认证')) return '零信任';
+  if (event.title.includes('文件') || event.title.includes('密信')) return '终端 / 密信';
+  if (event.title.includes('证书') || event.title.includes('密盒') || event.title.includes('密钥')) return '安全设备';
+  return '运维链路';
+}
+
+function securityAnalysis(event: DemoActivity) {
+  if (event.title.includes('登录') || event.title.includes('认证')) return '连续失败 + 异常地域 + 账号状态';
+  if (event.title.includes('文件')) return '文件哈希 + 终端行为 + 访问对象';
+  if (event.title.includes('证书') || event.title.includes('密钥')) return '设备健康 + 证书有效期 + 使用状态';
+  return '链路流量 + 资源基线 + 历史趋势';
+}
+
+function responseMode(event: DemoActivity) {
+  return event.securityLevel === 'high' || event.title.includes('拦截') ? '可自动下发' : '人工确认';
 }
 
 function openSecurityEventById(eventId: string) {
@@ -365,13 +402,19 @@ function eventClock(event: DemoActivity) {
       </article>
 
       <article class="ops-panel security-panel">
-        <header><span class="panel-title">安全事件<button class="panel-refresh" type="button" title="模拟零信任密码错误" aria-label="模拟零信任密码错误" @click.stop="triggerSecurityDemo"><BaseIcon name="refresh" /></button></span><b>高危 {{ securityEventSummary.high }} · 中危 {{ securityEventSummary.medium }}</b></header>
+        <header><span class="panel-title">告警处置中心<button class="panel-refresh" type="button" title="模拟零信任告警" aria-label="模拟零信任告警" @click.stop="triggerSecurityDemo"><BaseIcon name="refresh" /></button></span><b>待处置 {{ securityEventSummary.pending }} · 已联动 {{ securityEventSummary.dispatched }}</b></header>
+        <div class="security-queue-summary">
+          <span><small>高危待处置</small><strong>{{ securityEventSummary.high }}</strong></span>
+          <span><small>人工通知</small><strong>{{ securityEventSummary.notified }}</strong></span>
+          <span><small>策略下发</small><strong>{{ securityEventSummary.dispatched }}</strong></span>
+        </div>
         <div class="security-list">
-          <button v-for="event in securityEvents.slice(0, 3)" :key="event.id" type="button" class="security-item" :title="event.detail" @click="openSecurityEvent(event)">
+          <button v-for="event in securityEvents.slice(0, 4)" :key="event.id" type="button" class="security-item" :title="event.detail" @click="openSecurityEvent(event)">
             <i :class="`tone-${event.tone}`" />
             <span class="security-level" :class="`level-${event.securityLevel ?? 'notice'}`">{{ securityLevelLabel(event) }}</span>
-            <time>{{ eventClock(event) }}</time>
+            <span class="security-source">{{ securitySourceLabel(event) }}</span>
             <span class="security-copy"><strong>{{ event.title }}</strong><small>{{ event.detail }}</small></span>
+            <b class="security-action">处置 ›</b>
           </button>
         </div>
       </article>
@@ -395,7 +438,7 @@ function eventClock(event: DemoActivity) {
       :open="Boolean(selectedSecurityEvent)"
       :title="selectedSecurityEvent ? '自主防御 · 处置策略' : '自主防御 · 处置策略'"
       :subtitle="selectedSecurityEvent ? `${securityLevelLabel(selectedSecurityEvent)} · ${eventClock(selectedSecurityEvent)}` : ''"
-      :badges="selectedSecurityEvent ? [{ label: defenseStrategyApplied ? '策略已下发' : '待下发', tone: defenseStrategyApplied ? 'success' : 'warning' }, { label: '智能分析引擎', tone: 'info' }] : []"
+      :badges="selectedSecurityEvent ? [{ label: defenseStrategyApplied ? '策略已下发' : '待处置', tone: defenseStrategyApplied ? 'success' : 'warning' }, { label: ownerNotified ? '已电话通知' : '待通知', tone: ownerNotified ? 'success' : 'warning' }, { label: '智能分析引擎', tone: 'info' }] : []"
       @close="selectedSecurityEvent = null"
     >
       <template v-if="selectedSecurityEvent">
@@ -407,22 +450,31 @@ function eventClock(event: DemoActivity) {
           <div class="defense-facts">
             <article><span>风险等级</span><strong class="danger-text">{{ securityLevelLabel(selectedSecurityEvent) }}</strong></article>
             <article><span>关联人员</span><strong>{{ defenseTarget.person?.name ?? '北京接入点' }}</strong></article>
-            <article><span>风险来源</span><strong>零信任认证</strong></article>
-            <article><span>处置模式</span><strong>自主防御</strong></article>
+            <article><span>风险来源</span><strong>{{ securitySourceLabel(selectedSecurityEvent) }}</strong></article>
+            <article><span>处置模式</span><strong>{{ responseMode(selectedSecurityEvent) }}</strong></article>
           </div>
+          <article class="defense-contact">
+            <header><strong>责任人及通知方式</strong><span>{{ ownerNotified ? '已记录人工通知' : '待确认联系' }}</span></header>
+            <div class="contact-main">
+              <div><b>{{ defenseTarget.person?.name ?? '北京接入点值守人' }}</b><small>{{ defenseTarget.person?.unit ?? '北京通信保障中心' }} · 现场责任人</small></div>
+              <a v-if="defenseTarget.person?.phone" :href="`tel:${defenseTarget.person.phone}`" class="contact-phone">{{ defenseTarget.person.phone }}</a>
+              <button type="button" class="contact-notify" :class="{ notified: ownerNotified }" @click="notifySecurityOwner">{{ ownerNotified ? '已通知' : '电话通知' }}</button>
+            </div>
+          </article>
           <article class="defense-analysis">
-            <header><strong>智能研判结论</strong><span>规则 + 风险因子</span></header>
+            <header><strong>智能研判结论</strong><span>{{ securityAnalysis(selectedSecurityEvent) }}</span></header>
             <div class="defense-flow"><span>认证异常</span><i>→</i><span>连续失败</span><i>→</i><span>账号风险升高</span><i>→</i><b>阻断访问</b></div>
             <p>分析引擎结合失败次数、接入位置、终端状态和访问策略命中结果，判定本次行为需要立即阻断，并生成最小影响范围的处置策略。</p>
           </article>
-          <article class="defense-policy">
+          <article v-if="responseMode(selectedSecurityEvent) === '可自动下发'" class="defense-policy">
             <header><strong>生成处置策略</strong><span :class="defenseStrategyApplied ? 'applied' : ''">{{ defenseStrategyApplied ? '已执行' : '待下发' }}</span></header>
             <div class="policy-row"><i>01</i><span><strong>冻结高风险会话</strong><small>立即终止当前北京接入会话，阻止继续访问业务资源</small></span><b>立即</b></div>
             <div class="policy-row"><i>02</i><span><strong>下发认证阻断规则</strong><small>将账号加入零信任临时阻断名单，策略有效期 30 分钟</small></span><b>高优先级</b></div>
             <div class="policy-row"><i>03</i><span><strong>保留审计证据</strong><small>记录认证失败、设备指纹、访问对象和策略执行结果</small></span><b>自动</b></div>
           </article>
-          <article class="defense-targets"><header><strong>策略下发目标</strong><span>{{ defenseTarget.devices.length }} 个安全设备</span></header><div><span v-for="device in defenseTarget.devices" :key="device"><BaseIcon name="security" />{{ device }}<b :class="defenseStrategyApplied ? 'online' : ''">{{ defenseStrategyApplied ? '已下发' : '待下发' }}</b></span></div></article>
-          <button class="defense-apply" type="button" :disabled="defenseStrategyApplied" @click="applyDefenseStrategy"><BaseIcon name="security" />{{ defenseStrategyApplied ? '处置策略已下发并开始执行' : '下发自主防御策略' }}</button>
+          <article v-if="responseMode(selectedSecurityEvent) === '可自动下发'" class="defense-targets"><header><strong>策略下发目标</strong><span>{{ defenseTarget.devices.length }} 个安全设备</span></header><div><span v-for="device in defenseTarget.devices" :key="device"><BaseIcon name="security" />{{ device }}<b :class="defenseStrategyApplied ? 'online' : ''">{{ defenseStrategyApplied ? '已下发' : '待下发' }}</b></span></div></article>
+          <article v-else class="defense-manual-note"><strong>需要人工处置</strong><p>该类告警暂不支持直接下发设备策略，请先电话通知责任单位，完成现场核验后登记处置结果。</p></article>
+          <button v-if="responseMode(selectedSecurityEvent) === '可自动下发'" class="defense-apply" type="button" :disabled="defenseStrategyApplied" @click="applyDefenseStrategy"><BaseIcon name="security" />{{ defenseStrategyApplied ? `策略已下发 · ${dispatchLog[selectedSecurityEvent.id]}` : '下发处置策略至关联设备' }}</button>
         </section>
       </template>
     </DetailDrawerShell>
@@ -441,7 +493,8 @@ function eventClock(event: DemoActivity) {
       <template v-if="selectedPerson">
         <section v-if="drawerTab === 'overview'" class="drawer-stack">
           <div class="drawer-facts">
-            <article><span>所属部门</span><button type="button" class="drawer-link" @click="openDepartment(selectedPerson.department)">{{ selectedPerson.department }}</button></article>
+            <article><span>所属单位</span><button type="button" class="drawer-link" @click="openDepartment(selectedPerson.department)">{{ selectedPerson.unit }}</button></article>
+            <article><span>联系电话</span><a class="drawer-contact-link" :href="`tel:${selectedPerson.phone}`">{{ selectedPerson.phone }}</a></article>
             <article><span>所在区域</span><strong>{{ selectedPerson.countryName }} · {{ selectedPerson.city }}</strong></article>
             <article><span>终端地址</span><strong>{{ selectedPerson.primaryIp }}</strong></article>
             <article><span>最后活动</span><strong>{{ relativeTime(selectedPerson.lastActiveMinutes) }}</strong></article>
@@ -623,4 +676,32 @@ function eventClock(event: DemoActivity) {
 .ops-panel > header { height: 52px; }.map-panel { grid-template-rows: 52px minmax(0, 1fr); }
 .activity-list strong, .activity-list small { font-size: 14px; }
 .region-status-row { min-height: 48px; }
+.security-panel { grid-template-rows: 42px 44px minmax(0,1fr); }
+.security-queue-summary { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); border-bottom: 1px solid #253047; }
+.security-queue-summary > span { min-width: 0; padding: 5px 9px; border-right: 1px solid #253047; }
+.security-queue-summary > span:last-child { border-right: 0; }
+.security-queue-summary small, .security-queue-summary strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.security-queue-summary small { color: #8492a8; font-size: 10px; }
+.security-queue-summary strong { margin-top: 2px; color: #edc66b; font: 600 15px var(--font-family-mono, monospace); }
+.security-list > .security-item { grid-template-columns: 7px 34px 70px minmax(0,1fr) auto; min-height: 34px; }
+.security-source { overflow: hidden; color: #8ba7c8; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.security-action { padding-left: 4px; color: #7fb0ff; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.security-item:hover .security-action { color: #d5e7ff; }
+.defense-contact { border: 1px solid #3a5275; background: #14263e; }
+.defense-contact header { display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; border-bottom: 1px solid #304866; }
+.defense-contact header strong { color: #e9f3ff; font-size: 14px; }
+.defense-contact header span { color: #f2c771; font-size: 11px; }
+.contact-main { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 12px; align-items: center; padding: 10px 12px; }
+.contact-main b, .contact-main small { display: block; }
+.contact-main b { color: #e7f1ff; font-size: 14px; }
+.contact-main small { margin-top: 4px; color: #91a7c3; font-size: 11px; }
+.contact-phone { color: #91c4ff; font: 600 13px var(--font-family-mono, monospace); white-space: nowrap; }
+.contact-notify { min-height: 30px; padding: 0 10px; border: 1px solid #668fbe; color: #dceeff; background: #214b79; cursor: pointer; font-size: 12px; }
+.contact-notify:hover { border-color: #9cc8ff; background: #2b659e; }
+.contact-notify.notified { border-color: #4e806f; color: #9ae4c4; background: #214f47; cursor: default; }
+.defense-manual-note { padding: 12px; border: 1px solid rgba(233,185,73,.42); background: rgba(233,185,73,.08); }
+.defense-manual-note strong { color: #f2c771; font-size: 14px; }
+.defense-manual-note p { margin: 6px 0 0; color: #b9c8da; font-size: 12px; line-height: 1.5; }
+.drawer-contact-link { display: block; margin-top: 6px; color: #8db8ff; font-size: 18px; font-weight: 600; line-height: 1.3; }
+.drawer-contact-link:hover { color: #d6e6ff; }
 </style>

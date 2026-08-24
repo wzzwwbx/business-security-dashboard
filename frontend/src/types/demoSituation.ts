@@ -77,6 +77,9 @@ export interface DemoPerson {
   code: string;
   name: string;
   department: string;
+  /** 告警人工处置所需的责任单位和可联系号码。 */
+  unit: string;
+  phone: string;
   countryCode: string;
   countryName: string;
   city: string;

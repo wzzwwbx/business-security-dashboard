@@ -141,6 +141,8 @@ const regions: DemoRegion[] = regionSeeds.map((seed) => {
       code: `RY-${sequence}`,
       name: names[personIndex],
       department: seed.department,
+      unit: seed.department,
+      phone: `010-${String(6800 + personIndex).padStart(4, '0')}-${String(1000 + personIndex * 7).padStart(4, '0')}`,
       countryCode: seed.countryCode,
       countryName: seed.countryName,
       city: seed.city,
@@ -208,10 +210,35 @@ people.forEach((person) => {
   })).filter((item) => item.count > 0);
 });
 
-// 将初始安全事件关联到对应人员：异常登录→阿联酋、证书到期→新加坡、密钥异常→阿联酋等。
+// 将初始安全事件关联到对应人员，并用统一的账号、单位、终端字段组成可追溯事件。
 const initialEventPersonIndexes = [1, 2, 3, 4, 5];
 securityEvents.forEach((event, index) => {
-  event.personId = people[initialEventPersonIndexes[index]]?.id;
+  const person = people[initialEventPersonIndexes[index]];
+  if (!person) return;
+  event.personId = person.id;
+  const terminal = person.equipment.find((item) => item.type === 'pad');
+  const terminalCode = terminal?.code ?? '终端未上报';
+  const account = `${person.code} · ${person.name}`;
+
+  if (event.id === 'sec-001') {
+    event.title = `${account} 境外地址异常登录`;
+    event.detail = `账号从 ${person.countryName}${person.city} 的终端 ${terminalCode}（${person.primaryIp}）发起登录，连续 5 次认证失败，已触发零信任锁定策略`;
+  } else if (event.id === 'sec-002') {
+    const messageApp = person.equipment.find((item) => item.type === 'message-app');
+    event.title = `${account} 高危文件被拦截`;
+    event.detail = `${person.unit} 的终端 ${terminalCode}（${person.primaryIp}）通过${messageApp?.code ?? '密信终端'}接收的附件命中未知哈希，文件已隔离并上报`;
+  } else if (event.id === 'sec-003') {
+    const cryptoBox = person.equipment.find((item) => item.type === 'crypto-box');
+    event.title = `${account} 密盒证书即将到期`;
+    event.detail = `${person.unit} 的 ${cryptoBox?.code ?? '密盒设备'} 证书有效期不足 30 天，关联终端 ${terminalCode}，建议在维护窗口内完成更换`;
+  } else if (event.id === 'sec-004') {
+    const identityKey = person.equipment.find((item) => item.type === 'key');
+    event.title = `${account} 身份密钥认证异常`;
+    event.detail = `${person.unit} 的 ${identityKey?.code ?? '身份密钥'} 未响应，关联终端 ${terminalCode}（${person.primaryIp}），已转人工核验`;
+  } else if (event.id === 'sec-005') {
+    event.title = `${account} 境外链路流量异常`;
+    event.detail = `${person.countryName}${person.city} 的终端 ${terminalCode}（${person.primaryIp}）下行速率接近告警基线，当前持续观察中`;
+  }
 });
 
 const initialTimes = Array.from({ length: 7 }, (_, i) =>
@@ -905,11 +932,13 @@ export function demoTriggerZeroTrustPasswordFailure(attempts = 5) {
   const person = beijingPerson();
   if (!person) return;
   const occurredAt = new Date().toISOString();
+  const terminal = person.equipment.find((item) => item.type === 'pad');
+  const terminalCode = terminal?.code ?? '终端未上报';
   const event: DemoActivity = {
     id: `sec-demo-${++securitySeq}`,
     type: 'security',
-    title: '零信任密码认证失败',
-    detail: `北京接入点连续 ${attempts} 次密码输入错误，账号已锁定，零信任策略已阻断本次访问`,
+    title: `${person.name}（${person.code}）认证失败 · ${terminalCode}`,
+    detail: `零信任接入检测：账号 ${person.code}（${person.name}，${person.unit}）从终端 ${terminalCode}（${person.primaryIp}）发起登录，连续 ${attempts} 次密码输入错误，账号已锁定，零信任策略已阻断本次访问`,
     minutesAgo: 0,
     occurredAt,
     securityLevel: 'high',
@@ -919,7 +948,7 @@ export function demoTriggerZeroTrustPasswordFailure(attempts = 5) {
   demoSituationScenario.securityEvents.unshift(event);
   if (demoSituationScenario.securityEvents.length > 6) demoSituationScenario.securityEvents.pop();
   pushActivity(person, { ...event, id: `act-${Date.now()}-zero-trust`, title: '零信任认证失败', detail: event.detail });
-  pushLiveSignal({ countryCode: 'CN', source: 'zero-trust', sourceLabel: '零信任', title: `密码错误 ${attempts} 次`, tone: 'danger' });
+  pushLiveSignal({ countryCode: 'CN', source: 'zero-trust', sourceLabel: '零信任', title: `${person.name} · ${terminalCode} 密码错误 ${attempts} 次`, tone: 'danger' });
   refreshTotals();
 }
 
@@ -928,15 +957,19 @@ export function demoTriggerMessageActivity() {
   const person = beijingPerson();
   if (!person) return;
   person.message.sentMessages += 1;
+  const recipient = person.message.topRecipients[0]
+    ? demoSituationScenario.people.find((item) => item.id === person.message.topRecipients[0].personId)
+    : null;
+  const recipientName = recipient?.name ?? '业务联系人';
   pushActivity(person, {
     id: `act-${Date.now()}-demo-message`,
     type: 'message',
     title: '密信发送成功',
-    detail: `${person.name}（北京）向业务联系人发送 1 条密信消息`,
+    detail: `${person.name}（北京）向${recipientName}发送 1 条密信消息`,
     minutesAgo: 0,
     tone: 'info'
   });
-  pushLiveSignal({ countryCode: 'CN', source: 'message', sourceLabel: '密信', title: '发送消息 +1', tone: 'info' });
+  pushLiveSignal({ countryCode: 'CN', source: 'message', sourceLabel: '密信', title: `${person.name}发送给${recipientName}`, tone: 'info' });
   refreshTotals();
 }
 
@@ -954,7 +987,7 @@ export function demoTriggerSigningActivity() {
     minutesAgo: 0,
     tone: 'success'
   });
-  pushLiveSignal({ countryCode: 'CN', source: 'signing', sourceLabel: '签阅', title: '完成签阅 +1', tone: 'success' });
+  pushLiveSignal({ countryCode: 'CN', source: 'signing', sourceLabel: '签阅', title: `${person.name}完成文件签阅`, tone: 'success' });
   refreshTotals();
 }
 

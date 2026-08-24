@@ -45,7 +45,9 @@ export type BaseIconName =
   | 'chevron-left'
   | 'chevron-right'
   | 'chevron-down'
-  | 'fullscreen';
+  | 'fullscreen'
+  | 'volume'
+  | 'volume-off';
 
 const props = defineProps<{
   name: BaseIconName;
@@ -177,11 +179,15 @@ const pathMap: Record<BaseIconName, string[]> = {
   'chevron-down': [
     'M6.5 9.5L12 15l5.5-5.5'
   ],
-  fullscreen: [
-    'M8 3H3v5',
-    'M16 3h5v5',
-    'M21 16v5h-5',
-    'M3 16v5h5'
+  volume: [
+    'M5 10v4h3l4 3V7l-4 3H5z',
+    'M16 9.5a4 4 0 0 1 0 5',
+    'M18.5 7a7.5 7.5 0 0 1 0 10'
+  ],
+  'volume-off': [
+    'M5 10v4h3l4 3V7l-4 3H5z',
+    'M16 10l4 4',
+    'M20 10l-4 4'
   ]
 };
 
