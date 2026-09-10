@@ -61,7 +61,7 @@ const regionSeeds: RegionSeed[] = [
 const securityEventTime = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60000).toISOString();
 
 const securityEvents: DemoActivity[] = [
-  { id: 'sec-001', type: 'security', title: '境外地址异常登录尝试', detail: '阿布扎比节点连续 5 次登录失败，已触发锁定策略', minutesAgo: 6, occurredAt: securityEventTime(6), securityLevel: 'high', tone: 'danger' },
+  { id: 'sec-001', type: 'security', title: '境外地址异常登录尝试', detail: '阿布扎比节点连续 3 次登录失败，已触发锁定策略', minutesAgo: 6, occurredAt: securityEventTime(6), securityLevel: 'high', tone: 'danger' },
   { id: 'sec-002', type: 'security', title: '高危文件被拦截隔离', detail: '密信附件命中未知哈希，已隔离并上报', minutesAgo: 15, occurredAt: securityEventTime(15), securityLevel: 'high', tone: 'danger' },
   { id: 'sec-003', type: 'security', title: '密盒证书即将到期', detail: '密盒证书有效期不足 30 天，建议尽快更换', minutesAgo: 28, occurredAt: securityEventTime(28), securityLevel: 'medium', tone: 'warning' },
   { id: 'sec-004', type: 'security', title: '身份密钥认证异常', detail: '身份密钥介质未响应，已转人工核验', minutesAgo: 41, occurredAt: securityEventTime(41), securityLevel: 'medium', tone: 'warning' },
@@ -222,7 +222,7 @@ securityEvents.forEach((event, index) => {
 
   if (event.id === 'sec-001') {
     event.title = `${account} 境外地址异常登录`;
-    event.detail = `账号从 ${person.countryName}${person.city} 的终端 ${terminalCode}（${person.primaryIp}）发起登录，连续 5 次认证失败，已触发零信任锁定策略`;
+    event.detail = `账号从 ${person.countryName}${person.city} 的终端 ${terminalCode}（${person.primaryIp}）发起登录，连续 3 次认证失败，已触发零信任锁定策略`;
   } else if (event.id === 'sec-002') {
     const messageApp = person.equipment.find((item) => item.type === 'message-app');
     event.title = `${account} 高危文件被拦截`;
@@ -928,7 +928,7 @@ function assertDemoValue(label: string, actual: number, expected: number) {
 }
 
 // 演示 / 测试钩子：现场控制台模拟零信任侧连续密码错误。
-export function demoTriggerZeroTrustPasswordFailure(attempts = 5) {
+export function demoTriggerZeroTrustPasswordFailure(attempts = 3) {
   const person = beijingPerson();
   if (!person) return;
   const occurredAt = new Date().toISOString();

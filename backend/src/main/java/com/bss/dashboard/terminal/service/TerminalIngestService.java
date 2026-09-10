@@ -272,7 +272,7 @@ public class TerminalIngestService {
         if ((moduleAbnormal && configModified) || wrongPasswordCount >= 10) {
             return TerminalRiskLevel.CRITICAL;
         }
-        if (moduleAbnormal || suiteAbnormal || fingerprintChanged || wrongPasswordCount >= 5) {
+        if (moduleAbnormal || suiteAbnormal || fingerprintChanged || wrongPasswordCount >= 3) {
             return TerminalRiskLevel.HIGH;
         }
         if (configModified || wrongPasswordCount >= 1) {
@@ -330,7 +330,7 @@ public class TerminalIngestService {
             if (wrongPasswordCount > 0) {
                 results.add(new TerminalEventPayload(
                         "PASSWORD_ERROR",
-                        wrongPasswordCount >= 5 ? "WARNING" : "INFO",
+                        wrongPasswordCount >= 3 ? "WARNING" : "INFO",
                         "口令输入异常",
                         "累计输入错误次数：" + wrongPasswordCount,
                         "OPEN"
