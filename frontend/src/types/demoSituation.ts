@@ -238,6 +238,8 @@ export interface DemoSituationScenario {
   link: DemoLinkSnapshot;
   businessTrend: DemoBusinessTrend;
   securityEvents: DemoActivity[];
+  /** 累计产生的安全告警总数（列表仅保留最新窗口，计数持续累加）。 */
+  securityEventsProduced: number;
   /** 现场演示触发后在地图点位显示的联动信号。 */
   liveSignals: DemoLiveSignal[];
   /** 通信卫星中继节点。 */

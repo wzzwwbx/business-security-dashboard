@@ -60,11 +60,10 @@ const departmentSummary = computed(() => {
   };
 });
 const topMetrics = computed(() => {
-  const events = demoSituationScenario.securityEvents;
   return [
     { label: '在线用户 / 用户总数', value: `${demoTotals.onlinePeople}/${demoTotals.assignedPeople}`, unit: '人', note: `在线率 ${(demoTotals.onlinePeople / demoTotals.assignedPeople * 100).toFixed(0)}%`, tone: 'success' },
     { label: '今日密信消息收发', value: demoTotals.message.sentMessages + demoTotals.message.receivedMessages, unit: '条', note: `密信文件收发 ${demoTotals.message.sentFiles + demoTotals.message.receivedFiles} 份`, tone: 'info', drill: 'message' as const },
-    { label: '待处置告警', value: events.length, unit: '起', note: '终端 / 安全设备 / 零信任汇聚研判', tone: 'warning' },
+    { label: '待处置告警', value: demoSituationScenario.securityEventsProduced - Object.keys(dispatchLog.value).length, unit: '起', note: '终端 / 安全设备 / 零信任汇聚研判', tone: 'warning' },
     { label: '签阅收到 / 已处理', value: `${demoTotals.signing.received}/${demoTotals.signing.processed}`, unit: '份', note: `待处理 ${demoTotals.signing.pending} 份 · 异常退回 ${demoTotals.signing.exception} 份`, tone: 'info', drill: 'signing' as const }
   ];
 });
@@ -176,7 +175,7 @@ const securityEventSummary = computed(() => ({
   medium: securityEvents.filter((event) => event.securityLevel === 'medium').length,
   notified: Object.keys(notificationLog.value).length,
   dispatched: Object.keys(dispatchLog.value).length,
-  pending: securityEvents.length - Object.keys(dispatchLog.value).length
+  pending: demoSituationScenario.securityEventsProduced - Object.keys(dispatchLog.value).length
 }));
 
 const recentActivities = computed(() => demoSituationScenario.people
