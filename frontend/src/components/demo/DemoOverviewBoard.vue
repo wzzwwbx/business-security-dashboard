@@ -19,6 +19,7 @@ const defenseStrategyApplied = ref(false);
 const ownerNotified = ref(false);
 const notificationLog = ref<Record<string, string>>({});
 const dispatchLog = ref<Record<string, string>>({});
+const dispatchedHighCount = ref(0);
 const selectedDepartment = ref<string | null>(null);
 const drawerTab = ref('overview');
 const departmentDrawerTab = ref('overview');
@@ -171,7 +172,7 @@ const signingCompletionRate = computed(() => demoTotals.signing.received
   : 0);
 
 const securityEventSummary = computed(() => ({
-  high: securityEvents.filter((event) => event.securityLevel === 'high' && !dispatchLog.value[event.id]).length,
+  high: demoSituationScenario.securityHighProduced - dispatchedHighCount.value,
   medium: securityEvents.filter((event) => event.securityLevel === 'medium').length,
   notified: Object.keys(notificationLog.value).length,
   dispatched: Object.keys(dispatchLog.value).length,
@@ -267,6 +268,7 @@ function applyDefenseStrategy() {
   if (!event) return;
   demoClearLiveSignals('CN');
   defenseStrategyApplied.value = true;
+  if (!dispatchLog.value[event.id] && event.securityLevel === 'high') dispatchedHighCount.value += 1;
   dispatchLog.value = { ...dispatchLog.value, [event.id]: new Date().toLocaleTimeString('zh-CN', { hour12: false }) };
 }
 

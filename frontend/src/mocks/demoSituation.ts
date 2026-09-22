@@ -459,6 +459,7 @@ const scenarioData: DemoSituationScenario = {
   regions,
   securityEvents,
   securityEventsProduced: securityEvents.length,
+  securityHighProduced: securityEvents.filter((event) => event.securityLevel === 'high').length,
   liveSignals: [],
   satellites: [
     { id: 'sat-1', name: '卫-1 印度洋中继星', longitude: 75, latitude: 0, status: 'warning', bandwidthMbps: 20, utilization: 68, note: '服务西亚、非洲区域接入' },
@@ -644,7 +645,7 @@ function maybeAddSecurityEvent() {
   if (Math.random() < 0.55) return;
   const template = randomPick(securityEventPool);
   const person = randomPick(demoSituationScenario.people);
-  demoSituationScenario.securityEvents.unshift({
+  const event = {
     id: `sec-${++securitySeq}`,
     type: 'security',
     title: template.title,
@@ -654,8 +655,10 @@ function maybeAddSecurityEvent() {
     securityLevel: template.level,
     tone: template.tone,
     personId: person.id
-  });
+  } as DemoActivity;
+  demoSituationScenario.securityEvents.unshift(event);
   demoSituationScenario.securityEventsProduced += 1;
+  if (event.securityLevel === 'high') demoSituationScenario.securityHighProduced += 1;
   if (demoSituationScenario.securityEvents.length > 6) demoSituationScenario.securityEvents.pop();
 }
 
@@ -949,6 +952,7 @@ export function demoTriggerZeroTrustPasswordFailure(attempts = 3) {
   };
   demoSituationScenario.securityEvents.unshift(event);
   demoSituationScenario.securityEventsProduced += 1;
+  demoSituationScenario.securityHighProduced += 1;
   if (demoSituationScenario.securityEvents.length > 6) demoSituationScenario.securityEvents.pop();
   pushActivity(person, { ...event, id: `act-${Date.now()}-zero-trust`, title: '零信任认证失败', detail: event.detail });
   pushLiveSignal({ countryCode: 'CN', source: 'zero-trust', sourceLabel: '零信任', title: `${person.name} · ${terminalCode} 密码错误 ${attempts} 次`, tone: 'danger' });

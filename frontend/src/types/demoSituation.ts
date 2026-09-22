@@ -240,6 +240,8 @@ export interface DemoSituationScenario {
   securityEvents: DemoActivity[];
   /** 累计产生的安全告警总数（列表仅保留最新窗口，计数持续累加）。 */
   securityEventsProduced: number;
+  /** 累计产生的高危安全告警数（与列表窗口无关，持续累加）。 */
+  securityHighProduced: number;
   /** 现场演示触发后在地图点位显示的联动信号。 */
   liveSignals: DemoLiveSignal[];
   /** 通信卫星中继节点。 */
